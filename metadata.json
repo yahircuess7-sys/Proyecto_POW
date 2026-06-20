@@ -1,0 +1,6 @@
+{
+  "name": "Ferretería El Tornillo",
+  "description": "Sistema de gestión y punto de venta con maqueta de Laravel Blade y Bootstrap 5",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

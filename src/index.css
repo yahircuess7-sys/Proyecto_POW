@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* App custom styles */
+.app-navbar {
+  background-color: #0f172a;
+  border-bottom: 4px solid #f97316;
+}
+
+.app-brand-icon {
+  width: 45px;
+  height: 45px;
+}
+
+.app-small-text {
+  font-size: 0.8rem;
+}
+
+.app-tab-button {
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.app-dashboard-help-text {
+  line-height: 1.4;
+}
+
+.app-dashboard-badge {
+  font-size: 0.78rem;
+}

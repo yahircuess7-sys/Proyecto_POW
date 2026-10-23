@@ -4,6 +4,30 @@ import BladeExplorer from './components/BladeExplorer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'demo' | 'resources'>('demo');
+  const [agentPrompt, setAgentPrompt] = useState('Ayúdame a revisar el inventario de tornillos y recomendar una promoción para este lunes.');
+  const [agentResponse, setAgentResponse] = useState('El agente de negocio estará disponible una vez que configures tu GEMINI_API_KEY.');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAgentRun = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: agentPrompt,
+          context: 'Inventario: tornillos, cemento, pinturas, herramientas. Venta activa, prioridad de stock bajo y promociones de fin de semana.',
+        }),
+      });
+
+      const data = await response.json();
+      setAgentResponse(data.answer || data.error || 'No se obtuvo respuesta del agente.');
+    } catch (error) {
+      setAgentResponse(`No se pudo conectar con el backend del agente: ${error instanceof Error ? error.message : 'desconocido'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-light flex flex-col">
@@ -90,6 +114,37 @@ export default function App() {
           </div>
         )}
       </div>
+
+      <section className="container-fluid px-4 pb-4">
+        <div className="card border-0 shadow-sm">
+          <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span><i className="bi bi-robot me-2"></i>Agente de ferretería</span>
+            <span className="badge bg-warning text-dark">Gemini</span>
+          </div>
+          <div className="card-body">
+            <div className="row g-3 align-items-start">
+              <div className="col-lg-5">
+                <label className="form-label fw-semibold">Consulta del agente</label>
+                <textarea
+                  className="form-control"
+                  rows={6}
+                  value={agentPrompt}
+                  onChange={(e) => setAgentPrompt(e.target.value)}
+                />
+                <button className="btn btn-warning mt-3 fw-semibold" onClick={handleAgentRun} disabled={isLoading}>
+                  {isLoading ? 'Consultando...' : 'Enviar a Gemini'}
+                </button>
+              </div>
+              <div className="col-lg-7">
+                <label className="form-label fw-semibold">Respuesta</label>
+                <div className="border rounded bg-light p-3" style={{ minHeight: '180px', whiteSpace: 'pre-wrap' }}>
+                  {agentResponse}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
     </div>
   );

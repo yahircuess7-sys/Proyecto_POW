@@ -3,6 +3,20 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+if (file_exists(dirname(__DIR__) . '/.env')) {
+    $lines = file(dirname(__DIR__) . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2) + [1 => ''];
+        $name = trim($name);
+        $value = trim($value, "\"' ");
+        if (!empty($name)) {
+            $_ENV[$name] = $value;
+            putenv("$name=$value");
+        }
+    }
+}
+
 return [
 
     /*
@@ -17,7 +31,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => $_ENV['DB_CONNECTION'] ?? env('DB_CONNECTION', 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -86,17 +100,17 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'url' => $_ENV['DB_URL'] ?? env('DB_URL'),
+            'host' => $_ENV['DB_HOST'] ?? env('DB_HOST', '127.0.0.1'),
+            'port' => $_ENV['DB_PORT'] ?? env('DB_PORT', '5432'),
+            'database' => $_ENV['DB_DATABASE'] ?? env('DB_DATABASE', 'laravel'),
+            'username' => $_ENV['DB_USERNAME'] ?? env('DB_USERNAME', 'root'),
+            'password' => $_ENV['DB_PASSWORD'] ?? env('DB_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => $_ENV['DB_SSLMODE'] ?? env('DB_SSLMODE', 'prefer'),
         ],
 
         'sqlsrv' => [

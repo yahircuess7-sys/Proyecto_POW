@@ -2,36 +2,75 @@
 
 namespace Database\Seeders;
 
+use App\Models\Business;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Product;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Inyectar los datos en la base de datos.
+     * Inyectar los datos en la base de datos de manera idempotente y multiempresa.
      */
     public function run(): void
     {
-        // 1. Inyectando Usuarios
-        User::create([
-            'name' => 'Administrador Yahir',
-            'email' => 'admin@puntoagil.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'admin',
-            'status' => 'active',
-        ]);
+        // 1. Inyectando Empresa Matriz
+        $business = Business::firstOrCreate(
+            ['slug' => 'puntoagil-central'],
+            [
+                'name' => 'PuntoÁgil Central',
+                'tax_id' => '0999999999001',
+                'email' => 'admin@puntoagil.com',
+                'phone' => '+593 99 000 0000',
+                'address' => 'Sede Principal - Matriz',
+                'status' => 'active',
+                'settings' => [
+                    'currency' => 'USD',
+                    'tax_percentage' => 12,
+                    'timezone' => 'America/Guayaquil',
+                ],
+            ]
+        );
 
-        User::create([
-            'name' => 'Cajero Carlos',
-            'email' => 'cajero@puntoagil.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'cajero',
-            'status' => 'active',
-        ]);
+        // 2. Inyectando Usuarios y Membresías
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@puntoagil.com'],
+            [
+                'name' => 'Administrador Yahir',
+                'password' => Hash::make('12345678'),
+                'role' => 'admin',
+                'status' => 'active',
+                'current_business_id' => $business->id,
+            ]
+        );
 
-        // 2. Inyectando Productos Iniciales de Ejemplo
+        if (! $admin->businesses()->where('business_id', $business->id)->exists()) {
+            $admin->businesses()->attach($business->id, [
+                'role' => 'owner',
+                'is_default' => true,
+            ]);
+        }
+
+        $cajero = User::firstOrCreate(
+            ['email' => 'cajero@puntoagil.com'],
+            [
+                'name' => 'Cajero Carlos',
+                'password' => Hash::make('12345678'),
+                'role' => 'cajero',
+                'status' => 'active',
+                'current_business_id' => $business->id,
+            ]
+        );
+
+        if (! $cajero->businesses()->where('business_id', $business->id)->exists()) {
+            $cajero->businesses()->attach($business->id, [
+                'role' => 'cajero',
+                'is_default' => true,
+            ]);
+        }
+
+        // 3. Inyectando Productos Iniciales
         $products = [
             [
                 'sku' => 'CEM-001',
@@ -40,7 +79,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Materiales de Construcción',
                 'price' => 8.50,
                 'stock' => 150,
-                'unit' => 'Saco'
+                'unit' => 'Saco',
             ],
             [
                 'sku' => 'CLA-002',
@@ -49,7 +88,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Clavería',
                 'price' => 2.25,
                 'stock' => 50,
-                'unit' => 'Caja'
+                'unit' => 'Caja',
             ],
             [
                 'sku' => 'HER-003',
@@ -58,7 +97,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Herramientas',
                 'price' => 12.00,
                 'stock' => 25,
-                'unit' => 'Unidad'
+                'unit' => 'Unidad',
             ],
             [
                 'sku' => 'PIN-004',
@@ -67,12 +106,15 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Pinturas',
                 'price' => 15.50,
                 'stock' => 30,
-                'unit' => 'Galón'
-            ]
+                'unit' => 'Galón',
+            ],
         ];
 
-        foreach ($products as $product) {
-            Product::create($product);
+        foreach ($products as $p) {
+            Product::withoutBusinessScope()->firstOrCreate(
+                ['business_id' => $business->id, 'sku' => $p['sku']],
+                array_merge($p, ['business_id' => $business->id])
+            );
         }
     }
 }

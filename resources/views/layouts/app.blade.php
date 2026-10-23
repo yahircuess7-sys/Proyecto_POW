@@ -226,8 +226,8 @@
                 </nav>
             </div>
 
-            <!-- Administración (Solo con rol admin) -->
-            @if(auth()->user() && auth()->user()->role === 'admin')
+            <!-- Administración (Solo con rol admin o propietario de la empresa) -->
+            @if(auth()->user() && auth()->user()->isAdmin())
             <div>
                 <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Administración</p>
                 <nav class="space-y-1">
@@ -269,7 +269,7 @@
                     <p class="text-xs font-semibold text-white truncate">{{ auth()->user()->name ?? 'Usuario' }}</p>
                     <p class="text-[11px] text-slate-400 capitalize flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full {{ auth()->user() && auth()->user()->status === 'active' ? 'bg-emerald-400' : 'bg-slate-500' }}"></span>
-                        {{ auth()->user()->role ?? 'Cajero' }}
+                        {{ $currentBusinessUserRole ?? (auth()->user()->role ?? 'Cajero') }}
                     </p>
                 </div>
             </div>
@@ -300,7 +300,7 @@
                         Sistema Online
                     </span>
                     <span class="text-slate-300">/</span>
-                    <span class="text-slate-700">Sucursal Matriz</span>
+                    <span class="text-slate-700 font-semibold truncate max-w-[200px]">{{ $currentBusiness->name ?? 'PuntoÁgil Central' }}</span>
                 </div>
             </div>
 

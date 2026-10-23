@@ -5,15 +5,25 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Services\TenantManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected TenantManager $tenantManager
+    ) {}
+
     public function index(Request $request)
     {
-        $query = User::query();
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()->current_business_id;
+
+        $query = User::whereHas('businesses', function ($q) use ($businessId) {
+            $q->where('businesses.id', $businessId);
+        });
 
         if ($search = $request->input('search')) {
             $query->where(function ($sub) use ($search) {
@@ -36,19 +46,34 @@ class UserController extends Controller
     {
         $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()->current_business_id;
 
-        User::create($validated);
+        DB::transaction(function () use ($validated, $businessId) {
+            $validated['current_business_id'] = $businessId;
+            $user = User::create($validated);
+
+            $user->businesses()->attach($businessId, [
+                'role' => $validated['role'],
+                'is_default' => true,
+            ]);
+        });
 
         return redirect()->route('admin.users.index')->with('success', 'Usuario creado correctamente.');
     }
 
     public function edit(User $user)
     {
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()->current_business_id;
+        abort_unless($user->businesses()->where('businesses.id', $businessId)->exists(), 404);
+
         return view('admin.users.edit', compact('user'));
     }
 
     public function update(UserRequest $request, User $user)
     {
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()->current_business_id;
+        abort_unless($user->businesses()->where('businesses.id', $businessId)->exists(), 404);
+
         $validated = $request->validated();
 
         if (!empty($validated['password'])) {
@@ -57,25 +82,41 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        DB::transaction(function () use ($user, $validated, $businessId) {
+            $user->update($validated);
+
+            $user->businesses()->updateExistingPivot($businessId, [
+                'role' => $validated['role'],
+            ]);
+        });
 
         return redirect()->route('admin.users.index')->with('success', 'Usuario actualizado correctamente.');
     }
 
     public function destroy(User $user)
     {
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()->current_business_id;
+        abort_unless($user->businesses()->where('businesses.id', $businessId)->exists(), 404);
+
         if (Auth::id() === $user->id) {
             return redirect()->route('admin.users.index')
                 ->with('error', 'No puedes eliminar tu propia cuenta de usuario en sesión activa.');
         }
 
-        if ($user->sales()->exists()) {
+        if ($user->sales()->where('business_id', $businessId)->exists()) {
             return redirect()->route('admin.users.index')
-                ->with('error', 'No se puede eliminar este usuario porque tiene transacciones de venta asociadas.');
+                ->with('error', 'No se puede eliminar este usuario porque tiene transacciones de venta asociadas en esta empresa.');
         }
 
-        $user->delete();
+        DB::transaction(function () use ($user, $businessId) {
+            $user->businesses()->detach($businessId);
 
-        return redirect()->route('admin.users.index')->with('success', 'Usuario eliminado correctamente.');
+            // Si el usuario ya no tiene membresías en ninguna empresa, se elimina completamente
+            if ($user->businesses()->count() === 0) {
+                $user->delete();
+            }
+        });
+
+        return redirect()->route('admin.users.index')->with('success', 'Usuario removido de la empresa correctamente.');
     }
 }

@@ -15,8 +15,8 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || $request->user()->role !== 'admin') {
-            abort(403, 'Acceso denegado. Se requieren permisos de administrador.');
+        if (! $request->user() || ! $request->user()->isAdmin()) {
+            abort(403, 'Acceso denegado. Se requieren permisos de administrador en esta empresa.');
         }
 
         return $next($request);

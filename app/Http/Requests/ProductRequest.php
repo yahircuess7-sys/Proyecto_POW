@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\TenantManager;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,13 +25,16 @@ class ProductRequest extends FormRequest
     {
         $product = $this->route('product');
         $productId = is_object($product) ? $product->id : $product;
+        $businessId = app(TenantManager::class)->getTenantId() ?: auth()->user()?->current_business_id;
 
         return [
             'sku' => [
                 'nullable',
                 'max:255',
                 'alpha_dash',
-                Rule::unique('products', 'sku')->ignore($productId),
+                Rule::unique('products', 'sku')
+                    ->where(fn ($query) => $query->where('business_id', $businessId))
+                    ->ignore($productId),
             ],
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:255'],

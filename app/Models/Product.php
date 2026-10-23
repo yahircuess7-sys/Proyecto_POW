@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToBusiness;
 
     protected $fillable = [
+        'business_id',
         'sku',
         'name',
         'description',

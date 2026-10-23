@@ -52,6 +52,10 @@ class SaleController extends Controller
             foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
 
+                if (! $product) {
+                    throw new \Exception("Producto no autorizado o no encontrado en el inventario de este negocio.");
+                }
+
                 if ($product->stock < $item['quantity']) {
                     throw new \Exception("Stock insuficiente para: " . $product->name);
                 }

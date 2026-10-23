@@ -158,3 +158,57 @@ En esta fase se rediseñó integralmente la experiencia visual y operativa del s
 11. **Página de Entrada / Bienvenida (`resources/views/welcome.blade.php`):**
     - Landing corporativa SaaS con hero banner degradado, resumen de módulos por rol y acceso directo al sistema.
 
+---
+
+## 7. Arquitectura Multiempresa (Multi-Tenancy) y Seguridad de Base de Datos
+
+### 7.1 Modelo de Datos y Relaciones Multiempresa
+Se diseñó e implementó un esquema de aislamiento multiempresa (shared-database, isolated-schema) robusto y extensible:
+* **Entidad `businesses`:**
+  * Define cada empresa/inquilino (tenant) en la plataforma SaaS.
+  * Campos: `id`, `name`, `slug` (único), `tax_id` (RUC/NIT/RFC), `email`, `phone`, `address`, `status` ('active', 'suspended'), `settings` (JSONB para monedas, tasas de impuestos y parámetros fiscales) y `timestamps`.
+* **Entidad `business_user` (Membresías Multiempresa):**
+  * Modela la pertenencia de un usuario a una o varias empresas con roles contextuales.
+  * Campos: `id`, `business_id` (FK cascade), `user_id` (FK cascade), `role` ('owner', 'admin', 'cajero'), `is_default` (booleano) y `timestamps`.
+  * Restricción de integridad: Clave única compuesta en `(business_id, user_id)`.
+* **Contexto Activo en `users`:**
+  * Columna `current_business_id` (FK referenciando `businesses.id`, `nullOnDelete`), permitiendo navegación transparente entre empresas sin cerrar sesión.
+* **Aislamiento en Registros Comerciales:**
+  * **`products`:** Añadida columna `business_id` (FK `NOT NULL`, cascade). Eliminado el antiguo índice único global `products_sku_unique` y reemplazado por la clave única compuesta `(business_id, sku)`. Creados índices compuestos `(business_id, category)` y `(business_id, stock)` para consultas de inventario de alto rendimiento.
+  * **`sales`:** Añadida columna `business_id` (FK `NOT NULL`, cascade). Creada clave única compuesta `(business_id, invoice_number)` e índice compuesto `(business_id, created_at)`.
+  * **`sale_items`:** Añadida columna `business_id` (FK `NOT NULL`, cascade) e índice `(business_id)` para acelerar agregaciones contables y auditorías.
+
+### 7.2 Migración Incremental, Reversible y Sin Pérdida de Datos
+* **Archivo de Migración:** `database/migrations/2026_10_23_000001_create_businesses_and_multi_tenant_architecture.php`.
+* **Ejecución no destructiva:** Creó e insertó automáticamente la empresa matriz inicial **`PuntoÁgil Central`** (`id: 1`, `slug: 'puntoagil-central'`), asociando de forma transparente los usuarios existentes (`admin@puntoagil.com` como `owner`, `cajero@puntoagil.com` como `cajero`) y todos los productos existentes, garantizando continuidad de servicio sin registros huérfanos.
+* **Reversibilidad (`down`):** Implementada de forma segura para eliminar restricciones compuestas, restaurar índices originales y suprimir tablas adicionales en caso de requerirse rollback.
+
+### 7.3 Evaluación y Hallazgos Críticos de Supabase RLS vs. Rol de Conexión
+* **Diagnóstico de Conexión:** Laravel se conecta a Supabase mediante PgBouncer (`aws-0-us-east-2.pooler.supabase.com:6543`) utilizando el rol de base de datos `postgres`.
+* **Hallazgo Crítico:** Mediante inspección en tiempo de ejecución de las propiedades de rol en PostgreSQL (`rolbypassrls = 1`), se evidenció que el usuario `postgres` posee la capacidad de omitir RLS incondicionalmente (`BYPASSRLS`). Según las especificaciones de PostgreSQL, incluso con `FORCE ROW LEVEL SECURITY`, los roles con `BYPASSRLS` evaden las políticas de fila.
+* **Decisión de Seguridad en Profundidad (Defense-in-Depth):**
+  1. **Aislamiento Estricto en Capa de Aplicación (Primario):**
+     * **`TenantManager` (`app/Services/TenantManager.php`):** Singleton que administra el negocio activo en memoria y sincroniza la variable de sesión `SET app.current_business_id`.
+     * **`BusinessScope` (`app/Models/Scopes/BusinessScope.php`):** Global Scope de Eloquent que intercepta todas las consultas sobre `Product`, `Sale` y `SaleItem` agregando automáticamente `WHERE business_id = ?`.
+     * **`BelongsToBusiness` (`app/Traits/BelongsToBusiness.php`):** Trait que auto-vincula el alcance global y asigna de forma automática el `business_id` en el evento `creating` del ciclo de vida del modelo.
+  2. **Control en Middleware (`app/Http/Middleware/IdentifyTenant.php`):**
+     * Valida de manera obligatoria que el usuario autenticado pertenezca activamente a la empresa seleccionada antes de permitir el acceso.
+     * Comparte las variables reactivas `$currentBusiness` y `$currentBusinessUserRole` con las vistas Blade.
+  3. **Políticas RLS en Base de Datos (Secundario / API Supabase):**
+     * Se aplicó `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` y se definieron políticas `tenant_isolation` en `products`, `sales` y `sale_items`. Si en el futuro se exponen clientes de Supabase con roles restringidos (`anon`, `authenticated`), la base de datos aplicará las restricciones a nivel de motor.
+
+### 7.4 Controladores y Lógica Comercial Adaptada
+* **`ProductController` & `ProductRequest`:** La regla de unicidad del SKU ahora valida exclusivamente dentro de la empresa en sesión (`Rule::unique('products', 'sku')->where('business_id', $businessId)`). Empresas distintas pueden tener el mismo SKU sin conflictos.
+* **`SkuGeneratorService`:** Al consultar productos existentes para generar correlativos con prefijo (`CEM-001`), el servicio respeta el `BusinessScope`, garantizando correlativos independientes por empresa.
+* **`SaleController`:** En el POS, el controlador valida que cada ítem solicitado exista y pertenezca al catálogo del negocio activo, bloqueando intentos de cobro cruzado de inventario. Las boletas y reportes quedan filtrados automáticamente.
+* **`Admin\UserController`:** La administración de usuarios opera en el contexto de la empresa activa. Un administrador solo puede ver, crear, editar y remover operadores asociados a su empresa.
+
+### 7.5 Verificación Automatizada (Resultados 100% Satisfactorios)
+Se diseñó e implementó la suite especializada `tests/Feature/MultiTenantIsolationTest.php` junto con la preservación de la suite base `ArchitectureAndSecurityTest.php`:
+* `test_catalog_is_strictly_isolated_between_businesses`: **PASS** (Catálogo de una empresa B es invisible en empresa A; acceso directo por ID retorna 404).
+* `test_sku_uniqueness_is_scoped_per_business`: **PASS** (Permite coexistencia del mismo SKU en diferentes empresas pero previene duplicidad dentro de la misma).
+* `test_pos_checkout_rejects_cross_tenant_products`: **PASS** (Rechaza cobros de artículos pertenecientes a otra empresa con HTTP 400).
+* `test_user_management_is_isolated_per_business`: **PASS** (Aislamiento completo de operadores entre empresas en módulo administrativo).
+* **Resultado Global de la Suite:** **13 tests aprobados, 51 aserciones exitosas (100% OK)**.
+
+

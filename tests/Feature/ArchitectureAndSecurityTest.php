@@ -121,4 +121,22 @@ class ArchitectureAndSecurityTest extends TestCase
         $this->actingAs($admin)->get('/admin/users/create')->assertStatus(200);
         $this->actingAs($admin)->get('/reports')->assertStatus(200);
     }
+
+    public function test_logout_redirects_to_home_without_csrf_419_error(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        if (! $admin) {
+            $this->markTestSkipped('No admin user found in database.');
+        }
+
+        // Test POST logout without CSRF token (should redirect to / without 419)
+        $response = $this->actingAs($admin)->post('/logout');
+        $response->assertRedirect('/');
+        $this->assertGuest();
+
+        // Test GET logout (should redirect to / without 405 error)
+        $response = $this->actingAs($admin)->get('/logout');
+        $response->assertRedirect('/');
+        $this->assertGuest();
+    }
 }

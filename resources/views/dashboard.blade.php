@@ -1,129 +1,165 @@
 @extends('layouts.app')
 
-@section('title', 'Panel de Control - Ferretería El Tornillo')
+@section('title', 'Panel de Control - PuntoÁgil')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row align-items-center mb-4">
-        <div class="col-md-8">
-            <h1 class="h3 fw-bold text-dark mb-0">¡Bienvenido de vuelta, {{ auth()->user()->name ?? 'Administrador' }}!</h1>
-            <p class="text-muted">Aquí tienes un resumen general del movimiento técnico de hoy en la ferretería.</p>
+<div class="space-y-8">
+
+    <!-- Welcome & Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">
+                ¡Bienvenido de vuelta, {{ auth()->user()->name ?? 'Administrador' }}!
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+                Monitorea el flujo operativo, métricas de ventas y el estado del stock en tiempo real.
+            </p>
         </div>
-        <div class="col-md-4 text-md-end">
-            <span class="badge bg-white text-dark shadow-sm p-3 border rounded-3 font-monospace">
-                <i class="bi bi-calendar3 text-warning me-2"></i>
+
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 shadow-subtle font-mono">
+                <i class="bi bi-clock-history text-emerald-600"></i>
                 {{ date('d/M/Y - H:i') }}
             </span>
+            <a href="{{ route('pos.create') }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/25 transition-all">
+                <i class="bi bi-cart-plus-fill"></i>
+                <span>Abrir Terminal POS</span>
+            </a>
         </div>
     </div>
 
-    <!-- Panel de Tarjetas de Indicadores Rápidos -->
-    <div class="row g-4 mb-4">
-        <!-- Venta del Día -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 shadow-sm border-start border-primary border-4 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted text-uppercase fw-bold text-xs" style="font-size: 0.75rem; letter-spacing: 0.05em;">Ventas del Día</span>
-                        <div class="rounded-3 bg-primary bg-opacity-10 p-2 text-primary" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-                            <i class="bi bi-currency-dollar fs-4"></i>
-                        </div>
-                    </div>
-                    <h3 class="fw-bold text-dark mb-1 font-mono">${{ number_format($dailyTotal, 2) }}</h3>
-                    <small class="text-success fw-bold d-flex align-items-center gap-1">
-                        <i class="bi bi-graph-up"></i>
-                        <span>{{ $ordersToday }} transacción{{ $ordersToday === 1 ? '' : 'es' }} hoy</span>
-                    </small>
+    <!-- 4 KPI Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- KPI 1: Ventas del Día -->
+        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Ventas Hoy</span>
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    <i class="bi bi-cash-stack text-lg"></i>
                 </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-bold font-mono text-slate-900 tracking-tight">
+                    ${{ number_format($dailyTotal, 2) }}
+                </h3>
+                <p class="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+                    <i class="bi bi-receipt"></i>
+                    <span>{{ $ordersToday }} comprobante{{ $ordersToday === 1 ? '' : 's' }} emitido{{ $ordersToday === 1 ? '' : 's' }}</span>
+                </p>
             </div>
         </div>
 
-        <!-- Productos Registrados -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 shadow-sm border-start border-warning border-4 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted text-uppercase fw-bold text-xs" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Productos</span>
-                        <div class="rounded-3 bg-warning bg-opacity-10 p-2 text-warning" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-                            <i class="bi bi-boxes fs-4"></i>
-                        </div>
-                    </div>
-                    <h3 class="fw-bold text-dark mb-1 font-mono">{{ $totalProducts }}</h3>
-                    <small class="text-muted d-block">En {{ $totalCategories }} categorías</small>
+        <!-- KPI 2: Ticket Promedio -->
+        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Ticket Promedio</span>
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                    <i class="bi bi-receipt-cutoff text-lg"></i>
                 </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-bold font-mono text-slate-900 tracking-tight">
+                    ${{ number_format($averageTicket, 2) }}
+                </h3>
+                <p class="flex items-center gap-1.5 mt-2 text-xs text-slate-600 font-medium">
+                    <i class="bi bi-graph-up text-blue-500"></i>
+                    <span>Por transacción en caja</span>
+                </p>
             </div>
         </div>
 
-        <!-- Alerta de Stocks Bajos -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 shadow-sm border-start border-danger border-4 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted text-uppercase fw-bold text-xs" style="font-size: 0.75rem; letter-spacing: 0.05em;">Stock Crítico</span>
-                        <div class="rounded-3 bg-danger bg-opacity-10 p-2 text-danger" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-                            <i class="bi bi-exclamation-triangle fs-4"></i>
-                        </div>
-                    </div>
-                    <h3 class="fw-bold text-danger mb-1 font-mono">{{ $lowStockCount + $outOfStockCount }} Artículos</h3>
-                    <small class="text-danger fw-bold d-block">{{ $outOfStockCount }} sin stock, {{ $lowStockCount }} bajo stock</small>
+        <!-- KPI 3: Catálogo Total -->
+        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Catálogo Activo</span>
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                    <i class="bi bi-boxes text-lg"></i>
                 </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-bold font-mono text-slate-900 tracking-tight">
+                    {{ $totalProducts }}
+                </h3>
+                <p class="flex items-center gap-1.5 mt-2 text-xs text-slate-600 font-medium">
+                    <i class="bi bi-tags text-purple-500"></i>
+                    <span>En {{ $totalCategories }} categoría{{ $totalCategories === 1 ? '' : 's' }}</span>
+                </p>
             </div>
         </div>
 
-        <!-- Transacciones del Día -->
-        <div class="col-xl-3 col-md-6">
-            <div class="card h-100 shadow-sm border-start border-success border-4 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="text-muted text-uppercase fw-bold text-xs" style="font-size: 0.75rem; letter-spacing: 0.05em;">Órdenes del Día</span>
-                        <div class="rounded-3 bg-success bg-opacity-10 p-2 text-success" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-                            <i class="bi bi-receipt-cutoff fs-4"></i>
-                        </div>
-                    </div>
-                    <h3 class="fw-bold text-dark mb-1 font-mono">${{ number_format($averageTicket, 2) }}</h3>
-                    <small class="text-muted d-block">Promedio por boleta</small>
+        <!-- KPI 4: Stock Crítico / Alertas -->
+        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Atención Stock</span>
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl {{ ($lowStockCount + $outOfStockCount) > 0 ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-50 text-slate-400 border border-slate-200' }}">
+                    <i class="bi bi-exclamation-triangle-fill text-lg"></i>
                 </div>
+            </div>
+            <div class="mt-4">
+                <h3 class="text-2xl font-bold font-mono {{ ($lowStockCount + $outOfStockCount) > 0 ? 'text-amber-600' : 'text-slate-900' }} tracking-tight">
+                    {{ $lowStockCount + $outOfStockCount }}
+                </h3>
+                <p class="mt-2 text-xs font-semibold text-slate-600">
+                    <span class="text-rose-600">{{ $outOfStockCount }} agotado{{ $outOfStockCount === 1 ? '' : 's' }}</span>, 
+                    <span class="text-amber-600">{{ $lowStockCount }} crítico{{ $lowStockCount === 1 ? '' : 's' }}</span>
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Menú de Accesos Rápidos (POS e Inventario) -->
-    <div class="row g-4 mb-4">
-        <!-- Tarjeta Izquierda: Acceso Rápido a Venta POS -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm p-4 bg-primary text-white position-relative overflow-hidden rounded-3">
-                <div class="position-absolute" style="right: -20px; bottom: -20px; opacity: 0.15;">
-                    <i class="bi bi-cart4" style="font-size: 11rem;"></i>
-                </div>
-                <div class="card-body p-0">
-                    <span class="badge bg-warning text-dark text-uppercase mb-2 fw-bold">Módulo Transaccional</span>
-                    <h4 class="fw-bold mb-2">Punto de Venta Integrado</h4>
-                    <p class="text-light mb-4" style="max-width: 440px; opacity: 0.9;">
-                        Apertura directa al carrito interactivo de facturación. Ideal para cajeros y personal de mostrador. Carga productos con un clic, calcula impuestos y emite tickets.
+    <!-- 2 Featured Quick Action Hubs -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Action Card 1: Punto de Venta Express -->
+        <div class="relative overflow-hidden p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-slate-900 to-slate-950 text-white shadow-card border border-slate-800">
+            <div class="absolute -right-6 -bottom-6 text-slate-800/40 pointer-events-none">
+                <i class="bi bi-cart4 text-[160px]"></i>
+            </div>
+            <div class="relative z-10 flex flex-col justify-between h-full space-y-6">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono uppercase tracking-wide">
+                        <i class="bi bi-lightning-charge-fill"></i> Operación Rápida
+                    </span>
+                    <h2 class="text-xl md:text-2xl font-bold text-white mt-3">Terminal Punto de Venta (POS)</h2>
+                    <p class="text-slate-400 text-sm mt-1 max-w-md">
+                        Interfaz táctil para búsqueda ágil de materiales, carrito en tiempo real, desglose de IVA 12% y descarga automática de boleta en PDF.
                     </p>
-                    <a href="{{ route('pos.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-                        <i class="bi bi-calculator me-2"></i>Ir a Vender (POS)
+                </div>
+                <div>
+                    <a href="{{ route('pos.create') }}" 
+                       class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-lg shadow-emerald-500/25 transition-all">
+                        <span>Iniciar Nueva Venta</span>
+                        <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Tarjeta Derecha: Acceso Rápido a Inventario -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm p-4 bg-dark text-white position-relative overflow-hidden rounded-3">
-                <div class="position-absolute" style="right: -20px; bottom: -20px; opacity: 0.15;">
-                    <i class="bi bi-boxes" style="font-size: 11rem;"></i>
-                </div>
-                <div class="card-body p-0">
-                    <span class="badge bg-orange text-white text-uppercase mb-2 fw-bold" style="background-color: #f97316;">Bodega y Auditoría</span>
-                    <h4 class="fw-bold mb-2">Administrar Artículos y Precios</h4>
-                    <p class="text-muted mb-4" style="max-width: 440px; color: #cbd5e1 !important; opacity: 0.9;">
-                        Inspecciona stock de clavería, cementos, herramientas. Actualiza precios, genera nuevos registros con códigos SKU, y saca estimaciones de almacenamiento real.
-                    </p>
-                    <a href="{{ route('inventory.index') }}" class="btn btn-outline-light fw-bold px-4 py-2">
-                        <i class="bi bi-eye-fill me-2"></i>Ir al Inventario
-                    </a>
-                </div>
+        <!-- Action Card 2: Control de Inventario -->
+        <div class="relative overflow-hidden p-6 md:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-card flex flex-col justify-between space-y-6">
+            <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 font-mono uppercase tracking-wide">
+                    <i class="bi bi-boxes"></i> Almacén y Precios
+                </span>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-900 mt-3">Gestión de Catálogo y Bodega</h2>
+                <p class="text-slate-500 text-sm mt-1 max-w-md">
+                    Registra nuevos productos, actualiza existencias, calcula correlativos automáticos de SKU y exporta listas en PDF y Excel/CSV.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('inventory.index') }}" 
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all">
+                    <i class="bi bi-list-check"></i>
+                    <span>Ver Todo el Inventario</span>
+                </a>
+                <a href="{{ route('inventory.create') }}" 
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Nuevo Material</span>
+                </a>
             </div>
         </div>
     </div>

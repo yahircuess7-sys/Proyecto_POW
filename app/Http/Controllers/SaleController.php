@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSaleRequest;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
@@ -24,21 +25,16 @@ class SaleController extends Controller
         return $this->index();
     }
 
-    public function store(Request $request)
+    public function store(StoreSaleRequest $request)
     {
-        $validatedData = $request->validate([
-            'items' => 'required|array',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-        ]);
+        $items = $request->validated()['items'];
 
         DB::beginTransaction();
 
         try {
             $subtotal = 0;
 
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $subtotal += $item['quantity'] * $item['unit_price'];
             }
 
@@ -47,15 +43,15 @@ class SaleController extends Controller
 
             $sale = Sale::create([
                 'invoice_number' => 'INV-' . time(),
-                'user_id' => Auth::id() ?? 1, // Usuario por defecto en demo
+                'user_id' => Auth::id() ?: 1,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
             ]);
 
-            foreach ($request->items as $item) {
+            foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
-                
+
                 if ($product->stock < $item['quantity']) {
                     throw new \Exception("Stock insuficiente para: " . $product->name);
                 }

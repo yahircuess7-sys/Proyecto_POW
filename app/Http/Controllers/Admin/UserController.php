@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -20,7 +22,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderByDesc('created_at')->paginate(15);
+        $users = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
 
         return view('admin.users', compact('users'));
     }
@@ -30,16 +32,9 @@ class UserController extends Controller
         return view('admin.users.create');
     }
 
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,cajero',
-            'status' => 'required|in:active,inactive',
-        ]);
-
+        $validated = $request->validated();
         $validated['password'] = Hash::make($validated['password']);
 
         User::create($validated);
@@ -52,17 +47,11 @@ class UserController extends Controller
         return view('admin.users.edit', compact('user'));
     }
 
-    public function update(Request $request, User $user)
+    public function update(UserRequest $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:6',
-            'role' => 'required|in:admin,cajero',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $validated = $request->validated();
 
-        if ($validated['password']) {
+        if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -75,6 +64,16 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        if (Auth::id() === $user->id) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'No puedes eliminar tu propia cuenta de usuario en sesión activa.');
+        }
+
+        if ($user->sales()->exists()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'No se puede eliminar este usuario porque tiene transacciones de venta asociadas.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'Usuario eliminado correctamente.');

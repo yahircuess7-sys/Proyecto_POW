@@ -12,13 +12,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Inventario
+    // Inventario (Accesible por roles autorizados en panel)
     Route::get('inventory/export/pdf', [ProductController::class, 'exportPdf'])->name('inventory.export.pdf');
     Route::get('inventory/export/csv', [ProductController::class, 'exportCsv'])->name('inventory.export.csv');
     Route::resource('inventory', ProductController::class)
@@ -31,11 +31,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'exportPdf'])->name('sales.pdf');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     
-    // Reportes
-    Route::get('/reports', [SaleController::class, 'reports'])->name('reports.index');
-    Route::get('/admin/reports/export', [SaleController::class, 'exportReports'])->name('admin.reports.export');
+    // Módulos con permiso exclusivo de Administrador
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/reports', [SaleController::class, 'reports'])->name('reports.index');
+        Route::get('/admin/reports/export', [SaleController::class, 'exportReports'])->name('admin.reports.export');
 
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::resource('users', AdminUserController::class)->except(['show']);
+        Route::prefix('admin')->name('admin.')->group(function () {
+            Route::resource('users', AdminUserController::class)->except(['show']);
+        });
     });
 });

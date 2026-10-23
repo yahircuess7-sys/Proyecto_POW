@@ -4,8 +4,7 @@ cd /d "%~dp0"
 echo Limpiando procesos PHP antiguos...
 taskkill /F /IM php.exe >nul 2>&1
 
-echo Generando key y limpiando cache...
-php artisan key:generate --force
+echo Limpiando cache del sistema...
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear

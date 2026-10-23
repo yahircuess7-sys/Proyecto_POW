@@ -1,131 +1,160 @@
-# Auditoría Técnica Integral - Sistema PuntoÁgil (Ferretería El Tornillo)
+# Auditoría Técnica Integral y Bitácora de Reorganización - PuntoÁgil (Ferretería El Tornillo)
 
-**Fecha:** 23 de Octubre de 2026  
-**Auditor:** Desarrollador Senior Laravel  
+**Fecha de Actualización:** 23 de Octubre de 2026  
+**Auditor / Arquitecto:** Desarrollador Senior Laravel  
 **Versión de Laravel:** 12.0  
 **Versión de PHP:** 8.2.12  
 **Base de Datos:** PostgreSQL 17.11 en Supabase (Pooler PgBouncer en puerto 6543)  
-**Estado General:** Funcional en módulos clave, pero con colisión arquitectural (React/Vite vs Blade), duplicidad de código (inglés/español), vulnerabilidades de autorización crítica y bugs funcionales en formularios y autenticación.
+**Estado General:** Refactorizado, seguro y estabilizado. Se resolvieron los riesgos críticos de Broken Access Control, la pérdida de datos en productos, las fallas en autenticación por estado, la auto-eliminación de usuarios, la paginación dinámica y se purgó el código muerto.
 
 ---
 
 ## 1. Arquitectura y Estructura del Repositorio
 
-### 1.1 Colisión de Prototipo React/Node con Laravel Monolítico
-* **Hallazgo:** El repositorio mezcla dos aplicaciones distintas en la misma raíz:
-  1. **Monolito Laravel 12:** Rutas en `routes/web.php`, controladores en `app/Http/Controllers/`, vistas Blade en `resources/views/` maquetadas con **Bootstrap 5.3 CDN** y estilos personalizados.
-  2. **Prototipo React 19 / AI Studio:** Directorio `src/` (`App.tsx`, `main.tsx`, `components/`, etc.), `server.js` (Express + `@google/genai`), `index.html`, `vite.config.ts`, `metadata.json` y `package.json` bautizado como `"react-example"`.
-* **Impacto:** 
-  - `package.json` define `"dev": "vite --port=3000 --host=0.0.0.0"` y dependencias de React/Tailwind v4 que no se usan en las vistas Blade.
-  - `composer.json` intenta ejecutar `npm run dev` en su script `dev`, lo cual levanta el servidor de React en lugar del pipeline de assets de Laravel.
-  - `vite.config.js` (Laravel) y `vite.config.ts` (React) coexisten y generan ambigüedad en herramientas de construcción.
-  - Existencia de un archivo huérfano `public/hot` apuntando a `http://0.0.0.0:3000`.
-
-### 1.2 Configuración del Entorno y Conexión Supabase
-* **Base de datos:** Conexión activa a `aws-0-us-east-2.pooler.supabase.com:6543` con driver `pgsql` y `DB_SSLMODE=require`.
-* **Migraciones:** 10 migraciones ejecutadas exitosamente (`users`, `products`, `sales`, `sale_items`, `sessions`, `jobs`, `cache`, etc.).
-* **Hacks en arranque (`bootstrap/app.php` y `config/database.php`):**
-  - En `bootstrap/app.php` (L7-19) se agregó un parser manual de `.env` que puebla `$_ENV` y ejecuta `putenv()`.
-  - En `config/database.php` (L89-99) se modificó el bloque `pgsql` para leer `$_ENV['DB_HOST'] ?? env('DB_HOST')`.
-  - **Riesgo:** Rompe el aislamiento nativo de Laravel y falla si se ejecuta `php artisan config:cache` en producción.
-* **Script destructivo `start-server.bat`:**
-  - La línea 8 ejecuta `php artisan key:generate --force` en cada inicio del servidor local. Esto invalida inmediatamente todas las sesiones existentes en base de datos y cookies encriptadas de usuarios.
-* **Extensión PHP `ext-intl` ausente:**
-  - La CLI local no tiene habilitada la extensión `intl` en `php.ini`. Ejecutar comandos que invoquen `Illuminate\Support\Number` (como `php artisan db:show`) dispara una excepción fatal `RuntimeException`.
+### 1.1 Estructura Refactorizada y Separación de Responsabilidades
+* **Middleware de Autorización (`EnsureUserIsAdmin`):** Creado en `app/Http/Middleware/EnsureUserIsAdmin.php` y registrado bajo el alias `admin` en `bootstrap/app.php`. Protege de forma estricta las rutas de administración (`admin.users.*`) y reportes financieros (`reports.index`, `admin.reports.export`).
+* **Capa de Validación (Form Requests):**
+  * `app/Http/Requests/ProductRequest.php`: Centraliza las reglas de creación y actualización de productos, valida unicidad ignorando el ID actual e incluye el campo `description`.
+  * `app/Http/Requests/UserRequest.php`: Unifica la validación de usuarios (clave requerida en creación, opcional en edición).
+  * `app/Http/Requests/StoreSaleRequest.php`: Valida las transacciones atómicas del POS.
+* **Capa de Servicios de Dominio (`SkuGeneratorService`):**
+  * Ubicado en `app/Services/SkuGeneratorService.php`. Encapsula la normalización, prefijos por palabras clave y correlativos únicos, reduciendo drásticamente la complejidad y líneas de código de `ProductController`.
+* **Capa de Modelos y Relaciones Eloquent:**
+  * Enriquecido `User.php` con la relación `sales()` (`HasMany(Sale::class)`) y el método auxiliar `isAdmin(): bool`.
+* **Frontend y Paginación:**
+  * Configurado `Paginator::useBootstrapFive()` en `app/Providers/AppServiceProvider.php`.
+  * Conectada la paginación real de Laravel (`{{ $products->links() }}`) en `resources/views/inventory/index.blade.php`, eliminando la maqueta estática previa.
+  * Agregados banners de alertas para mensajes de sesión (`session('success')` y `session('error')`) en las vistas de inventario y usuarios.
+* **Depuración de Código Muerto y Duplicado:**
+  * Eliminados de forma segura los controladores y modelos huérfanos sin tablas en la base de datos: `ProductoController.php`, `VentaController.php`, `Producto.php`, `Venta.php`, `VentaDetalle.php`.
+  * Eliminadas las vistas duplicadas con rutas rotas: `resources/views/inventario/` e `index.blade.php`, `form.blade.php`, `resources/views/admin/reportes.blade.php`, `resources/views/home.blade.php` y la carpeta vacía `resources/views/ventas/`.
 
 ---
 
-## 2. Estado de Módulos y Funcionalidades
+## 2. Estado Actual de Módulos
 
-| Módulo | Estado | Archivos Clave | Descripción y Diagnóstico |
+| Módulo | Estado | Archivos Clave | Diagnóstico y Mejoras Aplicadas |
 | :--- | :---: | :--- | :--- |
-| **Autenticación (Auth)** | ⚠️ Con Fallas | `app/Http/Controllers/Auth/LoginController.php`<br>`resources/views/auth/login.blade.php`<br>`database/seeders/DatabaseSeeder.php` | Login funcional por sesión, pero permite el acceso a usuarios inactivos (`status='inactive'`), carece de rate limiting y las credenciales de demo en la vista están desincronizadas con la BD. |
-| **Control de Acceso / Roles** | 🔴 Crítico | `routes/web.php`<br>`resources/views/layouts/app.blade.php`<br>`app/Http/Controllers/Admin/UserController.php` | No existe middleware ni Gate para el rol `admin`. Un cajero puede ingresar directamente por URL a `/admin/users` y gestionar administradores. |
-| **Panel Principal (Dashboard)** | 🟢 Operativo | `app/Http/Controllers/DashboardController.php`<br>`resources/views/dashboard.blade.php` | Muestra métricas de ventas del día, inventario, categorías y stock crítico. Correctamente integrado. |
-| **Inventario de Productos** | 🟡 Operativo con Bugs | `app/Http/Controllers/ProductController.php`<br>`resources/views/inventory/` | CRUD completo, generación de SKU inteligente, exportación PDF y CSV. **Bug:** El campo `description` no se guarda por omisión en `$request->validate()`. Sin paginación. |
-| **Punto de Venta (POS)** | 🟢 Operativo | `app/Http/Controllers/SaleController.php`<br>`resources/views/sales/index.blade.php` | Carrito dinámico en JavaScript, validación de stock, registro transaccional con DB Transaction, generación de boleta PDF vía Dompdf. |
-| **Detalle de Venta y Boletas** | 🟢 Operativo | `app/Http/Controllers/SaleController.php`<br>`resources/views/sales/show.blade.php`<br>`resources/views/sales/invoice_pdf.blade.php` | Visualización e impresión de boleta en formato ticket/A4 con desglose de ítems, subtotal e IVA. |
-| **Reportes y Transacciones** | 🟡 Parcial | `app/Http/Controllers/SaleController.php`<br>`resources/views/admin/reports.blade.php` | Listado de últimas 12 transacciones y exportación CSV. No permite filtrar por rango de fechas (fijo a `now()`). |
-| **Gestión de Usuarios (Admin)** | 🟡 Riesgoso | `app/Http/Controllers/Admin/UserController.php`<br>`resources/views/admin/users/` | CRUD de empleados y administradores. **Riesgo:** Permite auto-eliminación y caída por integridad referencial si el usuario tiene ventas. |
-| **Módulos Duplicados en Español** | ⚪ Código Muerto | `app/Http/Controllers/ProductoController.php`<br>`app/Http/Controllers/VentaController.php`<br>`app/Models/Producto.php`, `Venta.php`, `VentaDetalle.php`<br>`resources/views/inventario/`, `resources/views/admin/reportes.blade.php` | Código duplicado e incompleto que apunta a tablas inexistentes (`productos`, `ventas`). No están enrutados y colapsan si se invocan. |
+| **Autenticación (Auth)** | 🟢 Seguro y Estable | `app/Http/Controllers/Auth/LoginController.php`<br>`resources/views/auth/login.blade.php`<br>`routes/web.php` | Bloqueo activo de usuarios con `status !== 'active'`, rate limiting en `POST /login` (`throttle:6,1`) y credenciales demo sincronizadas con los datos de seed (`admin@eltornillo.com` / `cajero@eltornillo.com` con clave `12345678`). |
+| **Control de Acceso / Roles** | 🟢 Seguro y Auditado | `app/Http/Middleware/EnsureUserIsAdmin.php`<br>`routes/web.php`<br>`bootstrap/app.php` | Rutas administrativas y de reportes aisladas bajo middleware `admin`. Un cajero autenticado recibe HTTP 403 Forbidden. Verificado por test automatizado. |
+| **Inventario de Productos** | 🟢 Optimizado y Sin Pérdida de Datos | `app/Http/Controllers/ProductController.php`<br>`app/Http/Requests/ProductRequest.php`<br>`app/Services/SkuGeneratorService.php`<br>`resources/views/inventory/` | Paginación real de 15 ítems con preservación de filtros en query string. Corrección de guardado de `description`. Extracción de lógica SKU a servicio. Verificado por test automatizado. |
+| **Punto de Venta (POS)** | 🟢 Operativo y Validado | `app/Http/Controllers/SaleController.php`<br>`app/Http/Requests/StoreSaleRequest.php`<br>`resources/views/sales/index.blade.php` | Validación estricta con Form Request, deducción de stock transaccional, generación de boleta PDF y protección contra usuarios huérfanos. |
+| **Gestión de Usuarios (Admin)** | 🟢 Blindado contra Fallos | `app/Http/Controllers/Admin/UserController.php`<br>`app/Http/Requests/UserRequest.php`<br>`resources/views/admin/users.blade.php` | Prevención de auto-eliminación del administrador en sesión y protección contra violación de integridad referencial si un usuario posee transacciones de venta. |
+| **Reportes Financieros** | 🟡 Operativo (Requiere filtros) | `app/Http/Controllers/SaleController.php`<br>`resources/views/admin/reports.blade.php` | Protegido para administradores. Exportación CSV y métricas funcionales. Queda como deuda técnica permitir filtros por rango de fechas arbitrario. |
 
 ---
 
-## 3. Matriz de Errores Evidentes y Riesgos de Seguridad
+## 3. Matriz de Cambios Ejecutados
 
-### 3.1 Riesgos Críticos de Seguridad (Prioridad 1)
-1. **Falta de Autorización en Rutas Administrativas (Broken Access Control):**
-   - **Ubicación:** `routes/web.php` (L38-40).
-   - **Detalle:** La ruta `Route::prefix('admin')->name('admin.')->group(...)` solo tiene middleware `['auth']`. La restricción por rol solo existe a nivel visual en `resources/views/layouts/app.blade.php` (L164).
-   - **Vulnerabilidad:** Un cajero autenticado puede acceder a `http://localhost/admin/users`, crear nuevos administradores, cambiar contraseñas de otros usuarios o eliminarlos.
-2. **Usuarios Inactivos Pueden Iniciar Sesión:**
-   - **Ubicación:** `app/Http/Controllers/Auth/LoginController.php` (L23).
-   - **Detalle:** `Auth::attempt($credentials)` solo valida `email` y `password`. Si un administrador desactiva a un empleado (`status = 'inactive'`), este puede seguir iniciando sesión sin impedimento.
-3. **Ausencia de Protección contra Fuerza Bruta en Login:**
-   - **Ubicación:** `routes/web.php` (L15) y `LoginController.php`.
-   - **Detalle:** La ruta `POST /login` no implementa middleware de limitación de tasa (`throttle:6,1` o `RateLimiter`).
-
-### 3.2 Errores Funcionales Evidentes (Prioridad 2)
-1. **Pérdida de Información del Campo `description` en Productos:**
-   - **Ubicación:** `app/Http/Controllers/ProductController.php` (L52-59 y L89-96).
-   - **Detalle:** El formulario `inventory/form.blade.php` incluye el textarea `description`. Sin embargo, la validación en `store()` y `update()` no incluye la regla para `description`. Al llamar `Product::create($validatedData)` o `$product->update($validatedData)`, Laravel descarta automáticamente cualquier campo no validado, por lo que las descripciones nunca se guardan en la base de datos.
-2. **Credenciales de Demostración Incorrectas en Pantalla de Login:**
-   - **Ubicación:** `resources/views/auth/login.blade.php` (L142-145).
-   - **Detalle:** Los botones de acceso rápido autocompletan `admin@ferreteria.com` / `123456` y `cajero@ferreteria.com` / `123456`. Los datos reales inyectados por `DatabaseSeeder.php` son `admin@eltornillo.com` y `cajero@eltornillo.com` con clave `12345678`. El usuario que hace clic en los botones de prueba recibe un error de credenciales inválidas.
-3. **Regeneración Forzada de `APP_KEY` en `start-server.bat`:**
-   - **Ubicación:** `start-server.bat` (L8).
-   - **Detalle:** Ejecutar `php artisan key:generate --force` cada vez que se levanta el proyecto invalida las sesiones de base de datos (`sessions`) y corrompe cualquier dato cifrado previo.
-4. **Fallo de Integridad Referencial al Eliminar Usuarios:**
-   - **Ubicación:** `app/Http/Controllers/Admin/UserController.php` (L76-81) y `database/migrations/2026_06_13_000002_create_sales_table.php` (L14).
-   - **Detalle:** La tabla `sales` tiene `$table->foreignId('user_id')->constrained('users')` sin cascada ni `nullOnDelete`. Si un administrador intenta eliminar a un cajero que ya registró ventas, el sistema arroja una excepción de base de datos no controlada (SQLSTATE 23503). Tampoco se impide que el usuario administrador actual se auto-elimine.
-
-### 3.3 Código Duplicado y Residuos Huérfanos (Prioridad 3)
-1. **Modelos y Controladores Duplicados (Spanglish vs English):**
-   - Coexisten `ProductController` (activo) con `ProductoController` (muerto).
-   - Coexisten `SaleController` (activo) con `VentaController` (muerto).
-   - Coexisten `Product` / `Sale` / `SaleItem` con `Producto` / `Venta` / `VentaDetalle`.
-   - Las migraciones reales son `products`, `sales`, `sale_items`. Los modelos en español fallarán inmediatamente si son llamados porque sus tablas no existen.
-2. **Vistas Blade Duplicadas:**
-   - `resources/views/inventory/` (activa) vs `resources/views/inventario/` (duplicada con enlaces rotos a `route('inventario.index')`).
-   - `resources/views/admin/reports.blade.php` (activa) vs `resources/views/admin/reportes.blade.php` (duplicada).
-3. **Residuos de React / Express / AI Studio:**
-   - Todo el contenido de `src/`, `server.js`, `index.html`, `vite.config.ts`, `metadata.json`, `.env.local` y los paquetes en `package.json` no guardan relación con la aplicación Laravel Blade en ejecución.
+1. **Broken Access Control Solucionado:**
+   - Middleware `EnsureUserIsAdmin` activo en grupo de rutas `admin.*` y `reports.*`.
+2. **Corrección de Pérdida de Descripciones de Productos:**
+   - `ProductRequest` incluye regla y persistencia para `description`.
+3. **Bloqueo de Cuentas Inactivas:**
+   - `LoginController` rechaza intentos de login con cuenta inactiva y emite feedback apropiado.
+4. **Protección contra Fuerza Bruta:**
+   - Middleware `throttle:6,1` asignado al endpoint `/login`.
+5. **Corrección de `start-server.bat`:**
+   - Removido `php artisan key:generate --force`. Las sesiones activas de usuarios ya no se destruyen en cada inicio.
+6. **Protección de Integridad en Eliminación de Usuarios:**
+   - `UserController@destroy` valida la existencia de ventas previas y bloquea la auto-eliminación.
+7. **Paginación Dinámica y Homogeneización Bootstrap 5:**
+   - `Paginator::useBootstrapFive()` configurado en `AppServiceProvider`.
+   - Vistas actualizadas con navegación real de Laravel.
+8. **Depuración de Residuos:**
+   - Eliminados 5 archivos PHP de modelos/controladores en desuso y 4 vistas/carpetas duplicadas.
+   - Autoload optimizado mediante `composer dump-autoload`.
 
 ---
 
-## 4. Estado de Dependencias y Entorno
+## 4. Deuda Técnica Registrada (Para Fases Posteriores)
 
-### Backend (PHP / Composer)
-- `laravel/framework`: 12.0
-- `barryvdh/laravel-dompdf`: 3.1 (utilizado directamente con instancias `Dompdf\Dompdf` en controladores)
-- `laravel/tinker`: 2.10.1
-- **Observación:** No se utiliza ningún paquete de roles (como Spatie Laravel-Permission). Los roles están basados en la columna enum `role` (`admin`, `cajero`) de la tabla `users`.
-
-### Frontend
-- Las vistas Blade no cargan los scripts compilados de Vite; dependen de:
-  - Bootstrap 5.3.3 CSS (vía CDN jsDelivr)
-  - Bootstrap Icons 1.11.3 (vía CDN jsDelivr)
-  - Fuentes Google Fonts (Plus Jakarta Sans, JetBrains Mono, Inter)
-  - JavaScript Vanilla inline en `sales/index.blade.php` para la lógica del POS.
+1. **Aislamiento del Prototipo React / AI Studio:**
+   - La carpeta `src/`, `server.js`, `index.html`, `vite.config.ts`, `metadata.json`, `.env.local` y las dependencias de React en `package.json` siguen residiendo en la raíz.
+   - **Acción recomendada:** Moverlos a una subcarpeta independiente (ej. `tools/ai-agent/` o `prototype/`) y limpiar `package.json` para que sirva exclusivamente al frontend de Laravel cuando se requiera empaquetar activos locales.
+2. **Normalización del Bootstrapping de Entorno:**
+   - En `bootstrap/app.php` (L7-19) y `config/database.php` (L87-100) persiste la lectura manual de `$_ENV` para la conexión de PostgreSQL/Supabase.
+   - **Acción recomendada:** Verificar por qué el servidor local requirió este workaround en Windows y normalizarlo para permitir la ejecución limpia de `php artisan config:cache` en entornos de producción.
+3. **Filtros por Rango de Fechas en Reportes:**
+   - El método `SaleController@reports` actualmente calcula métricas fijas con `whereDate('created_at', now())`.
+   - **Acción recomendada:** Permitir parámetros `from` y `to` desde el selector de fechas de la interfaz para auditorías de ventas históricas.
+4. **Habilitación de Extensión PHP `intl`:**
+   - El entorno local requiere habilitar `extension=intl` en el `php.ini` del servidor para habilitar comandos de formateo nativos como `php artisan db:show`.
 
 ---
 
-## 5. Plan de Acción y Prioridades Recomendadas
+## 5. Resultados de Verificación Automatizada
 
-### Fase 1: Seguridad y Control de Acceso (Inmediato)
-1. Crear un Middleware `EnsureUserIsAdmin` (o registrar middleware de alias `role:admin`) y aplicarlo a las rutas `admin.*` y `reports.*`.
-2. Actualizar `LoginController@login` para verificar que `status === 'active'`.
-3. Aplicar limitador de tasa (`throttle:5,1`) a la ruta `login`.
-4. Proteger `UserController@destroy` contra la auto-eliminación y manejar la restricción de integridad cuando un usuario posee ventas registradas.
+Se implementó y ejecutó la suite de pruebas en `tests/Feature/ArchitectureAndSecurityTest.php` contra la base de datos de Supabase:
+- `test_guest_cannot_access_protected_routes`: **PASS** (Redirección a `/login`)
+- `test_cashier_is_forbidden_from_admin_modules`: **PASS** (HTTP 403 en `/admin/users` y `/reports`)
+- `test_admin_can_access_admin_modules`: **PASS** (HTTP 200)
+- `test_login_rejects_inactive_user`: **PASS** (Error de sesión y estado desautenticado)
+- `test_product_description_is_saved_and_persisted`: **PASS** (Persistencia exitosa de descripción técnica)
+- `test_all_redesigned_views_render_successfully`: **PASS** (HTTP 200 en todas las vistas rediseñadas)
+- Suite completa del proyecto: **8 tests pasados, 27 aserciones exitosas (100% OK)**.
 
-### Fase 2: Corrección de Bugs Funcionales en Flujo Principal
-1. Incluir `'description' => 'nullable|string'` en la validación de `ProductController@store` y `ProductController@update`.
-2. Corregir los botones de demo en `resources/views/auth/login.blade.php` para que usen `admin@eltornillo.com` y `cajero@eltornillo.com` con clave `12345678`.
-3. Remover `php artisan key:generate --force` de `start-server.bat`.
-4. Agregar paginación en `ProductController@index` (`$query->paginate(15)`).
+---
 
-### Fase 3: Limpieza y Desacoplamiento Arquitectural
-1. Eliminar o archivar el código muerto en español (`ProductoController`, `VentaController`, `Producto`, `Venta`, `VentaDetalle`, `resources/views/inventario`, `resources/views/admin/reportes.blade.php`).
-2. Aislar o remover el prototipo React/Node (`src/`, `server.js`, `index.html`, `vite.config.ts`) a una carpeta dedicada o submódulo, limpiando `package.json` para que sirva exclusivamente al frontend de Laravel.
-3. Normalizar `bootstrap/app.php` y `config/database.php` removiendo los hacks de carga manual de `.env` para garantizar compatibilidad con `config:cache`.
-4. Habilitar la extensión `extension=intl` en el `php.ini` de la máquina de desarrollo.
+## 6. Rediseño de Interfaz SaaS (Blade, Tailwind CSS & Alpine.js)
+
+En esta fase se rediseñó integralmente la experiencia visual y operativa del sistema, transformándolo de una apariencia heterogénea a una plataforma SaaS profesional, elegante y coherente para Ferretería El Tornillo.
+
+### 6.1 Identidad Visual y Tokens de Diseño
+- **Paleta Corporativa:**
+  - Verde Esmeralda Principal: `#10B981` (`emerald-500`)
+  - Verde Esmeralda Oscuro / Hover: `#059669` (`emerald-600`)
+  - Azul Pizarra Profundo (Sidebar y acentos oscuros): `#0F172A` (`slate-900`)
+  - Fondo Suave de Aplicación: `#F8FAFC` (`slate-50`)
+  - Blanco de Superficie y Tarjetas: `#FFFFFF`
+- **Tipografía:**
+  - Texto principal y UI: `Inter` (sans-serif)
+  - Precios, SKUs, facturas y métricas numéricas: `JetBrains Mono` (font-mono)
+- **Componentes Base:**
+  - Tarjetas redondeadas (`rounded-2xl`) con bordes sutiles `border-slate-200/80` y sombras suaves.
+  - Insignias de estado (Active, Inactivo, Stock Óptimo, Bajo Stock, Agotado) con contrastes accesibles.
+  - Modales accesibles interactivos impulsados por Alpine.js sin alertas nativas intrusivas del navegador.
+
+### 6.2 Vistas y Módulos Rediseñados
+1. **Layout Principal (`resources/views/layouts/app.blade.php`):**
+   - Sidebar retráctil moderno en pizarra oscuro con badges dinámicos para roles (Admin / Cajero).
+   - Menú móvil con backdrop blur impulsado por Alpine.js.
+   - Encabezado superior con indicador de estado en vivo, perfil del usuario activo, atajo rápido a nueva venta POS y notificaciones flash integradas.
+2. **Dashboard Ejecutivo (`resources/views/dashboard.blade.php`):**
+   - 4 tarjetas métricas KPI (Ventas Totales, Artículos en Stock, Catálogo Activo y Nivel Crítico de Inventario).
+   - Accesos directos prioritarios hacia "Terminal POS Express" y "Catálogo de Inventario".
+   - Alertas contextuales y tabla de artículos con stock crítico.
+3. **Catálogo de Inventario (`resources/views/inventory/index.blade.php`):**
+   - Barra de herramientas con filtros por texto, categoría y estado de stock en tiempo real.
+   - Tabla con badges de disponibilidad por colorimetría (esmeralda, ámbar, rosa).
+   - Modal interactivo de confirmación de eliminación con Alpine.js.
+   - Paginación conectada a Eloquent conservando parámetros de búsqueda.
+4. **Formulario de Productos (`resources/views/inventory/form.blade.php`, `create.blade.php`, `edit.blade.php`):**
+   - Diseño en cuadrícula limpia de dos columnas, badges de ayuda y cálculo automático de SKU sugerido.
+   - Preservación completa del campo `description`.
+5. **Detalle de Producto (`resources/views/inventory/show.blade.php`):**
+   - Ficha técnica con desglose de márgenes, estado de bodega y accesos rápidos a edición.
+6. **Terminal POS de Ventas (`resources/views/sales/index.blade.php`):**
+   - Interfaz táctil ergonómica dividida en catálogo de productos y carrito lateral interactivo.
+   - Filtro por pastillas de categoría y barra de búsqueda reactiva.
+   - Ajustadores rápidos de cantidad (+ / - / eliminar) de alta respuesta táctil.
+   - Desglose contable automático en tiempo real: Subtotal, IVA 12% y Total.
+   - Envío asíncrono con feedback visual, botón de bloqueo ante doble click y descarga automática de factura PDF.
+7. **Detalle / Comprobante de Venta (`resources/views/sales/show.blade.php`):**
+   - Comprobante digital fiscal con diseño tipo recibo corporativo.
+   - Botones para impresión directa (`window.print()`), navegación a reportes y apertura de nueva venta.
+   - Desglose de ítems con cantidades, valores unitarios y subtotales.
+8. **Gestión de Usuarios (`resources/views/admin/users.blade.php`, `create.blade.php`, `edit.blade.php`, `form.blade.php`):**
+   - Listado administrativo con búsqueda por nombre y correo, badges de rol y estado.
+   - Modal de confirmación para eliminar operadores.
+   - Formularios estilizados con ayudas visuales y selección intuitiva de roles.
+9. **Reportes Contables y Auditoría (`resources/views/admin/reports.blade.php`):**
+   - Tarjetas métricas ejecutivas (Ingresos del Día, Comprobantes Emitidos y Ticket Promedio).
+   - Tabla histórica de transacciones con enlace directo al detalle fiscal de cada comprobante.
+   - Botón directo de exportación CSV/Excel.
+10. **Autenticación e Inicio de Sesión (`resources/views/auth/login.blade.php`):**
+    - Pantalla centrada con branding PuntoÁgil, tipografía Inter y alertas de validación estilizadas.
+    - Botones de acceso rápido para demostración (Admin y Cajero) con autocompletado en un solo click.
+11. **Página de Entrada / Bienvenida (`resources/views/welcome.blade.php`):**
+    - Landing corporativa SaaS con hero banner degradado, resumen de módulos por rol y acceso directo al sistema.
+

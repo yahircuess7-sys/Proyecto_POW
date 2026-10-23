@@ -1,294 +1,307 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Ferretería El Tornillo') - Sistema Administrativo</title>
+    <title>@yield('title', 'PuntoÁgil') - Sistema de Gestión y POS</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
+    <!-- Bootstrap Icons for universal lightweight iconography -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!-- Estilos Personalizados del Sistema -->
+    <!-- Tailwind CSS v3 via Official CDN with PuntoÁgil Emerald & Slate Theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            500: '#10b981', /* Verde Esmeralda */
+                            600: '#059669', /* Verde Oscuro */
+                            700: '#047857',
+                            slate: '#0f172a', /* Azul Pizarra */
+                            card: '#1e293b',
+                            bg: '#f8fafc',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'subtle': '0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px 0 rgba(15, 23, 42, 0.02)',
+                        'card': '0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -1px rgba(15, 23, 42, 0.02)',
+                        'floating': '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js for lightweight, reactive UI components (drawers, modals, dropdowns) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
     <style>
-        :root {
-            --fc-primary: #1e3a8a;       /* Azul Ferretero Oscuro */
-            --fc-secondary: #f97316;     /* Naranja Tornillo */
-            --fc-dark: #0f172a;          /* Dark Slate */
-            --fc-light: #f8fafc;         /* Soft Gray Background */
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--fc-light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            width: 260px;
-            background-color: var(--fc-dark);
-            color: #94a3b8;
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
-            transition: all 0.3s;
-        }
-
-        .sidebar-brand {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0.85rem 1.5rem;
-            color: #94a3b8;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-left: 4px solid transparent;
-        }
-
-        .sidebar-link:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            border-left-color: var(--fc-secondary);
-        }
-
-        .sidebar-link.active {
-            background-color: rgba(249, 115, 22, 0.1);
-            color: #fff;
-            font-weight: 600;
-            border-left-color: var(--fc-secondary);
-        }
-
-        /* Main Content Layout */
-        .main-wrapper {
-            margin-left: 260px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: all 0.3s;
-        }
-
-        .top-navbar {
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 0.75rem 1.5rem;
-        }
-
-        .footer {
-            background: #fff;
-            border-top: 1px solid #e2e8f0;
-            padding: 1rem 1.5rem;
-            margin-top: auto;
-        }
-
-        .badge-pos {
-            background-color: var(--fc-secondary);
-            color: white;
-            font-size: 0.75rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-        }
-
-        /* Responsive Breakpoints */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                margin-left: -260px;
-            }
-            .sidebar.active {
-                margin-left: 0;
-            }
-            .main-wrapper {
-                margin-left: 0;
-            }
-        }
+        [x-cloak] { display: none !important; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     </style>
     @yield('styles')
 </head>
-<body>
+<body class="h-full antialiased text-slate-800 bg-[#f8fafc]" x-data="{ sidebarOpen: false, userDropdown: false }">
 
-    <!-- Sidebar de la Ferretería -->
-    <aside class="sidebar" id="sidebarMenu">
-        <div class="sidebar-brand">
-            <i class="bi bi-nut-fill text-warning fs-3"></i>
+    <!-- Mobile Drawer Overlay -->
+    <div x-show="sidebarOpen" 
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden"
+         @click="sidebarOpen = false" x-cloak>
+    </div>
+
+    <!-- Sidebar Layout -->
+    <aside class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#0f172a] text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl border-r border-slate-800"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+        
+        <!-- Brand Header -->
+        <div class="flex items-center justify-between h-16 px-6 bg-slate-950/40 border-b border-slate-800/80">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group text-white">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                    <i class="bi bi-nut-fill text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+                        Punto<span class="text-emerald-400 font-extrabold">Ágil</span>
+                    </span>
+                    <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-medium">Ferretería El Tornillo</span>
+                </div>
+            </a>
+            <button class="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden" @click="sidebarOpen = false">
+                <i class="bi bi-x-lg text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="flex-1 px-4 py-6 overflow-y-auto space-y-7">
+            
+            <!-- Principal -->
             <div>
-                <h6 class="text-white mb-0 fw-bold">El Tornillo</h6>
-                <small class="text-xs text-muted" style="font-size: 0.7rem;">SISTEMA ADMINISTRATIVO</small>
+                <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Operaciones</p>
+                <nav class="space-y-1">
+                    <a href="{{ route('dashboard') }}" 
+                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('dashboard') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-speedometer2 text-base {{ request()->routeIs('dashboard') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Panel Inicial</span>
+                    </a>
+
+                    <a href="{{ route('inventory.index') }}" 
+                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('inventory.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-boxes text-base {{ request()->routeIs('inventory.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Inventario y Stock</span>
+                    </a>
+
+                    <a href="{{ route('pos.create') }}" 
+                       class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="bi bi-cart4 text-base {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                            <span>Caja Rápida</span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500 text-slate-950 font-mono tracking-wide">POS</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Administración (Solo con rol admin) -->
+            @if(auth()->user() && auth()->user()->role === 'admin')
+            <div>
+                <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Administración</p>
+                <nav class="space-y-1">
+                    <a href="{{ route('admin.users.index') }}" 
+                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.users.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-people text-base {{ request()->routeIs('admin.users.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Gestión de Usuarios</span>
+                    </a>
+
+                    <a href="{{ route('reports.index') }}" 
+                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('reports.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-graph-up-arrows text-base {{ request()->routeIs('reports.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Reportes Contables</span>
+                    </a>
+                </nav>
+            </div>
+            @endif
+
+            <!-- Sistema -->
+            <div>
+                <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Accesos</p>
+                <nav class="space-y-1">
+                    <a href="{{ route('home') }}" 
+                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/70 hover:text-white transition-all">
+                        <i class="bi bi-globe text-base text-slate-400"></i>
+                        <span>Página Pública</span>
+                    </a>
+                </nav>
             </div>
         </div>
 
-        <div class="py-3">
-            <div class="px-3 mb-2">
-                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.05em;">MENU GENERAL</small>
+        <!-- Sidebar Footer / Logout -->
+        <div class="p-4 border-t border-slate-800/80 bg-slate-950/30">
+            <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-900/80 border border-slate-800 mb-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-white truncate">{{ auth()->user()->name ?? 'Usuario' }}</p>
+                    <p class="text-[11px] text-slate-400 capitalize flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full {{ auth()->user() && auth()->user()->status === 'active' ? 'bg-emerald-400' : 'bg-slate-500' }}"></span>
+                        {{ auth()->user()->role ?? 'Cajero' }}
+                    </p>
+                </div>
             </div>
 
-            <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2 fs-5"></i>
-                <span>Panel Inicial</span>
-            </a>
-
-            <!-- Módulo de Inventario - Accesible por Admin y Cajeros -->
-            <a href="{{ route('inventory.index') }}" class="sidebar-link {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
-                <i class="bi bi-boxes fs-5"></i>
-                <span>Gestión Inventario</span>
-            </a>
-
-            <!-- Módulo de Ventas / POS (Punto de Venta) -->
-            <a href="{{ route('pos.create') }}" class="sidebar-link {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'active' : '' }}">
-                <i class="bi bi-cart4 fs-5"></i>
-                <span>Punto de Venta</span>
-                <span class="ms-auto badge-pos font-monospace">POS</span>
-            </a>
-
-            @if(auth()->user() && auth()->user()->role === 'admin')
-            <div class="px-3 mt-4 mb-2">
-                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.05em;">ADMINISTRACIÓN</small>
-            </div>
-            
-            <a href="{{ route('admin.users.index') }}" class="sidebar-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <i class="bi bi-people fs-5"></i>
-                <span>Gestionar Usuarios</span>
-            </a>
-            
-            <a href="{{ route('reports.index') }}" class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                <i class="bi bi-graph-up-arrows fs-5"></i>
-                <span>Reportes y Ventas</span>
-            </a>
-            @endif
-
-            <div class="px-3 mt-4 mb-2">
-                <small class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.65rem; letter-spacing: 0.05em;">SISTEMA</small>
-            </div>
-            
-            <a href="{{ route('home') }}" class="sidebar-link">
-                <i class="bi bi-globe fs-5"></i>
-                <span>Ir al Sitio Público</span>
-            </a>
-
-            <div class="px-3 mt-5">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-danger w-full d-flex align-items-center justify-content-center gap-2 py-2">
-                        <i class="bi bi-box-arrow-left"></i>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                </form>
-            </div>
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" 
+                        class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-500/20 border border-rose-500/30 transition-all">
+                    <i class="bi bi-box-arrow-left text-sm"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </form>
         </div>
     </aside>
 
-    <!-- Envoltorio de Contenido Principal -->
-    <div class="main-wrapper">
+    <!-- Main Content Area -->
+    <div class="lg:pl-64 flex flex-col min-h-screen">
         
-        <!-- Navbar Superior de Acciones -->
-        <nav class="navbar top-navbar navbar-expand bg-white sticky-top shadow-sm">
-            <div class="container-fluid">
-                <!-- Botón de apertura de barra lateral en móvil -->
-                <button class="btn btn-outline-secondary me-3 d-lg-none" id="sidebarToggle" onclick="document.getElementById('sidebarMenu').classList.toggle('active')">
-                    <i class="bi bi-list"></i>
+        <!-- Top App Header -->
+        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = true" class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden focus:outline-none">
+                    <i class="bi bi-list text-2xl leading-none"></i>
                 </button>
-
-                <!-- Buscador rápido en la cabecera -->
-                <form class="d-none d-sm-flex grow max-w-lg" style="max-width: 350px;">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar código, clavos, categorías..." aria-label="Search">
-                    </div>
-                </form>
-
-                <!-- Menú de Usuario Derecha -->
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item me-3 text-end d-none d-md-block">
-                        <span class="d-block fw-semibold text-dark fs-7">
-                            {{ auth()->user()->name ?? 'Administrador Tornillo' }}
-                        </span>
-                        <small class="text-muted text-uppercase d-block" style="font-size: 0.65rem; color: var(--fc-secondary) !important;">
-                            Rol: <span class="badge {{ (auth()->user()->role ?? 'admin') === 'admin' ? 'bg-primary' : 'bg-success' }}">{{ auth()->user()->role ?? 'Administrador' }}</span>
-                        </small>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                <i class="bi bi-person-fill"></i>
-                            </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="navbarDropdown">
-                            <li><h6 class="dropdown-header">Perfil de Usuario</h6></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Mi cuenta</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Ajustes del POS</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button class="dropdown-item text-danger" type="submit">
-                                        <i class="bi bi-box-arrow-left me-2"></i>Salir
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+                <div class="hidden sm:flex items-center gap-2 text-sm text-slate-600 font-medium">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Sistema Online
+                    </span>
+                    <span class="text-slate-300">/</span>
+                    <span class="text-slate-700">Sucursal Matriz</span>
+                </div>
             </div>
-        </nav>
 
-        <!-- Contenedor de Vistas Dinámicas -->
-        <main class="container-fluid py-4 px-md-4">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 border-start border-success" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                        <div>{{ session('success') }}</div>
+            <!-- Right Controls -->
+            <div class="flex items-center gap-3">
+                <a href="{{ route('pos.create') }}" 
+                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 transition-all active:scale-95">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span class="hidden sm:inline">Nueva Venta</span>
+                </a>
+
+                <!-- User Popover Menu -->
+                <div class="relative" @click.away="userDropdown = false">
+                    <button @click="userDropdown = !userDropdown" 
+                            class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-sm">
+                            {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                        </div>
+                        <i class="bi bi-chevron-down text-xs text-slate-400"></i>
+                    </button>
+
+                    <div x-show="userDropdown" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-floating border border-slate-200/80 py-2 z-50 divide-y divide-slate-100"
+                         x-cloak>
+                        <div class="px-4 py-2.5">
+                            <p class="text-xs font-semibold text-slate-900">{{ auth()->user()->name ?? 'Usuario' }}</p>
+                            <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email ?? '' }}</p>
+                        </div>
+                        <div class="py-1">
+                            <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                <i class="bi bi-speedometer2 text-sm text-slate-400"></i>
+                                <span>Panel de Control</span>
+                            </a>
+                            <a href="{{ route('inventory.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                <i class="bi bi-boxes text-sm text-slate-400"></i>
+                                <span>Inventario</span>
+                            </a>
+                        </div>
+                        <div class="py-1">
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full text-left flex items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors">
+                                    <i class="bi bi-box-arrow-left text-sm"></i>
+                                    <span>Cerrar Sesión</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+            
+            <!-- Global Flash Messages -->
+            @if(session('success'))
+                <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between p-4 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-subtle">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500 text-white shrink-0">
+                            <i class="bi bi-check-lg text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium">{{ session('success') }}</p>
+                    </div>
+                    <button @click="show = false" class="text-emerald-600 hover:text-emerald-900 p-1">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 border-start border-danger" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                        <div>{{ session('error') }}</div>
+                <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between p-4 mb-6 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-subtle">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-rose-500 text-white shrink-0">
+                            <i class="bi bi-exclamation-triangle-fill text-sm"></i>
+                        </div>
+                        <p class="text-sm font-medium">{{ session('error') }}</p>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button @click="show = false" class="text-rose-600 hover:text-rose-900 p-1">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
                 </div>
             @endif
 
             @yield('content')
         </main>
 
-        <!-- Pie de página simple comercial -->
-        <footer class="footer bg-white text-muted text-center py-3">
-            <div class="container-fluid d-md-flex align-items-center justify-content-between">
-                <span>&copy; {{ date('Y') }} <strong>Ferretería El Tornillo S.A.</strong> - Sistema Administrativo.</span>
+        <!-- Footer -->
+        <footer class="mt-auto py-5 px-6 md:px-8 border-t border-slate-200 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>&copy; {{ date('Y') }} <strong class="text-slate-700">PuntoÁgil</strong> &bull; Ferretería El Tornillo S.A.</p>
+            <div class="flex items-center gap-4 text-slate-400">
+                <span class="inline-flex items-center gap-1.5"><i class="bi bi-shield-check text-emerald-500"></i> Datos Protegidos</span>
+                <span>&bull;</span>
+                <span>PostgreSQL Cloud</span>
             </div>
         </footer>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @yield('scripts')
 </body>
 </html>

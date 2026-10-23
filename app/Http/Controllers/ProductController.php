@@ -2,20 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductRequest;
 use App\Models\Product;
+use App\Services\SkuGeneratorService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function __construct(
+        protected SkuGeneratorService $skuService
+    ) {}
+
+    public function index(Request $request)
     {
         $query = Product::query();
 
-        if ($search = request('search')) {
+        if ($search = $request->input('search')) {
             $query->where(function ($sub) use ($search) {
                 $sub->where('name', 'like', "%{$search}%")
                     ->orWhere('sku', 'like', "%{$search}%")
@@ -23,11 +28,11 @@ class ProductController extends Controller
             });
         }
 
-        if ($category = request('category')) {
+        if ($category = $request->input('category')) {
             $query->where('category', $category);
         }
 
-        if ($status = request('status')) {
+        if ($status = $request->input('status')) {
             if ($status === 'disponible') {
                 $query->where('stock', '>', 10);
             } elseif ($status === 'critico') {
@@ -37,7 +42,7 @@ class ProductController extends Controller
             }
         }
 
-        $products = $query->orderBy('category')->get();
+        $products = $query->orderBy('category')->paginate(15)->withQueryString();
 
         return view('inventory.index', compact('products'));
     }
@@ -47,18 +52,14 @@ class ProductController extends Controller
         return view('inventory.form');
     }
 
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        $validatedData = $request->validate([
-            'sku' => ['nullable', 'max:255', 'alpha_dash', Rule::unique('products', 'sku')],
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'unit' => 'required|string|max:100'
-        ]);
-
-        $validatedData['sku'] = $this->resolveSku($validatedData['sku'] ?? null, $validatedData['name'], $validatedData['category']);
+        $validatedData = $request->validated();
+        $validatedData['sku'] = $this->skuService->resolveSku(
+            $validatedData['sku'] ?? null,
+            $validatedData['name'],
+            $validatedData['category']
+        );
 
         try {
             DB::beginTransaction();
@@ -84,18 +85,15 @@ class ProductController extends Controller
         return view('inventory.form', compact('product'));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(ProductRequest $request, Product $product)
     {
-        $validatedData = $request->validate([
-            'sku' => ['nullable', 'max:255', 'alpha_dash', Rule::unique('products', 'sku')->ignore($product->id)],
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'unit' => 'required|string|max:100'
-        ]);
-
-        $validatedData['sku'] = $this->resolveSku($validatedData['sku'] ?? null, $validatedData['name'], $validatedData['category'], $product->id);
+        $validatedData = $request->validated();
+        $validatedData['sku'] = $this->skuService->resolveSku(
+            $validatedData['sku'] ?? null,
+            $validatedData['name'],
+            $validatedData['category'],
+            $product->id
+        );
 
         try {
             DB::beginTransaction();
@@ -156,84 +154,7 @@ class ProductController extends Controller
     {
         $value = trim($value ?? '');
         $value = str_replace(["\r\n", "\n", "\r"], ' ', $value);
-        $value = htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        return $value;
-    }
-
-    private function resolveSku(?string $sku, string $name, string $category, ?int $productId = null): string
-    {
-        $sku = trim((string) ($sku ?? ''));
-
-        if ($sku === '' || !preg_match('/^[A-Z]{2,}-\d{2,}$/', strtoupper($sku))) {
-            return $this->generateProductSku($name, $category, $productId);
-        }
-
-        return $this->normalizeSku($sku);
-    }
-
-    private function generateProductSku(string $name, string $category, ?int $productId = null): string
-    {
-        $prefix = $this->skuPrefixFromCategoryOrName($name, $category);
-        $prefix = strtoupper($this->normalizeSku($prefix));
-
-        $existingSkus = Product::where('sku', 'like', "$prefix-%")
-            ->when($productId, fn($query) => $query->where('id', '<>', $productId))
-            ->pluck('sku')
-            ->toArray();
-
-        $nextNumber = 1;
-        while (in_array(sprintf('%s-%03d', $prefix, $nextNumber), $existingSkus, true)) {
-            $nextNumber++;
-        }
-
-        return sprintf('%s-%03d', $prefix, $nextNumber);
-    }
-
-    private function skuPrefixFromCategoryOrName(string $name, string $category): string
-    {
-        $keywords = [
-            'cemento' => 'CEM',
-            'clavo' => 'CLA',
-            'tornillo' => 'TOR',
-            'herramienta' => 'HER',
-            'eléctrica' => 'ELE',
-            'electrica' => 'ELE',
-            'plomería' => 'PLO',
-            'plomeria' => 'PLO',
-            'hidráulica' => 'HID',
-            'hidraulica' => 'HID',
-            'pintura' => 'PIN',
-            'alambre' => 'ALM',
-            'madera' => 'MAD',
-            'abrasivo' => 'ABR',
-            'cementos' => 'CEM',
-            'pinturas' => 'PIN',
-        ];
-
-        $searchText = mb_strtolower($name . ' ' . $category);
-        foreach ($keywords as $term => $code) {
-            if (str_contains($searchText, $term)) {
-                return $code;
-            }
-        }
-
-        $words = preg_split('/\s+/', preg_replace('/[^\p{L}\p{N}]+/u', ' ', $name));
-        $words = array_filter($words);
-
-        if (count($words) >= 2) {
-            return strtoupper(substr($words[0], 0, 3) . substr($words[1], 0, 1));
-        }
-
-        $first = $words[0] ?? $category;
-        return strtoupper(substr($first, 0, 3));
-    }
-
-    private function normalizeSku(string $sku): string
-    {
-        $sku = strtoupper($sku);
-        $sku = str_replace([' ', '_'], '-', $sku);
-        $sku = preg_replace('/[^A-Z0-9\-]/', '', $sku);
-        return preg_replace('/-+/', '-', trim($sku, '-'));
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     public function exportCsv()
@@ -275,8 +196,7 @@ class ProductController extends Controller
         $value = $value ?? '';
         $value = str_replace(["\\r\\n", "\\n", "\\r", "\r\n", "\n", "\r", "\\t", "\t"], ' ', $value);
         $value = $this->normalizeCsvText($value);
-        $value = str_replace('"', '""', $value);
-        return $value;
+        return str_replace('"', '""', $value);
     }
 
     private function normalizeCsvText(?string $value): string
@@ -290,8 +210,6 @@ class ProductController extends Controller
             $value = preg_replace('/[^A-Za-z0-9 \-\.,;:\/_() ]/', '', $value);
         }
 
-        $value = preg_replace('/\s+/', ' ', $value);
-
-        return $value;
+        return preg_replace('/\s+/', ' ', $value);
     }
 }

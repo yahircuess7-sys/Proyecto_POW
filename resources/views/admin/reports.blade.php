@@ -1,100 +1,178 @@
 @extends('layouts.app')
 
-@section('title', 'Reportes Contables y Ventas')
+@section('title', 'Reportes y Auditoría de Ventas - PuntoÁgil')
 
 @section('content')
-<div class="row align-items-center mb-4 fade-in">
-    <div class="col-md-6">
-        <h4 class="fw-bold mb-0 text-dark">
-            <i class="bi bi-graph-up-arrows text-warning me-2"></i>
-            Reportes Contables y Ventas
-        </h4>
-        <p class="text-secondary small mb-0 mt-1">Historial consolidado de comprobantes emitidos y resumen financiero.</p>
-    </div>
-    <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
-        <button class="btn btn-outline-secondary fw-bold bg-white shadow-sm" style="border-radius: 6px;">
-            <i class="bi bi-calendar3 me-2"></i> Hoy
-        </button>
-        <a href="{{ route('admin.reports.export') }}" class="btn btn-dark fw-bold text-white shadow-sm" style="border-radius: 6px;">
-            <i class="bi bi-file-earmark-excel-fill me-2 text-success"></i> Exportar a Excel
-        </a>
-    </div>
-</div>
-
-<!-- Resumen Estadistico de Tarjetas -->
-<div class="row g-3 mb-4 fade-in" style="animation-delay: 0.1s;">
-    <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
-            <div class="d-flex align-items-center mb-2 text-muted fw-semibold">
-                <i class="bi bi-cash-stack me-2 fs-5 text-success"></i> Ingresos del Día
+<div class="space-y-6">
+    <!-- Header & Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
+                <span>Administración</span>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <span class="text-emerald-600 font-semibold">Reportes Contables</span>
             </div>
-            <h3 class="fw-bold text-dark mb-0">$<span class="font-monospace">{{ number_format($dailyTotal ?? 0, 2) }}</span></h3>
-            <p class="small text-success mb-0 mt-1"><i class="bi bi-arrow-up-right me-1"></i> +12% sobre ayer</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Reportes y Auditoría</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Historial consolidado de comprobantes emitidos, facturación y resumen contable diario.</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+            <a href="{{ route('admin.reports.export') }}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                <i class="bi bi-file-earmark-spreadsheet text-sm text-emerald-600"></i>
+                <span>Descargar CSV / Excel</span>
+            </a>
+            <a href="{{ route('sales.index') }}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                <i class="bi bi-calculator text-sm"></i>
+                <span>Abrir Terminal POS</span>
+            </a>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
-            <div class="d-flex align-items-center mb-2 text-muted fw-semibold">
-                <i class="bi bi-receipt me-2 fs-5 text-primary"></i> Boletas Emitidas
+
+    <!-- Metric Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <!-- Ingresos del Día -->
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ingresos del Día</span>
+                    <div class="text-2xl font-mono font-bold text-slate-900 mt-1">
+                        ${{ number_format($dailyTotal ?? 0, 2) }}
+                    </div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i class="bi bi-cash-stack text-xl"></i>
+                </div>
             </div>
-            <h3 class="fw-bold text-dark mb-0"><span class="font-monospace">{{ $invoicesCount ?? 0 }}</span></h3>
-            <p class="small text-muted mb-0 mt-1">Transacciones procesadas hoy</p>
+            <div class="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                <i class="bi bi-calendar-check"></i>
+                <span>Facturado el día de hoy (UTC/Local)</span>
+            </div>
+        </div>
+
+        <!-- Boletas Emitidas -->
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Comprobantes Emitidos</span>
+                    <div class="text-2xl font-mono font-bold text-slate-900 mt-1">
+                        {{ $invoicesCount ?? 0 }}
+                    </div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="bi bi-receipt-cutoff text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                <i class="bi bi-activity text-blue-500"></i>
+                <span>Transacciones registradas</span>
+            </div>
+        </div>
+
+        <!-- Ticket Promedio -->
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ticket Promedio</span>
+                    <div class="text-2xl font-mono font-bold text-slate-900 mt-1">
+                        ${{ number_format($averageTicket ?? 0, 2) }}
+                    </div>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <i class="bi bi-graph-up-arrow text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                <i class="bi bi-cart3 text-purple-500"></i>
+                <span>Promedio de consumo por cliente</span>
+            </div>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
-            <div class="d-flex align-items-center mb-2 text-muted fw-semibold">
-                <i class="bi bi-box-seam me-2 fs-5 text-warning"></i> Ticket Promedio
-            </div>
-            <h3 class="fw-bold text-dark mb-0">$<span class="font-monospace">{{ number_format($averageTicket ?? 0, 2) }}</span></h3>
-            <p class="small text-muted mb-0 mt-1">Por cada cobro en POS</p>
+
+    <!-- Transactions Table -->
+    <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i class="bi bi-clock-history text-emerald-600"></i>
+                <span>Historial de Transacciones Recientes</span>
+            </h3>
+            <span class="text-xs text-slate-500">
+                Mostrando <strong class="text-slate-800 font-mono">{{ method_exists($transactions, 'total') ? $transactions->total() : $transactions->count() }}</strong> transacciones
+            </span>
         </div>
-    </div>
-</div>
 
-<!-- Listado de Transacciones Restantes -->
-<div class="card border-0 shadow-sm fade-in mb-4" style="border-radius: 12px; overflow: hidden; animation-delay: 0.2s;">
-    <div class="card-header bg-white border-bottom py-3">
-        <h6 class="mb-0 fw-bold text-secondary">Últimas Transacciones Registradas</h6>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 text-nowrap">
-            <thead class="bg-light text-muted" style="font-size: 0.8rem;">
-                <tr>
-                    <th class="ps-4 fw-semibold text-uppercase">Nº Recibo</th>
-                    <th class="fw-semibold text-uppercase">Fecha y Hora</th>
-                    <th class="fw-semibold text-uppercase">Atendido Por</th>
-                    <th class="fw-semibold text-uppercase text-center">Ítems</th>
-                    <th class="fw-semibold text-uppercase">Subtotal</th>
-                    <th class="fw-semibold text-uppercase text-end pe-4">Total</th>
-                </tr>
-            </thead>
-            <tbody style="font-size: 0.9rem;">
-                @forelse($transactions as $tx)
-                <tr>
-                    <td class="ps-4 fw-bold text-dark font-monospace">{{ $tx->invoice_number }}</td>
-                    <td class="text-secondary font-monospace">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
-                    <td>
-                        <span class="badge bg-light text-dark border"><i class="bi bi-person-fill text-muted me-1"></i> {{ $tx->user->name ?? 'Cajero' }}</span>
-                    </td>
-                    <td class="text-center font-monospace bg-light text-secondary rounded">{{ $tx->items_count ?? 0 }}</td>
-                    <td class="font-monospace text-muted">${{ number_format($tx->subtotal, 2) }}</td>
-                    <td class="text-end pe-4 font-monospace fw-bold text-success">${{ number_format($tx->total, 2) }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No existen transacciones recientes.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Nº Factura</th>
+                        <th class="py-3.5 px-6">Fecha / Hora</th>
+                        <th class="py-3.5 px-6">Cajero</th>
+                        <th class="py-3.5 px-6 text-center">Ítems</th>
+                        <th class="py-3.5 px-6 text-right">Subtotal</th>
+                        <th class="py-3.5 px-6 text-right">Total</th>
+                        <th class="py-3.5 px-6 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs">
+                    @forelse($transactions as $tx)
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td class="py-3.5 px-6 font-mono font-bold text-slate-900">
+                                <a href="{{ route('sales.show', $tx) }}" class="hover:text-emerald-600 transition-colors">
+                                    {{ $tx->invoice_number }}
+                                </a>
+                            </td>
+                            <td class="py-3.5 px-6 font-mono text-slate-500 text-[11px]">
+                                {{ $tx->created_at->format('d/m/Y') }} <span class="text-slate-400">{{ $tx->created_at->format('H:i') }}</span>
+                            </td>
+                            <td class="py-3.5 px-6">
+                                <span class="inline-flex items-center gap-1.5 text-slate-700 font-medium">
+                                    <span class="w-5 h-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                                        {{ strtoupper(substr($tx->user->name ?? 'C', 0, 1)) }}
+                                    </span>
+                                    <span>{{ $tx->user->name ?? 'Cajero' }}</span>
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-6 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-slate-100 text-slate-700 font-medium">
+                                    {{ $tx->items_count ?? ($tx->items ? $tx->items->count() : 0) }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-6 text-right font-mono text-slate-600">
+                                ${{ number_format($tx->subtotal, 2) }}
+                            </td>
+                            <td class="py-3.5 px-6 text-right font-mono font-bold text-emerald-600">
+                                ${{ number_format($tx->total, 2) }}
+                            </td>
+                            <td class="py-3.5 px-6 text-center">
+                                <a href="{{ route('sales.show', $tx) }}"
+                                   title="Ver Recibo Completo"
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Ver</span>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="py-12 text-center">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                                    <i class="bi bi-receipt text-xl"></i>
+                                </div>
+                                <h3 class="text-sm font-semibold text-slate-700">No hay ventas registradas aún</h3>
+                                <p class="text-xs text-slate-400 mt-1">Las ventas efectuadas en la caja rápida se consolidarán aquí automáticamente.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-@if(method_exists($transactions, 'links'))
-<div class="d-flex justify-content-center mt-4">
-    {{ $transactions->links() }}
+        @if(method_exists($transactions, 'links') && $transactions->hasPages())
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                {{ $transactions->links() }}
+            </div>
+        @endif
+    </div>
 </div>
-@endif
 @endsection

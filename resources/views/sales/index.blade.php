@@ -6,7 +6,7 @@
 <div class="space-y-5">
     
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="animate-fade-up flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                 <span>Terminal de Ventas</span>
@@ -27,7 +27,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         <!-- Left Panel: Product Catalog (7 cols) -->
-        <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+        <div class="animate-fade-up stagger-1 lg:col-span-7 xl:col-span-8 space-y-4">
             
             <!-- Search & Category Filters -->
             <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-subtle space-y-3">
@@ -39,7 +39,7 @@
                     </span>
                     <input type="text" id="posSearch" 
                            class="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 placeholder-slate-400" 
-                           placeholder="Buscar por nombre, SKU, marca o medidas (ej. código, nombre)..." 
+                           placeholder="Buscar por nombre, SKU, marca o medidas (ej. cÃ³digo, nombre)..." 
                            autofocus>
                     <button type="button" id="clearSearchBtn" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 hidden">
                         <i class="bi bi-x-circle-fill"></i>
@@ -76,7 +76,7 @@
         </div>
 
         <!-- Right Panel: Cart & Checkout (5 cols) -->
-        <div class="lg:col-span-5 xl:col-span-4 sticky top-20">
+        <div class="animate-fade-up stagger-2 lg:col-span-5 xl:col-span-4 sticky top-20">
             <div class="rounded-3xl bg-white border border-slate-200/80 shadow-floating overflow-hidden flex flex-col">
                 
                 <!-- Ticket Header -->
@@ -141,7 +141,7 @@
                     
                     <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
                         <span class="text-sm font-bold text-slate-900 uppercase">Total a Cobrar:</span>
-                        <span class="text-2xl font-extrabold font-mono text-emerald-600" id="val_total">$0.00</span>
+                        <span class="text-2xl font-extrabold font-mono text-emerald-600 transition-transform duration-200" id="val_total">$0.00</span>
                     </div>
 
                     <!-- Checkout Button -->
@@ -149,7 +149,7 @@
                             id="submitSaleButton" 
                             onclick="submitSale()" 
                             disabled
-                            class="w-full mt-3 flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 transition-all active:scale-98">
+                            class="btn-shine w-full mt-3 flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 transition-all active:scale-98">
                         <i class="bi bi-check2-circle text-lg"></i>
                         <span>EMITIR BOLETA / COBRAR</span>
                     </button>
@@ -235,10 +235,11 @@
             return;
         }
 
-        productList.forEach(product => {
+        productList.forEach((product, idx) => {
             const disabled = product.stock <= 0;
             const card = document.createElement('div');
-            card.className = `p-4 rounded-2xl bg-white border border-slate-200/80 transition-all flex flex-col justify-between ${disabled ? 'opacity-55 cursor-not-allowed bg-slate-50' : 'hover:border-emerald-500/50 hover:shadow-card cursor-pointer group active:scale-98'}`;
+            card.style.animationDelay = Math.min(idx * 35, 210) + 'ms';
+            card.className = `animate-scale-in p-4 rounded-2xl bg-white border border-slate-200/80 transition-all flex flex-col justify-between ${disabled ? 'opacity-55 cursor-not-allowed bg-slate-50' : 'saas-card-hover hover:border-emerald-500/50 cursor-pointer group active:scale-98'}`;
             
             if (!disabled) {
                 card.onclick = (e) => {
@@ -297,7 +298,7 @@
 
         cart.forEach(item => {
             const itemRow = document.createElement('div');
-            itemRow.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 gap-2';
+            itemRow.className = 'animate-scale-in flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-colors gap-2';
             itemRow.innerHTML = `
                 <div class="min-w-0 flex-1">
                     <p class="text-xs font-bold text-slate-900 truncate">${item.name}</p>
@@ -402,6 +403,9 @@
         subtotalEl.textContent = formatCurrency(subtotal);
         taxEl.textContent = formatCurrency(tax);
         totalEl.textContent = formatCurrency(total);
+
+        totalEl.classList.add('scale-105');
+        setTimeout(() => totalEl.classList.remove('scale-105'), 160);
 
         submitButton.disabled = cart.length === 0;
     }

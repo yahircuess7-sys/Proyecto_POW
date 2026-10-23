@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-6">
     <!-- Header & Action Bar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="animate-fade-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
                 <span>Administración</span>
@@ -17,12 +17,12 @@
         </div>
         <div class="flex items-center gap-2.5">
             <a href="{{ route('admin.reports.export') }}"
-               class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+               class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-sm transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                 <i class="bi bi-file-earmark-spreadsheet text-sm text-emerald-600"></i>
                 <span>Descargar CSV / Excel</span>
             </a>
             <a href="{{ route('sales.index') }}"
-               class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+               class="btn-shine inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm hover:shadow transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
                 <i class="bi bi-calculator text-sm"></i>
                 <span>Abrir Terminal POS</span>
             </a>
@@ -32,7 +32,7 @@
     <!-- Metric Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <!-- Ingresos del Día -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+        <div class="group saas-card-hover animate-fade-up stagger-1 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
                 <div>
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ingresos del Día</span>
@@ -40,7 +40,7 @@
                         ${{ number_format($dailyTotal ?? 0, 2) }}
                     </div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-cash-stack text-xl"></i>
                 </div>
             </div>
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Boletas Emitidas -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+        <div class="group saas-card-hover animate-fade-up stagger-2 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
                 <div>
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Comprobantes Emitidos</span>
@@ -59,7 +59,7 @@
                         {{ $invoicesCount ?? 0 }}
                     </div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-receipt-cutoff text-xl"></i>
                 </div>
             </div>
@@ -70,7 +70,7 @@
         </div>
 
         <!-- Ticket Promedio -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+        <div class="group saas-card-hover animate-fade-up stagger-3 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between">
                 <div>
                     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ticket Promedio</span>
@@ -78,7 +78,7 @@
                         ${{ number_format($averageTicket ?? 0, 2) }}
                     </div>
                 </div>
-                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-graph-up-arrow text-xl"></i>
                 </div>
             </div>
@@ -90,7 +90,7 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+    <div class="animate-fade-up stagger-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <i class="bi bi-clock-history text-emerald-600"></i>

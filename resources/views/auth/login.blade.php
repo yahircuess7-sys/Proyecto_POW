@@ -41,18 +41,73 @@
             }
         }
     </script>
-</head>
-<body class="h-full flex items-center justify-center p-4 sm:p-6 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
-    <div class="w-full max-w-md">
+    <style>
+        @media (prefers-reduced-motion: no-preference) {
+            @view-transition {
+                navigation: auto;
+            }
+
+            @keyframes fadeUp {
+                from { opacity: 0; translate: 0 20px; }
+                to { opacity: 1; translate: 0 0; }
+            }
+
+            @keyframes scaleIn {
+                from { opacity: 0; scale: 0.96; }
+                to { opacity: 1; scale: 1; }
+            }
+
+            @keyframes orbDrift {
+                0%, 100% { translate: 0 0; scale: 1; }
+                50% { translate: 24px -18px; scale: 1.08; }
+            }
+
+            .animate-fade-up {
+                animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            .animate-scale-in {
+                animation: scaleIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+            }
+            .orb-drift {
+                animation: orbDrift 8s ease-in-out infinite;
+            }
+        }
+
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .btn-shine::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                translate: -120% 0;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+                transition: translate 0.55s ease;
+            }
+            .btn-shine:hover::after {
+                translate: 120% 0;
+            }
+        }
+    </style>
+</head>
+<body class="relative h-full flex items-center justify-center p-4 sm:p-6 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+
+    <!-- Subtle Ambient Background Glow -->
+    <div class="orb-drift fixed -top-24 -left-24 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+    <div class="orb-drift fixed -bottom-24 -right-24 w-96 h-96 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" style="animation-delay: -4s;"></div>
+
+    <div class="relative w-full max-w-md z-10">
         <!-- Logo & Header -->
-        <div class="text-center mb-6">
+        <div class="animate-fade-up text-center mb-6">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-3 group">
-                <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25 group-hover:bg-emerald-700 transition-all">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25 group-hover:bg-emerald-700 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
                     <i class="bi bi-lightning-charge-fill text-2xl"></i>
                 </div>
                 <div class="text-left">
-                    <div class="text-xl font-bold text-slate-900 tracking-tight leading-none">PuntoÁgil</div>
+                    <div class="text-xl font-bold text-slate-900 tracking-tight leading-none">Punto<span class="text-emerald-600">Ágil</span></div>
                     <div class="text-xs font-semibold text-emerald-600 uppercase tracking-widest mt-1">SaaS Cloud POS</div>
                 </div>
             </a>
@@ -61,8 +116,16 @@
         </div>
 
         <!-- Card Container -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl shadow-xl shadow-slate-200/50 p-6 sm:p-8">
-            <!-- Errors Alert -->
+        <div class="animate-scale-in bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl shadow-slate-200/50 p-6 sm:p-8">
+            <!-- Session Error Alert -->
+            @if(session('error'))
+                <div class="mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2.5">
+                    <i class="bi bi-info-circle-fill text-sm shrink-0 mt-0.5 text-amber-600"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
+            <!-- Validation Errors Alert -->
             @if($errors->any())
                 <div class="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5">
                     <i class="bi bi-exclamation-circle-fill text-sm shrink-0 mt-0.5"></i>
@@ -128,7 +191,7 @@
 
                 <!-- Submit Button -->
                 <button type="submit"
-                        class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+                        class="btn-shine w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
                     <i class="bi bi-box-arrow-in-right text-base"></i>
                     <span>Ingresar al Sistema</span>
                 </button>
@@ -141,8 +204,8 @@
                 </span>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button"
-                            onclick="document.getElementById('email').value='admin@puntoagil.com'; document.getElementById('password').value='12345678';"
-                            class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all group">
+                            onclick="fillCredentials('admin@puntoagil.com', '12345678')"
+                            class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 hover:-translate-y-0.5 text-left transition-all active:scale-95 group">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                             <span class="text-xs font-bold text-slate-700 group-hover:text-emerald-700">Administrador</span>
@@ -151,8 +214,8 @@
                     </button>
 
                     <button type="button"
-                            onclick="document.getElementById('email').value='cajero@puntoagil.com'; document.getElementById('password').value='12345678';"
-                            class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all group">
+                            onclick="fillCredentials('cajero@puntoagil.com', '12345678')"
+                            class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 hover:-translate-y-0.5 text-left transition-all active:scale-95 group">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                             <span class="text-xs font-bold text-slate-700 group-hover:text-emerald-700">Cajero POS</span>
@@ -165,12 +228,26 @@
 
         <!-- Back to Home -->
         <div class="text-center mt-6">
-            <a href="{{ url('/') }}" class="text-xs text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
-                <i class="bi bi-arrow-left"></i>
+            <a href="{{ url('/') }}" class="text-xs text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 group">
+                <i class="bi bi-arrow-left group-hover:-translate-x-1 transition-transform"></i>
                 <span>Volver a la página principal</span>
             </a>
         </div>
     </div>
 
+    <script>
+        function fillCredentials(email, password) {
+            const emailInput = document.getElementById('email');
+            const passInput = document.getElementById('password');
+            emailInput.value = email;
+            passInput.value = password;
+            emailInput.classList.add('ring-2', 'ring-emerald-500/40', 'border-emerald-500', 'bg-emerald-50/30');
+            passInput.classList.add('ring-2', 'ring-emerald-500/40', 'border-emerald-500', 'bg-emerald-50/30');
+            setTimeout(() => {
+                emailInput.classList.remove('ring-2', 'ring-emerald-500/40', 'border-emerald-500', 'bg-emerald-50/30');
+                passInput.classList.remove('ring-2', 'ring-emerald-500/40', 'border-emerald-500', 'bg-emerald-50/30');
+            }, 600);
+        }
+    </script>
 </body>
 </html>

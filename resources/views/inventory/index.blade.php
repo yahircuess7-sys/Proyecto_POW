@@ -15,7 +15,7 @@
 }">
 
     <!-- Header Actions -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="animate-fade-up flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Inventario General de Bodega</h1>
             <p class="text-sm text-slate-500 mt-1">Control de existencias, materiales de construcción, fijaciones y herramientas.</p>
@@ -23,19 +23,19 @@
 
         <div class="flex flex-wrap items-center gap-2.5">
             <a href="{{ route('inventory.export.pdf') }}" 
-               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-all shadow-subtle">
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-all active:scale-95 shadow-subtle">
                 <i class="bi bi-file-earmark-pdf-fill text-rose-500 text-sm"></i>
                 <span>Exportar PDF</span>
             </a>
 
             <a href="{{ route('inventory.export.csv') }}" 
-               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all shadow-subtle">
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all active:scale-95 shadow-subtle">
                 <i class="bi bi-file-earmark-spreadsheet-fill text-emerald-600 text-sm"></i>
                 <span>Exportar CSV</span>
             </a>
 
             <a href="{{ route('inventory.create') }}" 
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/25 transition-all">
+               class="btn-shine inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/25 transition-all active:scale-95">
                 <i class="bi bi-plus-lg"></i>
                 <span>Nuevo Producto</span>
             </a>
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Filters Bar -->
-    <div class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
+    <div class="animate-fade-up stagger-1 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
         <form action="{{ route('inventory.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5">
             <!-- Search Input -->
             <div class="lg:col-span-5">
@@ -98,7 +98,7 @@
     </div>
 
     <!-- Products Table Card -->
-    <div class="rounded-2xl bg-white border border-slate-200/80 shadow-subtle overflow-hidden">
+    <div class="animate-fade-up stagger-2 rounded-2xl bg-white border border-slate-200/80 shadow-subtle overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>

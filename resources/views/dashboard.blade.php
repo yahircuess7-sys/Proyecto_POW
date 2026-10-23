@@ -6,7 +6,7 @@
 <div class="space-y-8">
 
     <!-- Welcome & Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="animate-fade-up flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">
                 ¡Bienvenido de vuelta, {{ auth()->user()->name ?? 'Administrador' }}!
@@ -22,7 +22,7 @@
                 {{ date('d/M/Y - H:i') }}
             </span>
             <a href="{{ route('pos.create') }}" 
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/25 transition-all">
+               class="btn-shine inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm shadow-emerald-500/25 transition-all active:scale-95">
                 <i class="bi bi-cart-plus-fill"></i>
                 <span>Abrir Terminal POS</span>
             </a>
@@ -33,10 +33,10 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
         <!-- KPI 1: Ventas del Día -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+        <div class="group saas-card-hover animate-fade-up stagger-1 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Ventas Hoy</span>
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-cash-stack text-lg"></i>
                 </div>
             </div>
@@ -52,10 +52,10 @@
         </div>
 
         <!-- KPI 2: Ticket Promedio -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+        <div class="group saas-card-hover animate-fade-up stagger-2 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Ticket Promedio</span>
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-receipt-cutoff text-lg"></i>
                 </div>
             </div>
@@ -71,10 +71,10 @@
         </div>
 
         <!-- KPI 3: Catálogo Total -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+        <div class="group saas-card-hover animate-fade-up stagger-3 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Catálogo Activo</span>
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
                     <i class="bi bi-boxes text-lg"></i>
                 </div>
             </div>
@@ -90,10 +90,10 @@
         </div>
 
         <!-- KPI 4: Stock Crítico / Alertas -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle hover:shadow-card transition-all">
+        <div class="group saas-card-hover animate-fade-up stagger-4 p-5 rounded-2xl bg-white border border-slate-200/80 shadow-subtle">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Atención Stock</span>
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl {{ ($lowStockCount + $outOfStockCount) > 0 ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-50 text-slate-400 border border-slate-200' }}">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl group-hover:scale-110 transition-all duration-300 {{ ($lowStockCount + $outOfStockCount) > 0 ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-slate-50 text-slate-400 border border-slate-200' }}">
                     <i class="bi bi-exclamation-triangle-fill text-lg"></i>
                 </div>
             </div>
@@ -113,8 +113,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         <!-- Action Card 1: Punto de Venta Express -->
-        <div class="relative overflow-hidden p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-slate-900 to-slate-950 text-white shadow-card border border-slate-800">
-            <div class="absolute -right-6 -bottom-6 text-slate-800/40 pointer-events-none">
+        <div class="group saas-card-hover animate-fade-up stagger-4 relative overflow-hidden p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[#0f172a] via-slate-900 to-slate-950 text-white shadow-card border border-slate-800">
+            <div class="absolute -right-6 -bottom-6 text-slate-800/40 pointer-events-none group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500">
                 <i class="bi bi-cart4 text-[160px]"></i>
             </div>
             <div class="relative z-10 flex flex-col justify-between h-full space-y-6">
@@ -129,16 +129,16 @@
                 </div>
                 <div>
                     <a href="{{ route('pos.create') }}" 
-                       class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-lg shadow-emerald-500/25 transition-all">
+                       class="btn-shine inline-flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-lg shadow-emerald-500/25 transition-all active:scale-95">
                         <span>Iniciar Nueva Venta</span>
-                        <i class="bi bi-arrow-right"></i>
+                        <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Action Card 2: Control de Inventario -->
-        <div class="relative overflow-hidden p-6 md:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-card flex flex-col justify-between space-y-6">
+        <div class="saas-card-hover animate-fade-up stagger-5 relative overflow-hidden p-6 md:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-card flex flex-col justify-between space-y-6">
             <div>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 font-mono uppercase tracking-wide">
                     <i class="bi bi-boxes"></i> Almacén y Precios
@@ -151,14 +151,14 @@
 
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('inventory.index') }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all">
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all active:scale-95">
                     <i class="bi bi-list-check"></i>
                     <span>Ver Todo el Inventario</span>
                 </a>
                 <a href="{{ route('inventory.create') }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95">
                     <i class="bi bi-plus-lg"></i>
-                    <span>Nuevo Material</span>
+                    <span>Nuevo Producto</span>
                 </a>
             </div>
         </div>

@@ -14,7 +14,7 @@
     }
 }">
     <!-- Top Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="animate-fade-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
                 <span>Administración</span>
@@ -25,7 +25,7 @@
             <p class="text-xs text-slate-500 mt-0.5">Control de cuentas, perfiles de cajero y accesos administrativos.</p>
         </div>
         <div>
-            <a href="{{ route('admin.users.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
+            <a href="{{ route('admin.users.create') }}" class="btn-shine inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm hover:shadow transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500/30">
                 <i class="bi bi-person-plus text-sm"></i>
                 <span>Nuevo Usuario</span>
             </a>
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Filter & Search Toolbar -->
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+    <div class="animate-fade-up stagger-1 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
         <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="relative w-full sm:max-w-md">
                 <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Users Table Card -->
-    <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+    <div class="animate-fade-up stagger-2 bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>

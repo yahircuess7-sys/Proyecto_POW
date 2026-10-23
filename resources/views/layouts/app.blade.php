@@ -54,6 +54,109 @@
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+        /* Cross-Document View Transitions & Compositor Motion (Modern Web Guidance) */
+        @media (prefers-reduced-motion: no-preference) {
+            @view-transition {
+                navigation: auto;
+            }
+
+            .vt-sidebar { view-transition-name: app-sidebar; }
+            .vt-header { view-transition-name: app-header; }
+            .vt-main { view-transition-name: main-content; }
+
+            ::view-transition-old(main-content) {
+                animation: 0.18s cubic-bezier(0.4, 0, 1, 1) both vt-fade-out;
+            }
+            ::view-transition-new(main-content) {
+                animation: 0.28s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both vt-fade-in;
+            }
+
+            @keyframes vt-fade-out {
+                to { opacity: 0; translate: 0 -6px; }
+            }
+            @keyframes vt-fade-in {
+                from { opacity: 0; translate: 0 10px; }
+                to { opacity: 1; translate: 0 0; }
+            }
+
+            @keyframes fadeUp {
+                from { opacity: 0; translate: 0 16px; }
+                to { opacity: 1; translate: 0 0; }
+            }
+
+            @keyframes scaleIn {
+                from { opacity: 0; scale: 0.96; }
+                to { opacity: 1; scale: 1; }
+            }
+
+            @keyframes slideInRight {
+                from { opacity: 0; translate: -12px 0; }
+                to { opacity: 1; translate: 0 0; }
+            }
+
+            @keyframes gentleFloat {
+                0%, 100% { translate: 0 0; }
+                50% { translate: 0 -5px; }
+            }
+
+            .animate-fade-up {
+                animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            .animate-scale-in {
+                animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            .animate-slide-right {
+                animation: slideInRight 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            .animate-float {
+                animation: gentleFloat 4s ease-in-out infinite;
+            }
+
+            .stagger-1 { animation-delay: 50ms; }
+            .stagger-2 { animation-delay: 100ms; }
+            .stagger-3 { animation-delay: 150ms; }
+            .stagger-4 { animation-delay: 200ms; }
+            .stagger-5 { animation-delay: 250ms; }
+
+            .saas-card-hover {
+                transition: translate 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                            box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                            border-color 0.25s ease;
+            }
+            .saas-card-hover:hover {
+                translate: 0 -3px;
+                box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 8px -4px rgba(16, 185, 129, 0.06);
+            }
+
+            .nav-link-anim {
+                transition: translate 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                            background-color 0.2s ease,
+                            color 0.2s ease;
+            }
+            .nav-link-anim:hover {
+                translate: 3px 0;
+            }
+        }
+
+        /* Button subtle shine effect */
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .btn-shine::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                translate: -120% 0;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+                transition: translate 0.55s ease;
+            }
+            .btn-shine:hover::after {
+                translate: 120% 0;
+            }
+        }
     </style>
     @yield('styles')
 </head>
@@ -72,13 +175,13 @@
     </div>
 
     <!-- Sidebar Layout -->
-    <aside class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#0f172a] text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl border-r border-slate-800"
+    <aside class="vt-sidebar fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#0f172a] text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl border-r border-slate-800"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
         
         <!-- Brand Header -->
         <div class="flex items-center justify-between h-16 px-6 bg-slate-950/40 border-b border-slate-800/80">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group text-white">
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300">
                     <i class="bi bi-lightning-charge-fill text-xl"></i>
                 </div>
                 <div>
@@ -101,19 +204,19 @@
                 <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Operaciones</p>
                 <nav class="space-y-1">
                     <a href="{{ route('dashboard') }}" 
-                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('dashboard') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <i class="bi bi-speedometer2 text-base {{ request()->routeIs('dashboard') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Panel Inicial</span>
                     </a>
 
                     <a href="{{ route('inventory.index') }}" 
-                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('inventory.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('inventory.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <i class="bi bi-boxes text-base {{ request()->routeIs('inventory.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Inventario y Stock</span>
                     </a>
 
                     <a href="{{ route('pos.create') }}" 
-                       class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <div class="flex items-center gap-3">
                             <i class="bi bi-cart4 text-base {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                             <span>Caja Rápida</span>
@@ -129,13 +232,13 @@
                 <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Administración</p>
                 <nav class="space-y-1">
                     <a href="{{ route('admin.users.index') }}" 
-                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.users.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.users.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <i class="bi bi-people text-base {{ request()->routeIs('admin.users.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Gestión de Usuarios</span>
                     </a>
 
                     <a href="{{ route('reports.index') }}" 
-                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('reports.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('reports.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <i class="bi bi-graph-up-arrows text-base {{ request()->routeIs('reports.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                         <span>Reportes Contables</span>
                     </a>
@@ -148,7 +251,7 @@
                 <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-slate-300 font-mono">Accesos</p>
                 <nav class="space-y-1">
                     <a href="{{ route('home') }}" 
-                       class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/70 hover:text-white transition-all">
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/70 hover:text-white">
                         <i class="bi bi-globe text-base text-slate-400"></i>
                         <span>Página Pública</span>
                     </a>
@@ -186,7 +289,7 @@
     <div class="lg:pl-64 flex flex-col min-h-screen">
         
         <!-- Top App Header -->
-        <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+        <header class="vt-header sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
             <div class="flex items-center gap-4">
                 <button @click="sidebarOpen = true" class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden focus:outline-none">
                     <i class="bi bi-list text-2xl leading-none"></i>
@@ -204,7 +307,7 @@
             <!-- Right Controls -->
             <div class="flex items-center gap-3">
                 <a href="{{ route('pos.create') }}" 
-                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 transition-all active:scale-95">
+                   class="btn-shine inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 transition-all active:scale-95">
                     <i class="bi bi-plus-circle-fill"></i>
                     <span class="hidden sm:inline">Nueva Venta</span>
                 </a>
@@ -257,11 +360,11 @@
         </header>
 
         <!-- Main Body -->
-        <main class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
+        <main class="vt-main flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
             
             <!-- Global Flash Messages -->
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between p-4 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-subtle">
+                <div x-data="{ show: true }" x-show="show" x-transition class="animate-scale-in flex items-center justify-between p-4 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-subtle">
                     <div class="flex items-center gap-3">
                         <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500 text-white shrink-0">
                             <i class="bi bi-check-lg text-lg"></i>

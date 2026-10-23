@@ -3,20 +3,6 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
-if (file_exists(dirname(__DIR__) . '/.env')) {
-    $lines = file(dirname(__DIR__) . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        list($name, $value) = explode('=', $line, 2) + [1 => ''];
-        $name = trim($name);
-        $value = trim($value, "\"' ");
-        if (!empty($name)) {
-            $_ENV[$name] = $value;
-            putenv("$name=$value");
-        }
-    }
-}
-
 return [
 
     /*

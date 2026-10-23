@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - PuntoÁgil / Ferretería El Tornillo</title>
+    <title>Iniciar Sesión - PuntoÁgil SaaS</title>
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,11 +49,11 @@
         <div class="text-center mb-6">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-3 group">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25 group-hover:bg-emerald-700 transition-all">
-                    <i class="bi bi-nut-fill text-2xl"></i>
+                    <i class="bi bi-lightning-charge-fill text-2xl"></i>
                 </div>
                 <div class="text-left">
                     <div class="text-xl font-bold text-slate-900 tracking-tight leading-none">PuntoÁgil</div>
-                    <div class="text-xs font-semibold text-emerald-600 uppercase tracking-widest mt-1">Ferretería El Tornillo</div>
+                    <div class="text-xs font-semibold text-emerald-600 uppercase tracking-widest mt-1">SaaS Cloud POS</div>
                 </div>
             </a>
             <h2 class="mt-5 text-xl font-bold text-slate-900 tracking-tight">Acceso a la Plataforma</h2>
@@ -89,7 +89,7 @@
                                name="email"
                                id="email"
                                value="{{ old('email') }}"
-                               placeholder="tu-correo@eltornillo.com"
+                               placeholder="tu-correo@puntoagil.com"
                                required
                                autofocus
                                class="w-full pl-10 pr-4 py-2.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
@@ -141,23 +141,23 @@
                 </span>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button"
-                            onclick="document.getElementById('email').value='admin@eltornillo.com'; document.getElementById('password').value='12345678';"
+                            onclick="document.getElementById('email').value='admin@puntoagil.com'; document.getElementById('password').value='12345678';"
                             class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all group">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                             <span class="text-xs font-bold text-slate-700 group-hover:text-emerald-700">Administrador</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">admin@eltornillo.com</div>
+                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">admin@puntoagil.com</div>
                     </button>
 
                     <button type="button"
-                            onclick="document.getElementById('email').value='cajero@eltornillo.com'; document.getElementById('password').value='12345678';"
+                            onclick="document.getElementById('email').value='cajero@puntoagil.com'; document.getElementById('password').value='12345678';"
                             class="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-left transition-all group">
                         <div class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                             <span class="text-xs font-bold text-slate-700 group-hover:text-emerald-700">Cajero POS</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">cajero@eltornillo.com</div>
+                        <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">cajero@puntoagil.com</div>
                     </button>
                 </div>
             </div>

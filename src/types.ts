@@ -1,4 +1,4 @@
-// Definición de tipos y estructuras de datos para el sistema de Ferretería El Tornillo
+// Definición de tipos y estructuras de datos para el sistema de PuntoÁgil
 
 export type Role = 'admin' | 'cajero';
 

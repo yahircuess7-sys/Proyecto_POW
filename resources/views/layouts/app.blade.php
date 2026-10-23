@@ -79,13 +79,13 @@
         <div class="flex items-center justify-between h-16 px-6 bg-slate-950/40 border-b border-slate-800/80">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group text-white">
                 <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-                    <i class="bi bi-nut-fill text-xl"></i>
+                    <i class="bi bi-lightning-charge-fill text-xl"></i>
                 </div>
                 <div>
                     <span class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
                         Punto<span class="text-emerald-400 font-extrabold">Ágil</span>
                     </span>
-                    <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-medium">Ferretería El Tornillo</span>
+                    <span class="block text-[10px] uppercase tracking-wider text-emerald-400/90 font-medium">SaaS Cloud POS</span>
                 </div>
             </a>
             <button class="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden" @click="sidebarOpen = false">
@@ -293,7 +293,7 @@
 
         <!-- Footer -->
         <footer class="mt-auto py-5 px-6 md:px-8 border-t border-slate-200 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p>&copy; {{ date('Y') }} <strong class="text-slate-700">PuntoÁgil</strong> &bull; Ferretería El Tornillo S.A.</p>
+            <p>&copy; {{ date('Y') }} <strong class="text-slate-700">PuntoÁgil</strong> &bull; Plataforma SaaS de Gestión Comercial</p>
             <div class="flex items-center gap-4 text-slate-400">
                 <span class="inline-flex items-center gap-1.5"><i class="bi bi-shield-check text-emerald-500"></i> Datos Protegidos</span>
                 <span>&bull;</span>

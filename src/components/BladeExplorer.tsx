@@ -31,7 +31,7 @@ export default function BladeExplorer() {
       const url = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'laravel_ferreteria_export.zip';
+      a.download = 'laravel_puntoagil_export.zip';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

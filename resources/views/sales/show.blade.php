@@ -66,16 +66,16 @@
                             {{ strtoupper(substr($sale->user->name ?? 'C', 0, 1)) }}
                         </div>
                         <span>{{ $sale->user->name ?? 'Cajero Desconocido' }}</span>
-                        <span class="text-[10px] text-slate-400">({{ $sale->user->email ?? 'pos@eltornillo.com' }})</span>
+                        <span class="text-[10px] text-slate-400">({{ $sale->user->email ?? 'pos@puntoagil.com' }})</span>
                     </div>
                 </div>
 
                 <div>
-                    <span class="text-slate-400 block font-medium">Establecimiento</span>
+                    <span class="text-slate-400 block font-medium">Establecimiento / Emisor</span>
                     <div class="text-slate-700 font-medium mt-0.5">
-                        Ferretería El Tornillo S.A.
+                        PuntoÁgil Cloud POS
                     </div>
-                    <div class="text-[11px] text-slate-400">RUC: 0992348571001 · Sucursal Matriz</div>
+                    <div class="text-[11px] text-slate-400">Facturación Electrónica &bull; Sistema Certificado</div>
                 </div>
 
                 <div>

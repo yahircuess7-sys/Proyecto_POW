@@ -216,7 +216,7 @@ export const laravelTemplates: BladeFile[] = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>@yield('title', 'Ferretería El Tornillo') - Sistema Administrativo</title>
+    <title>@yield('title', 'PUNTOÁGIL SAAS') - Sistema Administrativo</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -232,8 +232,8 @@ export const laravelTemplates: BladeFile[] = [
     <!-- Estilos Personalizados del Sistema -->
     <style>
         :root {
-            --fc-primary: #1e3a8a;       /* Azul Ferretero Oscuro */
-            --fc-secondary: #f97316;     /* Naranja Tornillo */
+            --fc-primary: #1e3a8a;       /* Pizarra Oscuro */
+            --fc-secondary: #f97316;     /* Acento Esmeralda */
             --fc-dark: #0f172a;          /* Dark Slate */
             --fc-light: #f8fafc;         /* Soft Gray Background */
         }
@@ -339,12 +339,12 @@ export const laravelTemplates: BladeFile[] = [
 </head>
 <body>
 
-    <!-- Sidebar de la Ferretería -->
+    <!-- Sidebar de PuntoÁgil -->
     <aside class="sidebar id="sidebarMenu"">
         <div class="sidebar-brand">
             <i class="bi bi-nut-fill text-warning fs-3"></i>
             <div>
-                <h6 class="text-white mb-0 fw-bold">El Tornillo</h6>
+                <h6 class="text-white mb-0 fw-bold">PuntoÁgil</h6>
                 <small class="text-xs text-muted" style="font-size: 0.7rem;">SISTEMA ADMINISTRATIVO</small>
             </div>
         </div>
@@ -434,7 +434,7 @@ export const laravelTemplates: BladeFile[] = [
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item me-3 text-end d-none d-md-block">
                         <span class="d-block fw-semibold text-dark fs-7">
-                            {{ auth()->user()->nombre ?? 'Administrador Tornillo' }}
+                            {{ auth()->user()->nombre ?? 'Administrador PuntoÁgil' }}
                         </span>
                         <small class="text-muted text-uppercase d-block" style="font-size: 0.65rem; color: var(--fc-secondary) !important;">
                             Rol: <span class="badge {{ (auth()->user()->role ?? 'admin') === 'admin' ? 'bg-primary' : 'bg-success' }}">{{ auth()->user()->role ?? 'Administrador' }}</span>
@@ -493,7 +493,7 @@ export const laravelTemplates: BladeFile[] = [
         <!-- Pie de página simple comercial -->
         <footer class="footer bg-white text-muted text-center py-3">
             <div class="container-fluid d-md-flex align-items-center justify-content-between">
-                <span>&copy; {{ date('Y') }} <strong>Ferretería El Tornillo S.A.</strong> - Sistema Administrativo.</span>
+                <span>&copy; {{ date('Y') }} <strong>PUNTOÁGIL SAAS</strong> - Sistema Administrativo.</span>
                 <span class="d-none d-md-inline text-muted fs-7">Hecho para Proyecto de Maquetación Final <i class="bi bi-heart-fill text-danger text-xs"></i></span>
             </div>
         </footer>
@@ -517,7 +517,7 @@ export const laravelTemplates: BladeFile[] = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferretería El Tornillo - Los mejores precios y calidad en construcción</title>
+    <title>PUNTOÁGIL SAAS - Los mejores precios y calidad en construcción</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -587,7 +587,7 @@ export const laravelTemplates: BladeFile[] = [
         <div class="container">
             <a class="navbar-brand navbar-brand-custom" href="#">
                 <i class="bi bi-nut-fill text-warning fs-3 animate-spin"></i>
-                <span>FERRETERÍA EL TORNILLO</span>
+                <span>PUNTOÁGIL SAAS</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
                 <span class="navbar-toggler-icon"></span>
@@ -648,7 +648,7 @@ export const laravelTemplates: BladeFile[] = [
         <div class="container">
             <div class="text-center mb-5">
                 <h6 class="text-orange text-uppercase fw-bold" style="color:#f97316;">Nuestros Servicios</h6>
-                <h2 class="fw-bold text-dark mb-2">¿Por qué preferir Ferretería El Tornillo?</h2>
+                <h2 class="fw-bold text-dark mb-2">¿Por qué preferir PUNTOÁGIL SAAS?</h2>
                 <p class="text-muted" style="max-width: 600px; margin: 0 auto;">Líderes locales con más de 15 años de experiencia entregando materiales para obras emblemáticas.</p>
             </div>
 
@@ -659,7 +659,7 @@ export const laravelTemplates: BladeFile[] = [
                             <i class="bi bi-activity fs-3 text-primary"></i>
                         </div>
                         <h4 class="fw-bold text-dark">Variedad de Stock</h4>
-                        <p class="text-muted">Más de 5,000 artículos en pernos, tornillos, cementos, herramientas manuales y eléctricas de marcas premium.</p>
+                        <p class="text-muted">Más de 5,000 artículos en pernos, pernos, cementos, herramientas manuales y eléctricas de marcas premium.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -703,7 +703,7 @@ export const laravelTemplates: BladeFile[] = [
     <!-- Footer de la Landing -->
     <footer class="bg-white border-top py-4 text-center">
         <div class="container text-muted">
-            <p class="mb-1">&copy; {{ date('Y') }} <strong>Ferretería El Tornillo S.A.</strong> Todos los derechos reservados.</p>
+            <p class="mb-1">&copy; {{ date('Y') }} <strong>PUNTOÁGIL SAAS</strong> Todos los derechos reservados.</p>
             <small>Proyecto de Maquetación Frontend Premium - Listo para Implementar</small>
         </div>
     </footer>
@@ -723,7 +723,7 @@ export const laravelTemplates: BladeFile[] = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Ferretería El Tornillo</title>
+    <title>Iniciar Sesión - PUNTOÁGIL SAAS</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -795,12 +795,12 @@ export const laravelTemplates: BladeFile[] = [
 <body>
 
     <div class="login-card">
-        <!-- Encabezado de la Tarjeta con logo de Ferretería -->
+        <!-- Encabezado de la Tarjeta con logo de PuntoÁgil -->
         <div class="login-header">
             <div class="d-inline-flex bg-warning rounded-circle p-2 shadow-sm mb-2 text-dark" style="width: 60px; height: 60px; align-items: center; justify-content: center;">
                 <i class="bi bi-nut-fill fs-2"></i>
             </div>
-            <h4 class="fw-bold mb-0 text-white tracking-tight">Ferretería El Tornillo</h4>
+            <h4 class="fw-bold mb-0 text-white tracking-tight">PUNTOÁGIL SAAS</h4>
             <small class="text-uppercase fw-semibold text-warning" style="font-size: 0.75rem; letter-spacing: 1px;">Ingreso Seguro</small>
         </div>
 
@@ -823,7 +823,7 @@ export const laravelTemplates: BladeFile[] = [
                     <label for="email" class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.75rem;">CORREO ELECTRÓNICO</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-envelope"></i></span>
-                        <input type="email" name="email" id="email" class="form-control bg-light border-start-0 ps-0" placeholder="ejemplo@ferreteria.com" value="{{ old('email') }}" required autofocus>
+                        <input type="email" name="email" id="email" class="form-control bg-light border-start-0 ps-0" placeholder="ejemplo@puntoagil.com" value="{{ old('email') }}" required autofocus>
                     </div>
                 </div>
 
@@ -858,10 +858,10 @@ export const laravelTemplates: BladeFile[] = [
             <div class="border-top pt-4 text-center mt-3">
                 <span class="text-muted d-block mb-2" style="font-size: 0.75rem;">Acceso rápido de credenciales (Click):</span>
                 <div class="d-flex justify-content-center gap-2">
-                    <span class="badge-role d-flex align-items-center gap-1 text-dark" onclick="document.getElementById('email').value='admin@ferreteria.com'; document.getElementById('password').value='123456';">
+                    <span class="badge-role d-flex align-items-center gap-1 text-dark" onclick="document.getElementById('email').value='admin@puntoagil.com'; document.getElementById('password').value='123456';">
                         <i class="bi bi-shield-lock-fill text-secondary"></i> Admin
                     </span>
-                    <span class="badge-role d-flex align-items-center gap-1 text-dark" onclick="document.getElementById('email').value='cajero@ferreteria.com'; document.getElementById('password').value='123456';">
+                    <span class="badge-role d-flex align-items-center gap-1 text-dark" onclick="document.getElementById('email').value='cajero@puntoagil.com'; document.getElementById('password').value='123456';">
                         <i class="bi bi-cash-coin text-secondary"></i> Cajero
                     </span>
                 </div>
@@ -879,14 +879,14 @@ export const laravelTemplates: BladeFile[] = [
     icon: 'bi-grid-3x3-gap-fill',
     code: `@extends('layouts.app')
 
-@section('title', 'Panel de Control - Ferretería El Tornillo')
+@section('title', 'Panel de Control - PUNTOÁGIL SAAS')
 
 @section('content')
 <div class="container-fluid">
     <div class="row align-items-center mb-4">
         <div class="col-md-8">
             <h1 class="h3 fw-bold text-dark mb-0">¡Bienvenido de vuelta, {{ auth()->user()->nombre ?? 'Administrador' }}!</h1>
-            <p class="text-muted">Aquí tienes un resumen general del movimiento técnico de hoy en la ferretería.</p>
+            <p class="text-muted">Aquí tienes un resumen general del movimiento técnico de hoy en PuntoÁgil.</p>
         </div>
         <div class="col-md-4 text-md-end">
             <span class="badge bg-white text-dark shadow-sm p-3 border rounded-3 font-monospace">
@@ -1090,11 +1090,11 @@ export const laravelTemplates: BladeFile[] = [
   {
     path: 'resources/views/inventario/index.blade.php',
     title: 'Lista de Productos (Inventario)',
-    description: 'Vista tabular del catálogo de ferretería. Soporta barra de filtros, indicadores visuales de quiebre de stock, y botones elegantes de exportación rápida a formatos Excel y PDF.',
+    description: 'Vista tabular del catálogo de PuntoÁgil. Soporta barra de filtros, indicadores visuales de quiebre de stock, y botones elegantes de exportación rápida a formatos Excel y PDF.',
     icon: 'bi-list-ul',
     code: `@extends('layouts.app')
 
-@section('title', 'Control de Inventario - Ferretería El Tornillo')
+@section('title', 'Control de Inventario - PUNTOÁGIL SAAS')
 
 @section('content')
 <div class="container-fluid">
@@ -1102,7 +1102,7 @@ export const laravelTemplates: BladeFile[] = [
     <div class="row align-items-center mb-4 g-3">
         <div class="col-md-6">
             <h1 class="h3 fw-bold text-dark mb-0">Inventario General de Bodega</h1>
-            <p class="text-muted">Monitorea niveles de stock, marcas de cemento, tornillos de acero y herramientas del local.</p>
+            <p class="text-muted">Monitorea niveles de stock, marcas de cemento, pernos de acero y herramientas del local.</p>
         </div>
         <div class="col-md-6 text-md-end d-flex flex-wrap gap-2 justify-content-md-end">
             <!-- Botones de Exportación UI (Sin lógica compleja) -->
@@ -1142,7 +1142,7 @@ export const laravelTemplates: BladeFile[] = [
                         <option value="">Todas las Familias</option>
                         <option value="Herramientas Manuales">Herramientas Manuales</option>
                         <option value="Herramientas Eléctricas">Herramientas Eléctricas</option>
-                        <option value="Fijaciones y Tornillos">Fijaciones y Tornillos</option>
+                        <option value="Fijaciones y Pernos">Fijaciones y Pernos</option>
                         <option value="Construcción y Áridos">Construcción y Áridos</option>
                         <option value="Plomería">Plomería</option>
                         <option value="Pinturas">Pinturas</option>
@@ -1187,11 +1187,11 @@ export const laravelTemplates: BladeFile[] = [
                         <tr>
                             <td class="px-4 py-3 font-mono fw-bold">SKU-TORN-009</td>
                             <td>
-                                <div class="fw-bold text-dark">Tornillo Drywall 1x6 (100un)</div>
+                                <div class="fw-bold text-dark">Perno Hexagonal 1x6 (100un)</div>
                                 <small class="text-muted">Fijación de paneles de yeso y madera suave</small>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-light text-dark border py-1.5 px-2.5">Fijaciones y Tornillos</span>
+                                <span class="badge bg-light text-dark border py-1.5 px-2.5">Fijaciones y Pernos</span>
                             </td>
                             <td class="text-end">
                                 <div class="fw-bold">$4.50</div>
@@ -1280,7 +1280,7 @@ export const laravelTemplates: BladeFile[] = [
                                 <small class="text-muted">Amarras estribos metálicos gruesos</small>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-light text-dark border py-1.5 px-2.5">Fijaciones y Tornillos</span>
+                                <span class="badge bg-light text-dark border py-1.5 px-2.5">Fijaciones y Pernos</span>
                             </td>
                             <td class="text-end">
                                 <div class="fw-bold">$1.80</div>
@@ -1335,7 +1335,7 @@ export const laravelTemplates: BladeFile[] = [
     icon: 'bi-file-earmark-plus-fill',
     code: `@extends('layouts.app')
 
-@section('title', isset($producto) ? 'Editar Producto - Ferretería El Tornillo' : 'Nuevo Producto - Ferretería El Tornillo')
+@section('title', isset($producto) ? 'Editar Producto - PUNTOÁGIL SAAS' : 'Nuevo Producto - PUNTOÁGIL SAAS')
 
 @section('content')
 <div class="container-fluid" style="max-width: 900px; margin: 0 auto;">
@@ -1383,7 +1383,7 @@ export const laravelTemplates: BladeFile[] = [
                         <label for="category" class="form-label text-dark fw-semibold">Categoría del Material <span class="text-danger">*</span></label>
                         <select name="categoria" id="category" class="form-select @error('categoria') is-invalid @enderror" required>
                             <option value="">Seleccione una Categoría</option>
-                            <option value="Fijaciones y Tornillos" {{ old('categoria', $producto->categoria ?? '') === 'Fijaciones y Tornillos' ? 'selected' : '' }}>Fijaciones y Tornillos</option>
+                            <option value="Fijaciones y Pernos" {{ old('categoria', $producto->categoria ?? '') === 'Fijaciones y Pernos' ? 'selected' : '' }}>Fijaciones y Pernos</option>
                             <option value="Herramientas Manuales" {{ old('categoria', $producto->categoria ?? '') === 'Herramientas Manuales' ? 'selected' : '' }}>Herramientas Manuales</option>
                             <option value="Herramientas Eléctricas" {{ old('categoria', $producto->categoria ?? '') === 'Herramientas Eléctricas' ? 'selected' : '' }}>Herramientas Eléctricas</option>
                             <option value="Construcción y Áridos" {{ old('categoria', $producto->categoria ?? '') === 'Construcción y Áridos' ? 'selected' : '' }}>Construcción y Áridos</option>
@@ -1472,7 +1472,7 @@ export const laravelTemplates: BladeFile[] = [
     icon: 'bi-cart-check-fill',
     code: `@extends('layouts.app')
 
-@section('title', 'Punto de Venta POS - Ferretería El Tornillo')
+@section('title', 'Punto de Venta POS - PUNTOÁGIL SAAS')
 
 @section('content')
 <div class="container-fluid">
@@ -1507,14 +1507,14 @@ export const laravelTemplates: BladeFile[] = [
                         <div class="col-md-6 pos-item-card">
                             <div class="card h-100 border border-opacity-10 shadow-none hover-shadow transition p-3">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="badge bg-primary bg-opacity-10 text-primary">Tornillos</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">Pernos</span>
                                     <span class="font-mono text-muted text-xs" style="font-size:0.75rem;">SKU-009</span>
                                 </div>
-                                <h6 class="fw-bold text-dark mb-1">Tornillo Drywall 1x6 (100un)</h6>
+                                <h6 class="fw-bold text-dark mb-1">Perno Hexagonal 1x6 (100un)</h6>
                                 <p class="text-muted small mb-3">Stock: 140 Unidades</p>
                                 <div class="d-flex justify-content-between align-items-center mt-auto">
                                     <span class="fw-bold fs-5 text-dark font-mono">$4.50</span>
-                                    <button class="btn btn-sm btn-warning fw-bold px-3 py-1 text-dark" onclick="addProductToCart(1, 'Tornillo Drywall 1x6 (100un)', 4.50, 140)">
+                                    <button class="btn btn-sm btn-warning fw-bold px-3 py-1 text-dark" onclick="addProductToCart(1, 'Perno Hexagonal 1x6 (100un)', 4.50, 140)">
                                         <i class="bi bi-plus-lg"></i> Agregar
                                     </button>
                                 </div>
@@ -1608,7 +1608,7 @@ export const laravelTemplates: BladeFile[] = [
                             <!-- Ítems se cargarían dinámicamente con JS, aquí mostramos un ejemplo maqueta -->
                             <div class="d-flex justify-content-between align-items-center mb-3 text-dark pb-2 border-bottom">
                                 <div>
-                                    <span class="fw-bold d-block small">Tornillo Drywall 1x6 (100un)</span>
+                                    <span class="fw-bold d-block small">Perno Hexagonal 1x6 (100un)</span>
                                     <small class="text-muted">$4.50 x 2 un</small>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">

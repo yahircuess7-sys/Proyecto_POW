@@ -49,11 +49,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
-                    <i class="bi bi-nut-fill text-xl"></i>
+                    <i class="bi bi-lightning-charge-fill text-xl"></i>
                 </div>
                 <div>
                     <span class="text-lg font-bold text-slate-900 tracking-tight leading-none block">PuntoÁgil</span>
-                    <span class="text-[10px] uppercase font-semibold text-emerald-600 tracking-wider">Ferretería El Tornillo</span>
+                    <span class="text-[10px] uppercase font-semibold text-emerald-600 tracking-wider">Cloud POS & Inventario</span>
                 </div>
             </div>
 
@@ -84,11 +84,11 @@
             </div>
 
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-tight">
-                Control de inventario y facturación rápida para <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">ferreterías modernas</span>.
+                Control de inventario y facturación ágil para <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">comercios modernos</span>.
             </h1>
 
             <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                PuntoÁgil centraliza el control de existencias, cálculo automatizado de impuestos y cobro ágil en caja para <strong class="text-white">Ferretería El Tornillo</strong>.
+                PuntoÁgil centraliza el control de existencias, cálculo automatizado de impuestos y cobro ultra rápido en caja para tu negocio.
             </p>
 
             <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -143,7 +143,7 @@
                     </div>
                     <h3 class="text-lg font-bold text-slate-900 mb-2">Gestión de Catálogo & Stock</h3>
                     <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                        Auditoría en tiempo real de unidades en bodega, alertas de stock mínimo, generación automatizada de códigos SKU únicos y categorización para ferretería.
+                        Auditoría en tiempo real de unidades en bodega, alertas de stock mínimo, generación automatizada de códigos SKU únicos y categorización de productos.
                     </p>
                     <div class="text-xs font-semibold text-blue-600 flex items-center gap-1">
                         <span>Control de almacén</span>
@@ -173,9 +173,9 @@
     <footer class="mt-auto bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <i class="bi bi-nut-fill text-emerald-500 text-base"></i>
+                <i class="bi bi-lightning-charge-fill text-emerald-500 text-base"></i>
                 <span class="font-bold text-white">PuntoÁgil</span>
-                <span class="text-slate-500">· Ferretería El Tornillo S.A.</span>
+                <span class="text-slate-500">· Plataforma Cloud de Gestión Comercial</span>
             </div>
             <div>
                 <span>&copy; {{ date('Y') }} PuntoÁgil SaaS. Todos los derechos reservados.</span>

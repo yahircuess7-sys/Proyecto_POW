@@ -146,7 +146,7 @@ class ProductController extends Controller
 
         return response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="inventario_tornillo.pdf"',
+            'Content-Disposition' => 'attachment; filename="inventario_puntoagil.pdf"',
         ]);
     }
 
@@ -185,7 +185,7 @@ class ProductController extends Controller
 
         return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="inventario_tornillo.csv"',
+            'Content-Disposition' => 'attachment; filename="inventario_puntoagil.csv"',
             'Pragma' => 'public',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
         ]);

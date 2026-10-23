@@ -54,7 +54,7 @@
                        name="email"
                        id="email"
                        value="{{ old('email', $user->email ?? '') }}"
-                       placeholder="usuario@eltornillo.com"
+                       placeholder="usuario@puntoagil.com"
                        required
                        class="w-full pl-10 pr-4 py-2.5 text-xs text-slate-800 bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all {{ $errors->has('email') ? 'border-rose-300 ring-rose-500/20' : 'border-slate-200' }}">
             </div>

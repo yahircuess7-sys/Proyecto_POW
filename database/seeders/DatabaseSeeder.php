@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // 1. Inyectando Usuarios
         User::create([
             'name' => 'Administrador Yahir',
-            'email' => 'admin@eltornillo.com',
+            'email' => 'admin@puntoagil.com',
             'password' => Hash::make('12345678'),
             'role' => 'admin',
             'status' => 'active',
@@ -25,13 +25,13 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Cajero Carlos',
-            'email' => 'cajero@eltornillo.com',
+            'email' => 'cajero@puntoagil.com',
             'password' => Hash::make('12345678'),
             'role' => 'cajero',
             'status' => 'active',
         ]);
 
-        // 2. Inyectando Productos de Ferretería
+        // 2. Inyectando Productos Iniciales de Ejemplo
         $products = [
             [
                 'sku' => 'CEM-001',

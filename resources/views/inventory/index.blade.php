@@ -67,7 +67,7 @@
                     <option value="" {{ request('category') === '' ? 'selected' : '' }}>Todas las Familias</option>
                     <option value="Herramientas Manuales" {{ request('category') === 'Herramientas Manuales' ? 'selected' : '' }}>Herramientas Manuales</option>
                     <option value="Herramientas Eléctricas" {{ request('category') === 'Herramientas Eléctricas' ? 'selected' : '' }}>Herramientas Eléctricas</option>
-                    <option value="Fijaciones y Tornillos" {{ request('category') === 'Fijaciones y Tornillos' ? 'selected' : '' }}>Fijaciones y Tornillos</option>
+                    <option value="Fijaciones y Anclajes" {{ request('category') === 'Fijaciones y Anclajes' ? 'selected' : '' }}>Fijaciones y Anclajes</option>
                     <option value="Construcción y Áridos" {{ request('category') === 'Construcción y Áridos' ? 'selected' : '' }}>Construcción y Áridos</option>
                     <option value="Plomería" {{ request('category') === 'Plomería' ? 'selected' : '' }}>Plomería</option>
                     <option value="Pinturas" {{ request('category') === 'Pinturas' ? 'selected' : '' }}>Pinturas</option>

@@ -51,7 +51,7 @@ class ArchitectureAndSecurityTest extends TestCase
     {
         $this->withoutMiddleware(ValidateCsrfToken::class);
 
-        $email = 'inactivo_' . uniqid() . '@eltornillo.com';
+        $email = 'inactivo_' . uniqid() . '@puntoagil.com';
         User::where('email', 'like', 'inactivo_%')->delete();
 
         $inactiveUser = User::create([
@@ -86,8 +86,8 @@ class ArchitectureAndSecurityTest extends TestCase
         $skuTest = 'TEST-' . time();
         $response = $this->actingAs($admin)->post('/inventory', [
             'sku' => $skuTest,
-            'name' => 'Tornillo Hexagonal de Prueba',
-            'category' => 'Fijaciones y Tornillos',
+            'name' => 'Artículo Técnico de Prueba',
+            'category' => 'Herramientas y Equipos',
             'description' => 'Descripción técnica de alta resistencia galvanizada.',
             'price' => 3.50,
             'stock' => 20,

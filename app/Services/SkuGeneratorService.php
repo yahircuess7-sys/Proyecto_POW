@@ -49,7 +49,8 @@ class SkuGeneratorService
         $keywords = [
             'cemento' => 'CEM',
             'clavo' => 'CLA',
-            'tornillo' => 'TOR',
+            'perno' => 'PER',
+            'fijacion' => 'FIJ',
             'herramienta' => 'HER',
             'eléctrica' => 'ELE',
             'electrica' => 'ELE',

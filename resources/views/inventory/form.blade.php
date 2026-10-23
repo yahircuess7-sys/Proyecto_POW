@@ -71,7 +71,7 @@
                             class="w-full px-4 py-2.5 rounded-xl border {{ $errors->has('category') ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-slate-50/50' }} text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700" 
                             required>
                         <option value="">Seleccione una Categoría</option>
-                        <option value="Fijaciones y Tornillos" {{ old('category', $product->category ?? '') === 'Fijaciones y Tornillos' ? 'selected' : '' }}>Fijaciones y Tornillos</option>
+                        <option value="Fijaciones y Anclajes" {{ old('category', $product->category ?? '') === 'Fijaciones y Anclajes' ? 'selected' : '' }}>Fijaciones y Anclajes</option>
                         <option value="Herramientas Manuales" {{ old('category', $product->category ?? '') === 'Herramientas Manuales' ? 'selected' : '' }}>Herramientas Manuales</option>
                         <option value="Herramientas Eléctricas" {{ old('category', $product->category ?? '') === 'Herramientas Eléctricas' ? 'selected' : '' }}>Herramientas Eléctricas</option>
                         <option value="Construcción y Áridos" {{ old('category', $product->category ?? '') === 'Construcción y Áridos' ? 'selected' : '' }}>Construcción y Áridos</option>

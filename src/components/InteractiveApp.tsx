@@ -6,21 +6,21 @@ import * as XLSX from 'xlsx';
 
 const INITIAL_USERS: User[] = [
   { id: 1, name: 'Yahir Cuess', email: 'yahircuess7@gmail.com', role: 'admin', status: 'active', createdAt: '01/01/2026' },
-  { id: 2, name: 'Aníbal Tornillo', email: 'admin@ferreteria.com', role: 'admin', status: 'active', createdAt: '15/01/2024' },
-  { id: 3, name: 'Carlos Gómez', email: 'cajero@ferreteria.com', role: 'cajero', status: 'active', createdAt: '10/05/2026' },
-  { id: 4, name: 'María Velez', email: 'maria.velez@ferreteria.com', role: 'cajero', status: 'inactive', createdAt: '22/02/2025' }
+  { id: 2, name: 'Admin PuntoÁgil', email: 'admin@puntoagil.com', role: 'admin', status: 'active', createdAt: '15/01/2024' },
+  { id: 3, name: 'Carlos Gómez', email: 'cajero@puntoagil.com', role: 'cajero', status: 'active', createdAt: '10/05/2026' },
+  { id: 4, name: 'María Velez', email: 'maria.velez@puntoagil.com', role: 'cajero', status: 'inactive', createdAt: '22/02/2025' }
 ];
 
-// Datos Iniciales de la Ferretería
+// Datos Iniciales de PuntoÁgil
 const INITIAL_PRODUCTS: Product[] = [
   {
     id: 1,
     sku: 'SKU-TORN-009',
-    name: 'Tornillo Drywall 1x6 pulgadas (100un)',
+    name: 'Perno Hexagonal 1x6 pulgadas (100un)',
     description: 'Para fijación de paneles de yeso a pernos de madera suave o perfiles de acero ligero.',
     price: 4.50,
     stock: 140,
-    category: 'Fijaciones y Tornillos',
+    category: 'Fijaciones y Pernos',
     unit: 'Cajas',
     brand: 'StanTools'
   },
@@ -53,7 +53,7 @@ const INITIAL_PRODUCTS: Product[] = [
     description: 'Alambre negro recocido de gran flexibilidad y resistencia para amarras de estribos y estructuras de fierro.',
     price: 2.10,
     stock: 75,
-    category: 'Fijaciones y Tornillos',
+    category: 'Fijaciones y Pernos',
     unit: 'Rollos',
     brand: 'AceroAndino'
   },
@@ -138,7 +138,7 @@ export default function InteractiveApp() {
   // Formulario de Producto (Crear / Editar)
   const [formSku, setFormSku] = useState<string>('');
   const [formName, setFormName] = useState<string>('');
-  const [formCategory, setFormCategory] = useState<string>('Fijaciones y Tornillos');
+  const [formCategory, setFormCategory] = useState<string>('Fijaciones y Pernos');
   const [formPrice, setFormPrice] = useState<number>(0);
   const [formStock, setFormStock] = useState<number>(0);
   const [formUnit, setFormUnit] = useState<string>('Unidades');
@@ -147,7 +147,7 @@ export default function InteractiveApp() {
   const [formError, setFormError] = useState<string>('');
 
   // Login inputs mockup
-  const [loginEmail, setLoginEmail] = useState<string>('admin@ferreteria.com');
+  const [loginEmail, setLoginEmail] = useState<string>('admin@puntoagil.com');
   const [loginPassword, setLoginPassword] = useState<string>('123456');
   const [loginError, setLoginError] = useState<string>('');
 
@@ -195,13 +195,13 @@ export default function InteractiveApp() {
       return;
     }
 
-    if (loginEmail === 'admin@ferreteria.com' && loginPassword === '123456') {
+    if (loginEmail === 'admin@puntoagil.com' && loginPassword === '123456') {
       setRole('admin');
-      setActiveUser('Aníbal Tornillo (Admin)');
+      setActiveUser('Admin PuntoÁgil (Admin)');
       setIsLoggedIn(true);
       setScreen('dashboard');
       setLoginError('');
-    } else if (loginEmail === 'cajero@ferreteria.com' && loginPassword === '123456') {
+    } else if (loginEmail === 'cajero@puntoagil.com' && loginPassword === '123456') {
       setRole('cajero');
       setActiveUser('Carlos Gómez (Cajero)');
       setIsLoggedIn(true);
@@ -214,15 +214,15 @@ export default function InteractiveApp() {
 
   const handleQuickLogin = (selectedRole: Role) => {
     if (selectedRole === 'admin') {
-      setLoginEmail('admin@ferreteria.com');
+      setLoginEmail('admin@puntoagil.com');
       setLoginPassword('123456');
       setRole('admin');
-      setActiveUser('Aníbal Tornillo (Admin)');
+      setActiveUser('Admin PuntoÁgil (Admin)');
       setIsLoggedIn(true);
       setScreen('dashboard');
       setLoginError('');
     } else {
-      setLoginEmail('cajero@ferreteria.com');
+      setLoginEmail('cajero@puntoagil.com');
       setLoginPassword('123456');
       setRole('cajero');
       setActiveUser('Carlos Gómez (Cajero)');
@@ -310,7 +310,7 @@ export default function InteractiveApp() {
     setSelectedProduct(null);
     setFormSku(`SKU-GEN-${Math.floor(100 + Math.random() * 900)}`);
     setFormName('');
-    setFormCategory('Fijaciones y Tornillos');
+    setFormCategory('Fijaciones y Pernos');
     setFormPrice(0.50);
     setFormStock(50);
     setFormUnit('Unidades');
@@ -512,7 +512,7 @@ export default function InteractiveApp() {
             <div className="container">
               <a className="navbar-brand text-primary fw-bold d-flex align-items-center gap-2" href="#" onClick={(e) => { e.preventDefault(); setScreen('home'); }}>
                 <i className="bi bi-nut-fill text-warning fs-3"></i>
-                <span className="fw-extrabold tracking-tight" style={{ letterSpacing: '-0.3px' }}>FERRETERÍA EL TORNILLO</span>
+                <span className="fw-extrabold tracking-tight" style={{ letterSpacing: '-0.3px' }}>PUNTOÁGIL SAAS</span>
               </a>
               <div className="ms-auto">
                 <button 
@@ -568,7 +568,7 @@ export default function InteractiveApp() {
           <section className="py-5 bg-white">
             <div className="container text-center mb-5">
               <span className="text-uppercase fw-bold font-mono text-warning" style={{ color: '#f97316' }}>Módulos del Estudiante</span>
-              <h2 className="fw-bold text-dark mt-1">Gestión de Roles de Ferretería</h2>
+              <h2 className="fw-bold text-dark mt-1">Gestión de Roles PuntoÁgil</h2>
               <p className="text-muted mx-auto" style={{ maxWidth: '600px' }}>Esta interfaz permite ensayar procesos completos de Auditoría de Almacén y Control de Transacciones de Caja (POS).</p>
             </div>
             <div className="container">
@@ -598,7 +598,7 @@ export default function InteractiveApp() {
           {/* Footer */}
           <footer className="bg-dark text-white py-4 mt-auto">
             <div className="container text-center text-muted">
-              <p className="mb-1 text-light">Ferretería El Tornillo S.A. &copy; 2026 - Universidad Maquetación Final</p>
+              <p className="mb-1 text-light">PUNTOÁGIL SAAS &copy; 2026 - Universidad Maquetación Final</p>
               <small>Diseñado con Bootstrap 5 para máxima fidelidad web y facilidad de aprendizaje.</small>
             </div>
           </footer>
@@ -614,7 +614,7 @@ export default function InteractiveApp() {
               <div className="rounded-circle bg-warning p-2 d-inline-flex mb-2 text-dark shadow-sm" style={{ width: '60px', height: '60px', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
                 <i className="bi bi-nut-fill fs-1"></i>
               </div>
-              <h4 className="fw-bold mb-0 tracking-tight">Ferretería El Tornillo</h4>
+              <h4 className="fw-bold mb-0 tracking-tight">PUNTOÁGIL SAAS</h4>
               <small className="text-uppercase fw-semibold text-warning" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Ingreso Seguro</small>
             </div>
 
@@ -634,7 +634,7 @@ export default function InteractiveApp() {
                     <input 
                       type="email" 
                       className="form-control bg-light border-start-0 ps-0" 
-                      placeholder="ejemplo@ferreteria.com"
+                      placeholder="ejemplo@puntoagil.com"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
@@ -718,7 +718,7 @@ export default function InteractiveApp() {
             <div className="p-4 border-bottom border-secondary border-opacity-10 d-flex align-items-center gap-2">
               <i className="bi bi-nut-fill text-warning fs-3"></i>
               <div>
-                <h6 className="mb-0 fw-bold text-white">El Tornillo</h6>
+                <h6 className="mb-0 fw-bold text-white">PuntoÁgil</h6>
                 <small className="text-muted fw-semibold" style={{ fontSize: '0.7rem' }}>SISTEMA INTERNO</small>
               </div>
             </div>
@@ -912,7 +912,7 @@ export default function InteractiveApp() {
                   <div className="row align-items-center mb-4">
                     <div className="col-12 col-md-8">
                       <h4 className="fw-extrabold text-dark mb-1">¡Buenos días, {role === 'admin' ? 'Administrador Yahir' : 'Cajero Carlos'}!</h4>
-                      <p className="text-muted small">Este es el reporte del estado físico y transaccional actual en "El Tornillo".</p>
+                      <p className="text-muted small">Este es el reporte del estado físico y transaccional actual en "PuntoÁgil".</p>
                     </div>
                   </div>
 
@@ -1056,13 +1056,13 @@ export default function InteractiveApp() {
                       <button 
                         onClick={() => {
                           const doc = new jsPDF();
-                          doc.text('Inventario - Ferretería El Tornillo S.A.', 14, 15);
+                          doc.text('Inventario - PUNTOÁGIL SAAS', 14, 15);
                           autoTable(doc, {
                             startY: 20,
                             head: [['SKU', 'Producto', 'Categoría', 'Precio', 'Stock', 'Unidad']],
                             body: products.map(p => [p.sku, p.name, p.category, `$${p.price.toFixed(2)}`, p.stock.toString(), p.unit]),
                           });
-                          doc.save('Inventario_Ferreteria.pdf');
+                          doc.save('Inventario_PuntoAgil.pdf');
                         }}
                         className="btn btn-outline-danger btn-sm fw-semibold d-flex align-items-center gap-1 bg-white"
                         id="btn-export-pdf"
@@ -1080,7 +1080,7 @@ export default function InteractiveApp() {
                           const ws = XLSX.utils.aoa_to_sheet(wsData);
                           const wb = XLSX.utils.book_new();
                           XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-                          XLSX.writeFile(wb, "Inventario_Ferreteria.xlsx");
+                          XLSX.writeFile(wb, "Inventario_PuntoAgil.xlsx");
                         }}
                         className="btn btn-outline-success btn-sm fw-semibold d-flex align-items-center gap-1 bg-white"
                         id="btn-export-excel"
@@ -1127,7 +1127,7 @@ export default function InteractiveApp() {
                             aria-label="Filtrar por categoría"
                           >
                             <option value="">Todas las Categorías</option>
-                            <option value="Fijaciones y Tornillos">Fijaciones y Tornillos</option>
+                            <option value="Fijaciones y Pernos">Fijaciones y Pernos</option>
                             <option value="Construcción y Áridos">Construcción y Áridos</option>
                             <option value="Herramientas Eléctricas">Herramientas Eléctricas</option>
                             <option value="Herramientas Manuales">Herramientas Manuales</option>
@@ -1311,7 +1311,7 @@ export default function InteractiveApp() {
                               aria-label="Seleccionar categoría del material"
                               title="Seleccionar categoría del material"
                             >
-                              <option value="Fijaciones y Tornillos">Fijaciones y Tornillos</option>
+                              <option value="Fijaciones y Pernos">Fijaciones y Pernos</option>
                               <option value="Construcción y Áridos">Construcción y Áridos</option>
                               <option value="Herramientas Eléctricas">Herramientas Eléctricas</option>
                               <option value="Herramientas Manuales">Herramientas Manuales</option>
@@ -1473,7 +1473,7 @@ export default function InteractiveApp() {
                                 aria-label="Filtrar por categoría POS"
                               >
                                 <option value="">Todas las Familias</option>
-                                <option value="Fijaciones y Tornillos">Fijaciones y Tornillos</option>
+                                <option value="Fijaciones y Pernos">Fijaciones y Pernos</option>
                                 <option value="Construcción y Áridos">Construcción y Áridos</option>
                                 <option value="Herramientas Eléctricas">Herramientas Eléctricas</option>
                                 <option value="Herramientas Manuales">Herramientas Manuales</option>
@@ -1842,7 +1842,7 @@ export default function InteractiveApp() {
             {/* Pie de Página Administrativo */}
             <footer className="bg-white border-top py-2.5 text-center text-muted mt-auto" style={{ fontSize: '0.8rem' }}>
               <div>
-                <strong>Ferretería El Tornillo S.A.</strong> Matrix Administrativa | Panel de Control.
+                <strong>PUNTOÁGIL SAAS</strong> Matrix Administrativa | Panel de Control.
               </div>
             </footer>
 
@@ -1864,7 +1864,7 @@ export default function InteractiveApp() {
             <div className="p-4" style={{ backgroundColor: '#fffff8', overflow: 'hidden' }} id="printableReceipt">
               <div className="text-center font-mono border-bottom pb-3 mb-3 text-dark">
                 <i className="bi bi-nut-fill fs-2 text-warning d-block mb-1"></i>
-                <h6 className="fw-bold mb-0 text-uppercase" style={{ letterSpacing: '1px' }}>FERRETERÍA EL TORNILLO S.A.</h6>
+                <h6 className="fw-bold mb-0 text-uppercase" style={{ letterSpacing: '1px' }}>PUNTOÁGIL SAAS</h6>
                 <small className="d-block" style={{ fontSize: '0.72rem' }}>AV. CONST. INDUSTRIAL N.812</small>
                 <small className="d-block" style={{ fontSize: '0.72rem' }}>RUC: 1792348512001 | TEL: 09-1234567</small>
                 <small className="d-block" style={{ fontSize: '0.72rem' }}>--- MATRIZ CENTRAL ---</small>
@@ -1917,7 +1917,7 @@ export default function InteractiveApp() {
 
               <div className="text-center font-mono text-dark mt-4 pt-3 border-top border-dashed border-dark">
                 <p className="mb-1 small">** GRACIAS POR SU COMPRA **</p>
-                <small className="d-block text-muted" style={{ fontSize: '0.65rem' }}>Verifique su mercadería antes de salir de la ferretería.</small>
+                <small className="d-block text-muted" style={{ fontSize: '0.65rem' }}>Verifique su mercadería antes de salir del comercio.</small>
               </div>
             </div>
 

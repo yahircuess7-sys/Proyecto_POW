@@ -1,4 +1,4 @@
-# Auditoría Técnica Integral y Bitácora de Reorganización - PuntoÁgil (Ferretería El Tornillo)
+# Auditoría Técnica Integral y Bitácora de Reorganización - PuntoÁgil SaaS
 
 **Fecha de Actualización:** 23 de Octubre de 2026  
 **Auditor / Arquitecto:** Desarrollador Senior Laravel  
@@ -35,7 +35,7 @@
 
 | Módulo | Estado | Archivos Clave | Diagnóstico y Mejoras Aplicadas |
 | :--- | :---: | :--- | :--- |
-| **Autenticación (Auth)** | 🟢 Seguro y Estable | `app/Http/Controllers/Auth/LoginController.php`<br>`resources/views/auth/login.blade.php`<br>`routes/web.php` | Bloqueo activo de usuarios con `status !== 'active'`, rate limiting en `POST /login` (`throttle:6,1`) y credenciales demo sincronizadas con los datos de seed (`admin@eltornillo.com` / `cajero@eltornillo.com` con clave `12345678`). |
+| **Autenticación (Auth)** | 🟢 Seguro y Estable | `app/Http/Controllers/Auth/LoginController.php`<br>`resources/views/auth/login.blade.php`<br>`routes/web.php` | Bloqueo activo de usuarios con `status !== 'active'`, rate limiting en `POST /login` (`throttle:6,1`) y credenciales demo sincronizadas con los datos de seed (`admin@puntoagil.com` / `cajero@puntoagil.com` con clave `12345678`). |
 | **Control de Acceso / Roles** | 🟢 Seguro y Auditado | `app/Http/Middleware/EnsureUserIsAdmin.php`<br>`routes/web.php`<br>`bootstrap/app.php` | Rutas administrativas y de reportes aisladas bajo middleware `admin`. Un cajero autenticado recibe HTTP 403 Forbidden. Verificado por test automatizado. |
 | **Inventario de Productos** | 🟢 Optimizado y Sin Pérdida de Datos | `app/Http/Controllers/ProductController.php`<br>`app/Http/Requests/ProductRequest.php`<br>`app/Services/SkuGeneratorService.php`<br>`resources/views/inventory/` | Paginación real de 15 ítems con preservación de filtros en query string. Corrección de guardado de `description`. Extracción de lógica SKU a servicio. Verificado por test automatizado. |
 | **Punto de Venta (POS)** | 🟢 Operativo y Validado | `app/Http/Controllers/SaleController.php`<br>`app/Http/Requests/StoreSaleRequest.php`<br>`resources/views/sales/index.blade.php` | Validación estricta con Form Request, deducción de stock transaccional, generación de boleta PDF y protección contra usuarios huérfanos. |
@@ -98,7 +98,7 @@ Se implementó y ejecutó la suite de pruebas en `tests/Feature/ArchitectureAndS
 
 ## 6. Rediseño de Interfaz SaaS (Blade, Tailwind CSS & Alpine.js)
 
-En esta fase se rediseñó integralmente la experiencia visual y operativa del sistema, transformándolo de una apariencia heterogénea a una plataforma SaaS profesional, elegante y coherente para Ferretería El Tornillo.
+En esta fase se rediseñó integralmente la experiencia visual y operativa del sistema, transformándolo de una apariencia heterogénea a una plataforma SaaS profesional, elegante y coherente para PuntoÁgil.
 
 ### 6.1 Identidad Visual y Tokens de Diseño
 - **Paleta Corporativa:**

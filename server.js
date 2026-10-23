@@ -36,7 +36,7 @@ app.post('/api/agent', async (req, res) => {
       model: 'gemini-2.5-flash',
       contents: `${context ? `Contexto del sistema:\n${context}\n\n` : ''}Usuario: ${prompt}`,
       config: {
-        systemInstruction: `Eres un asistente especializado para una ferretería. Responde con tono profesional, claro y útil. Ayuda con ventas, inventario, atención al cliente, pedidos, recomendaciones de productos y reportes operativos.`,
+        systemInstruction: `Eres un asistente especializado para la plataforma SaaS PuntoÁgil. Responde con tono profesional, claro y útil. Ayuda con ventas, inventario, atención al cliente, pedidos, recomendaciones de productos y reportes operativos.`,
       },
     });
 

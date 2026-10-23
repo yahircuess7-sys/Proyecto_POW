@@ -4,7 +4,7 @@ import BladeExplorer from './components/BladeExplorer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'demo' | 'resources'>('demo');
-  const [agentPrompt, setAgentPrompt] = useState('Ayúdame a revisar el inventario de tornillos y recomendar una promoción para este lunes.');
+  const [agentPrompt, setAgentPrompt] = useState('Ayúdame a revisar el inventario de productos y recomendar una promoción para este lunes.');
   const [agentResponse, setAgentResponse] = useState('El agente de negocio estará disponible una vez que configures tu GEMINI_API_KEY.');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -16,7 +16,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: agentPrompt,
-          context: 'Inventario: tornillos, cemento, pinturas, herramientas. Venta activa, prioridad de stock bajo y promociones de fin de semana.',
+          context: 'Inventario: materiales, cemento, pinturas, herramientas. Venta activa, prioridad de stock bajo y promociones de fin de semana.',
         }),
       });
 
@@ -41,7 +41,7 @@ export default function App() {
               <i className="bi bi-nut-fill fs-3 animate-spin"></i>
             </div>
             <div>
-              <h4 className="text-white mb-0 fw-bold tracking-tight">Ferretería El Tornillo S.A.</h4>
+              <h4 className="text-white mb-0 fw-bold tracking-tight">PuntoÁgil SaaS</h4>
               <p className="text-muted mb-0 small app-small-text">
                 <span className="badge bg-secondary text-white font-mono me-1">Laravel 10+ MVC</span> 
                 Maqueta Frontend & POS
@@ -118,7 +118,7 @@ export default function App() {
       <section className="container-fluid px-4 pb-4">
         <div className="card border-0 shadow-sm">
           <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <span><i className="bi bi-robot me-2"></i>Agente de ferretería</span>
+            <span><i className="bi bi-robot me-2"></i>Agente PuntoÁgil</span>
             <span className="badge bg-warning text-dark">Gemini</span>
           </div>
           <div className="card-body">

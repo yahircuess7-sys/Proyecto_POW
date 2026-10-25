@@ -64,6 +64,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Inventario (Lectura para Cajeros; Escritura autorizada por ProductPolicy para Owner/Admin/SuperAdmin)
     Route::get('inventory/export/pdf', [ProductController::class, 'exportPdf'])->name('inventory.export.pdf');
     Route::get('inventory/export/csv', [ProductController::class, 'exportCsv'])->name('inventory.export.csv');
+    Route::post('inventory/import/csv', [ProductController::class, 'importCsv'])->name('inventory.import.csv');
+    Route::patch('inventory/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('inventory.toggle-status');
+    Route::post('inventory/{product}/adjust', [ProductController::class, 'adjustStock'])->name('inventory.adjust');
     Route::resource('inventory', ProductController::class)
         ->parameters(['inventory' => 'product']);
 

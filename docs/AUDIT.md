@@ -289,6 +289,39 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
 * **Confirmaciones para Operaciones Delicadas:**
   * En `resources/views/admin/users.blade.php` y `resources/views/admin/businesses/index.blade.php`, activar/desactivar cuentas, revocar accesos de miembros y suspender empresas requieren confirmación explícita mediante modales interactivos en Alpine.js.
 
+---
+
+## 10. Módulo Completo de Productos, Inventario y Trazabilidad de Stock (Fase 3)
+
+### 10.1 Esquema de Datos y Migración Incremental (`2026_10_24_000003_enhance_products_and_create_inventory_movements.php`)
+* **Extensión de `products`:**
+  * `barcode` (`VARCHAR(100) NULL`): Código de barras (EAN/UPC) con índice compuesto `(business_id, barcode)`.
+  * `cost` (`DECIMAL(10,2) DEFAULT 0.00`): Costo de adquisición para cálculo contable y margen bruto.
+  * `min_stock` (`INTEGER DEFAULT 5`): Umbral de existencias mínimas para alerta de stock crítico.
+  * `status` (`VARCHAR(20) DEFAULT 'active'`): Estado en catálogo (`active` / `inactive`) con índice compuesto `(business_id, status)`.
+* **Tabla de Trazabilidad `inventory_movements`:**
+  * Columnas: `id`, `business_id` (FK), `product_id` (FK), `user_id` (FK nullable), `type` (`'initial'`, `'in'`, `'out'`, `'adjustment'`, `'sale'`), `quantity` (delta con signo), `previous_stock`, `new_stock`, `unit_cost`, `reason` (obligatorio), `reference_type` / `reference_id` (mórfico para ventas u otros documentos), `created_at`, `updated_at`.
+  * Índices de alto rendimiento: `(business_id, product_id, created_at)`, `(business_id, type)`, `(business_id, user_id)`.
+
+### 10.2 Trazabilidad de Inventario y Protección de Concurrencia (`InventoryService`)
+* **Capa de Dominio (`app/Services/InventoryService.php`):**
+  * `recordInitialStock`: Al registrar un producto con existencias mayores a cero, genera automáticamente el movimiento inicial auditado.
+  * `recordSaleDeduction`: Ejecuta bloqueo a nivel de fila (`lockForUpdate()`) dentro de la transacción del POS (`SaleController@store`), valida que el producto esté activo (`status = 'active'`) y que las existencias sean suficientes, deduce el inventario y crea el movimiento de tipo `sale` vinculado a la factura.
+  * `adjustStock`: Ajustes manuales por entrada (`in`), salida/merma (`out`) o conteo físico (`adjustment`). Exige motivo justificado obligatorio (mínimo 3 caracteres), valida contra stock negativo (`$newStock >= 0`) y registra auditoría en `audit_logs`.
+
+### 10.3 Operaciones en Controlador y Vistas Blade
+* **Activación y Desactivación de Productos (`ProductController@toggleStatus`):**
+  * Permite desactivar productos sin eliminarlos para proteger la integridad referencial de comprobantes históricos. Los productos desactivados quedan automáticamente excluidos del terminal POS y de nuevas ventas.
+* **Importación Masiva CSV (`ProductController@importCsv`):**
+  * Soporta delimitadores `;` y `,`, valida encabezados (`Nombre, Categoria, Precio, Costo, Stock, Stock_Minimo, Unidad, SKU, Codigo_Barras, Descripcion`), resuelve SKUs por familia y crea movimientos iniciales para productos con existencias.
+* **Exportación Actualizada (CSV & PDF):**
+  * Incorpora código de barras, costo, precio, stock, stock mínimo y estado de catálogo.
+* **Interfaz de Usuario Ergonómica (`inventory/index.blade.php`, `form.blade.php`, `show.blade.php`):**
+  * Tarjetas KPI en el índice con conteo de artículos, stock crítico dinámico (`stock <= min_stock`), agotados y valor total en mostrador.
+  * Modales en Alpine.js para ajuste manual de existencias con motivo y para importación masiva CSV.
+  * Pestaña histórica de movimientos en la ficha de detalle de cada producto.
+
+
 
 
 

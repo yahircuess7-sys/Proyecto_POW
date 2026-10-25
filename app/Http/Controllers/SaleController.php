@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,11 +16,17 @@ use Dompdf\Options;
 
 class SaleController extends Controller
 {
+    public function __construct(
+        protected InventoryService $inventoryService
+    ) {}
+
     public function index()
     {
         Gate::authorize('viewAny', Sale::class);
 
-        $products = Product::where('stock', '>', 0)->get();
+        $products = Product::where('stock', '>', 0)
+            ->where('status', Product::STATUS_ACTIVE)
+            ->get();
         return view('sales.index', compact('products'));
     }
 
@@ -57,18 +64,15 @@ class SaleController extends Controller
             ]);
 
             foreach ($items as $item) {
-                $product = Product::find($item['product_id']);
+                /** @var Product|null $product */
+                $product = Product::where('id', $item['product_id'])->lockForUpdate()->first();
 
                 if (! $product) {
                     throw new \Exception("Producto no autorizado o no encontrado en el inventario de este negocio.");
                 }
 
-                if ($product->stock < $item['quantity']) {
-                    throw new \Exception("Stock insuficiente para: " . $product->name);
-                }
-
-                $product->stock -= $item['quantity'];
-                $product->save();
+                // Deduce stock y registra el movimiento de inventario trazable de forma atómica
+                $this->inventoryService->recordSaleDeduction($product, (int) $item['quantity'], $sale, Auth::user());
 
                 SaleItem::create([
                     'sale_id' => $sale->id,

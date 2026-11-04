@@ -157,6 +157,27 @@
                 translate: 120% 0;
             }
         }
+
+        /* Modern subtle dark scrollbar for the sidebar */
+        .sidebar-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(71, 85, 105, 0.45) transparent;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.45);
+            border-radius: 9999px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.65);
+        }
     </style>
     @yield('styles')
 </head>
@@ -175,11 +196,11 @@
     </div>
 
     <!-- Sidebar Layout -->
-    <aside class="vt-sidebar fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#0f172a] text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl border-r border-slate-800"
+    <aside class="vt-sidebar fixed inset-y-0 left-0 z-50 flex flex-col w-64 h-screen max-h-screen bg-[#0f172a] text-slate-300 transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-xl border-r border-slate-800"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
         
         <!-- Brand Header -->
-        <div class="flex items-center justify-between h-16 px-6 bg-slate-950/40 border-b border-slate-800/80">
+        <div class="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-slate-950/40 border-b border-slate-800/80">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group text-white">
                 <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 group-hover:rotate-3 transition-transform duration-300">
                     <i class="bi bi-lightning-charge-fill text-xl"></i>
@@ -196,8 +217,8 @@
             </button>
         </div>
 
-        <!-- Navigation Links -->
-        <div class="flex-1 px-4 py-6 overflow-y-auto space-y-7">
+        <!-- Navigation Links (Scrollable area) -->
+        <div class="flex-1 min-h-0 px-4 py-5 overflow-y-auto space-y-6 sidebar-scroll">
             
             <!-- Principal -->
             <div>
@@ -358,7 +379,7 @@
         </div>
 
         <!-- Sidebar Footer / Logout -->
-        <div class="p-4 border-t border-slate-800/80 bg-slate-950/30">
+        <div class="flex-shrink-0 p-4 border-t border-slate-800/80 bg-slate-950/40">
             <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-900/80 border border-slate-800 mb-3">
                 <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20">
                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}

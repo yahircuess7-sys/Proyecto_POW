@@ -183,7 +183,7 @@ class Business extends Model
             return true;
         }
 
-        return $this->products()->count() < $plan->max_products;
+        return $this->products()->withoutBusinessScope()->count() < $plan->max_products;
     }
 
     /**
@@ -196,7 +196,7 @@ class Business extends Model
             return true;
         }
 
-        return $this->cashRegisters()->count() < $plan->max_cash_registers;
+        return $this->cashRegisters()->withoutBusinessScope()->count() < $plan->max_cash_registers;
     }
 
     /**
@@ -206,7 +206,7 @@ class Business extends Model
     {
         $plan = $this->currentPlan();
         if (! $plan) {
-            return false;
+            return true;
         }
 
         return $plan->hasFeature($feature);

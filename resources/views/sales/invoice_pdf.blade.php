@@ -26,8 +26,11 @@
 <body>
     <div class="header">
         <div>
-            <div class="brand">PuntoÁgil</div>
-            <span>Comprobante de Venta Electrónico &bull; Plataforma SaaS</span>
+            <div class="brand">{{ $business->name ?? 'PuntoÁgil' }}</div>
+            <span>{{ $business->settings['slogan'] ?? 'Comprobante de Venta Electrónico • Plataforma SaaS' }}</span>
+            @if(!empty($business->tax_id))
+                <span>RUC / NIT: {{ $business->tax_id }}</span>
+            @endif
         </div>
         <div class="invoice-meta">
             <strong>Factura / Recibo: {{ $sale->invoice_number }}</strong>
@@ -78,7 +81,7 @@
         <div class="grid">
             <div>
                 <strong>Observaciones</strong>
-                <div class="small">Gracias por su compra. Comprobante electrónico generado por PuntoÁgil Cloud POS.</div>
+                <div class="small">{{ $business->settings['receipt_footer_note'] ?? 'Gracias por su compra. Comprobante electrónico generado por PuntoÁgil Cloud POS.' }}</div>
             </div>
             <div>
                 <table class="table">
@@ -94,7 +97,7 @@
                         </tr>
                         @endif
                         <tr>
-                            <td>IVA (12%)</td>
+                            <td>IVA ({{ $business->settings['tax_percentage'] ?? 12 }}%)</td>
                             <td class="text-right">${{ number_format($sale->tax, 2) }}</td>
                         </tr>
                         <tr class="total-row">

@@ -9,6 +9,17 @@ class AuditLog extends Model
 {
     public $timestamps = false;
 
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new \LogicException('Los registros de auditoría son inmutables y no pueden modificarse.');
+        });
+
+        static::deleting(function () {
+            throw new \LogicException('Los registros de auditoría son inmutables y no pueden eliminarse.');
+        });
+    }
+
     protected $fillable = [
         'business_id',
         'user_id',

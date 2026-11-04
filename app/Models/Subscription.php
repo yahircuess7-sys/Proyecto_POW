@@ -56,8 +56,12 @@ class Subscription extends Model
 
     public function isActive(): bool
     {
-        if (in_array($this->status, [self::STATUS_SUSPENDED, self::STATUS_CANCELLED], true)) {
+        if (in_array($this->status, [self::STATUS_SUSPENDED, self::STATUS_PENDING, self::STATUS_PAST_DUE], true)) {
             return false;
+        }
+
+        if ($this->status === self::STATUS_CANCELLED) {
+            return $this->ends_at !== null && $this->ends_at->isFuture();
         }
 
         if ($this->status === self::STATUS_TRIALING) {

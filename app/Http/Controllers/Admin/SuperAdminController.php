@@ -54,7 +54,9 @@ class SuperAdminController extends Controller
             ->value('mrr_total') ?? 0.0;
 
         // Métricas de Actividad Global
-        $totalSalesVolume = (float) Sale::sum('total');
+        $totalSalesVolume = (float) Sale::withoutBusinessScope()
+            ->where('status', '!=', Sale::STATUS_CANCELLED)
+            ->sum('total');
         $totalProductsInPlatform = Product::withoutBusinessScope()->count();
 
         // Desglose de distribución por Planes
@@ -70,7 +72,11 @@ class SuperAdminController extends Controller
 
         // Empresas registradas recientemente
         $recentBusinesses = Business::with(['subscriptions.plan', 'users'])
-            ->withCount(['users', 'products', 'sales'])
+            ->withCount([
+                'users',
+                'products' => fn ($q) => $q->withoutBusinessScope(),
+                'sales' => fn ($q) => $q->withoutBusinessScope(),
+            ])
             ->orderByDesc('created_at')
             ->take(6)
             ->get();
@@ -101,7 +107,11 @@ class SuperAdminController extends Controller
         Gate::authorize('manage-platform');
 
         $query = Business::with(['subscriptions.plan'])
-            ->withCount(['users', 'products', 'sales']);
+            ->withCount([
+                'users',
+                'products' => fn ($q) => $q->withoutBusinessScope(),
+                'sales' => fn ($q) => $q->withoutBusinessScope(),
+            ]);
 
         if ($search = $request->input('search')) {
             $query->where(function ($sub) use ($search) {

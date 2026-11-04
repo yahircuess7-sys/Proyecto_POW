@@ -281,9 +281,10 @@ class SubscriptionAndSuperAdminTest extends TestCase
             'created' => time(),
             'data' => [
                 'object' => [
+                    'id' => 'in_stripe_invoice_' . uniqid(),
                     'subscription' => $sub->provider_subscription_id,
                     'customer' => $sub->provider_customer_id,
-                    'amount_paid' => 3500,
+                    'amount_paid' => 3000,
                     // Datos sensibles que NUNCA deben persistirse en texto plano según PCI-DSS
                     'card_number' => '4242424242424242',
                     'cvv' => '999',
@@ -434,6 +435,21 @@ class SubscriptionAndSuperAdminTest extends TestCase
         $this->assertNotNull($auditLog);
         $this->assertEquals($owner->id, $auditLog->user_id);
         $this->assertStringContainsString('Ferretería Central Renovada', $auditLog->description);
+
+        // 2.1. Comprobar inmutabilidad en la capa de modelo (prohibición de update y delete)
+        try {
+            $auditLog->update(['description' => 'Intento de alteración']);
+            $this->fail('AuditLog permitió una actualización cuando debería ser inmutable.');
+        } catch (\LogicException $e) {
+            $this->assertStringContainsString('inmutables', $e->getMessage());
+        }
+
+        try {
+            $auditLog->delete();
+            $this->fail('AuditLog permitió una eliminación cuando debería ser inmutable.');
+        } catch (\LogicException $e) {
+            $this->assertStringContainsString('inmutables', $e->getMessage());
+        }
 
         // 3. Exportar bitácora a CSV y comprobar headers y contenido
         $exportResp = $this->get(route('admin.audit.export'));

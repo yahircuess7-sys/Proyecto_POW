@@ -107,7 +107,7 @@ class SubscriptionWebhookController extends Controller
     protected function processEvent(string $provider, string $eventType, array $payload): void
     {
         $dataObject = $payload['data']['object'] ?? $payload;
-        $providerSubId = $dataObject['id'] ?? ($dataObject['subscription'] ?? null);
+        $providerSubId = $dataObject['subscription'] ?? ($dataObject['id'] ?? null);
         $providerCustId = $dataObject['customer'] ?? null;
         $businessId = $dataObject['metadata']['business_id'] ?? null;
 

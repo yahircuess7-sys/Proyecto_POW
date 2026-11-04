@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\TenantManager;
@@ -33,7 +35,11 @@ class BusinessController extends Controller
 
         Gate::authorize('update', $business);
 
-        $business->loadCount(['users', 'products', 'sales']);
+        $business->loadCount([
+            'users',
+            'products' => fn ($q) => $q->withoutBusinessScope(),
+            'sales' => fn ($q) => $q->withoutBusinessScope(),
+        ]);
 
         return view('admin.business.settings', compact('business'));
     }
@@ -138,7 +144,11 @@ class BusinessController extends Controller
     {
         Gate::authorize('viewAny', Business::class);
 
-        $query = Business::withCount(['users', 'products', 'sales']);
+        $query = Business::withCount([
+            'users',
+            'products' => fn ($q) => $q->withoutBusinessScope(),
+            'sales' => fn ($q) => $q->withoutBusinessScope(),
+        ]);
 
         if ($search = $request->input('search')) {
             $query->where(function ($sub) use ($search) {
@@ -229,6 +239,25 @@ class BusinessController extends Controller
                 ]);
             }
 
+            $defaultPlan = Plan::where('price', 30.00)->where('is_active', true)->first()
+                ?: Plan::where('slug', 'puntoagil')->first()
+                ?: Plan::where('is_active', true)->first()
+                ?: Plan::first();
+
+            if ($defaultPlan) {
+                Subscription::create([
+                    'business_id' => $biz->id,
+                    'plan_id' => $defaultPlan->id,
+                    'status' => Subscription::STATUS_ACTIVE,
+                    'billing_cycle' => 'monthly',
+                    'price' => $defaultPlan->price,
+                    'starts_at' => now(),
+                    'ends_at' => now()->addMonth(),
+                    'payment_provider' => 'manual',
+                    'notes' => 'Suscripción inicial asignada al registrar la empresa.',
+                ]);
+            }
+
             return $biz;
         });
 
@@ -270,7 +299,7 @@ class BusinessController extends Controller
             $business->id
         );
 
-        return redirect()->route('admin.businesses.index')
+        return back()
             ->with('success', "Estado de {$business->name} actualizado a {$newStatus}.");
     }
 }

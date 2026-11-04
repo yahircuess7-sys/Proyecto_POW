@@ -65,6 +65,21 @@ class Plan extends Model
             return false;
         }
 
-        return ! empty($this->features[$feature]);
+        $aliases = [
+            'purchases' => ['purchases', 'supplier_purchases'],
+            'supplier_purchases' => ['purchases', 'supplier_purchases'],
+            'returns' => ['returns', 'sale_returns'],
+            'sale_returns' => ['returns', 'sale_returns'],
+            'reports_export' => ['reports_export', 'export_csv', 'export_pdf'],
+        ];
+
+        $keysToCheck = $aliases[$feature] ?? [$feature];
+        foreach ($keysToCheck as $key) {
+            if (! empty($this->features[$key])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

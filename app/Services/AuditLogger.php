@@ -28,7 +28,17 @@ class AuditLogger
         $resolvedBusinessId = $businessId
             ?: (app(TenantManager::class)->getTenantId() ?: $actor?->current_business_id);
 
-        // Purgar cualquier clave sensible accidental antes de persistir
+        // Purgar cualquier clave sensible accidental antes de persistir (incluso anidada)
+        $sensitivePatterns = ['password', 'token', 'secret', 'card', 'cvv', 'cvc'];
+        array_walk_recursive($metadata, function (&$val, $key) use ($sensitivePatterns) {
+            $lowerKey = strtolower((string) $key);
+            foreach ($sensitivePatterns as $pattern) {
+                if (str_contains($lowerKey, $pattern)) {
+                    $val = '[REDACTED]';
+                    break;
+                }
+            }
+        });
         unset(
             $metadata['password'],
             $metadata['password_confirmation'],

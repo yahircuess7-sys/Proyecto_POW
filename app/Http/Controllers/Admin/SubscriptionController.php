@@ -69,12 +69,12 @@ class SubscriptionController extends Controller
                 'unlimited' => $currentPlan?->isUnlimitedUsers() ?? true,
             ],
             'products' => [
-                'current' => $business->products()->count(),
+                'current' => $business->products()->withoutBusinessScope()->count(),
                 'max' => $currentPlan?->max_products,
                 'unlimited' => $currentPlan?->isUnlimitedProducts() ?? true,
             ],
             'cash_registers' => [
-                'current' => $business->cashRegisters()->count(),
+                'current' => $business->cashRegisters()->withoutBusinessScope()->count(),
                 'max' => $currentPlan?->max_cash_registers,
                 'unlimited' => $currentPlan?->isUnlimitedCashRegisters() ?? true,
             ],
@@ -99,6 +99,10 @@ class SubscriptionController extends Controller
             abort_unless($actor->isOwner() || $actor->isSuperAdmin(), 403);
         }
 
+        if ($subscription && $subscription->isSuspended() && ! $actor->isSuperAdmin()) {
+            return back()->with('error', 'La suscripción se encuentra suspendida administrativamente. Contacte a soporte para reactivarla.');
+        }
+
         $validated = $request->validate([
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
             'billing_cycle' => ['nullable', 'string', 'in:monthly,yearly'],
@@ -116,9 +120,16 @@ class SubscriptionController extends Controller
         }
 
         if (! $newPlan->isUnlimitedProducts()) {
-            $productCount = $business->products()->count();
+            $productCount = $business->products()->withoutBusinessScope()->count();
             if ($productCount > $newPlan->max_products) {
                 return back()->with('error', "No es posible cambiar al plan '{$newPlan->name}' porque tu catálogo tiene {$productCount} productos y el plan admite un máximo de {$newPlan->max_products}.");
+            }
+        }
+
+        if (! $newPlan->isUnlimitedCashRegisters()) {
+            $registerCount = $business->cashRegisters()->withoutBusinessScope()->count();
+            if ($registerCount > $newPlan->max_cash_registers) {
+                return back()->with('error', "No es posible cambiar al plan '{$newPlan->name}' porque tu negocio tiene {$registerCount} cajas registradoras y el plan admite un máximo de {$newPlan->max_cash_registers}.");
             }
         }
 
@@ -214,6 +225,14 @@ class SubscriptionController extends Controller
         abort_unless($subscription, 404);
 
         Gate::authorize('update', $subscription);
+
+        if ($subscription->isSuspended() && ! $actor->isSuperAdmin()) {
+            return back()->with('error', 'La suscripción se encuentra suspendida administrativamente. Contacte a soporte.');
+        }
+
+        if (in_array($subscription->status, [Subscription::STATUS_PAST_DUE, Subscription::STATUS_PENDING], true) && ! $actor->isSuperAdmin()) {
+            return back()->with('error', 'No se puede reactivar una suscripción con pago pendiente o vencido sin confirmación de pago verificada.');
+        }
 
         $subscription->update([
             'status' => Subscription::STATUS_ACTIVE,

@@ -318,7 +318,8 @@ class SaleController extends Controller
     {
         Gate::authorize('view', $sale);
 
-        $sale->load(['items.product', 'user', 'customer', 'cashShift']);
+        $sale->load(['items.product', 'user', 'customer', 'cashShift', 'business']);
+        $business = $sale->business ?: $this->tenantManager->getTenant();
 
         $customerName = $sale->customer
             ? $sale->customer->name
@@ -331,7 +332,7 @@ class SaleController extends Controller
         $options = new Options();
         $options->set('isRemoteEnabled', true);
         $dompdf = new Dompdf($options);
-        $dompdf->loadHtml(view('sales.invoice_pdf', compact('sale', 'customerName', 'customerDocument'))->render());
+        $dompdf->loadHtml(view('sales.invoice_pdf', compact('sale', 'business', 'customerName', 'customerDocument'))->render());
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 

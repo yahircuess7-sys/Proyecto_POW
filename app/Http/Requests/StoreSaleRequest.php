@@ -34,10 +34,19 @@ class StoreSaleRequest extends FormRequest
             ],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_document' => ['nullable', 'string', 'max:50'],
+            'payment_method' => ['nullable', 'string', 'in:cash,card,transfer'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
+            'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'idempotency_key' => ['nullable', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.product_id' => [
+                'required',
+                'integer',
+                Rule::exists('products', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
+            ],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.discount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

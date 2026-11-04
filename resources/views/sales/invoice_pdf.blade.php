@@ -87,18 +87,42 @@
                             <td>Subtotal</td>
                             <td class="text-right">${{ number_format($sale->subtotal, 2) }}</td>
                         </tr>
+                        @if($sale->discount > 0)
                         <tr>
-                            <td>IVA 12%</td>
+                            <td>Descuento</td>
+                            <td class="text-right text-rose-600">-${{ number_format($sale->discount, 2) }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td>IVA (12%)</td>
                             <td class="text-right">${{ number_format($sale->tax, 2) }}</td>
                         </tr>
                         <tr class="total-row">
-                            <td>Total</td>
+                            <td>Total Pagado</td>
                             <td class="text-right">${{ number_format($sale->total, 2) }}</td>
                         </tr>
+                        <tr>
+                            <td>Método de Pago</td>
+                            <td class="text-right">{{ strtoupper($sale->payment_method ?? 'EFECTIVO') }}</td>
+                        </tr>
+                        @if(($sale->payment_method ?? 'cash') === 'cash' && $sale->paid_amount)
+                        <tr>
+                            <td>Efectivo Recibido</td>
+                            <td class="text-right">${{ number_format($sale->paid_amount, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Cambio / Vuelto</td>
+                            <td class="text-right">${{ number_format($sale->change_amount, 2) }}</td>
+                        </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; padding: 10px 14px; font-size: 10.5px; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+        <strong>AVISO DE CONTROL INTERNO:</strong> Este comprobante ha sido generado para control de gestión y entrega de mercancía interna. No constituye una factura electrónica fiscal ni confiere crédito tributario ante entidades fiscales.
     </div>
 </body>
 </html>

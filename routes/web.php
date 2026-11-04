@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\SaleReturnController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -77,8 +79,23 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/pos', [SaleController::class, 'create'])->name('pos.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales/history', [SaleController::class, 'history'])->name('sales.history');
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'exportPdf'])->name('sales.pdf');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+
+    // Caja y Turnos (Módulo 11)
+    Route::get('/cash', [CashRegisterController::class, 'index'])->name('cash.index');
+    Route::get('/cash/current', [CashRegisterController::class, 'current'])->name('cash.current');
+    Route::post('/cash/open', [CashRegisterController::class, 'openShift'])->name('cash.open');
+    Route::post('/cash/shifts/{shift}/movements', [CashRegisterController::class, 'recordMovement'])->name('cash.movements.store');
+    Route::post('/cash/shifts/{shift}/close', [CashRegisterController::class, 'closeShift'])->name('cash.close');
+    Route::get('/cash/shifts/{shift}', [CashRegisterController::class, 'show'])->name('cash.show');
+
+    // Facturación y Devoluciones (Módulo 12)
+    Route::get('/returns', [SaleReturnController::class, 'index'])->name('sales.returns.index');
+    Route::get('/sales/{sale}/returns/create', [SaleReturnController::class, 'create'])->name('sales.returns.create');
+    Route::post('/sales/{sale}/returns', [SaleReturnController::class, 'store'])->name('sales.returns.store');
+    Route::get('/returns/{saleReturn}', [SaleReturnController::class, 'show'])->name('sales.returns.show');
 
     // Clientes (Directorio Comercial, registro, búsqueda y ficha técnica)
     Route::patch('customers/{customer}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('customers.toggle-status');

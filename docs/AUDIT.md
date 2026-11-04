@@ -441,6 +441,82 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
   * `test_cancelling_pending_purchase_and_protection_against_cancelling_received`: Comprueba que órdenes pendientes pueden anularse sin tocar stock, y que compras recibidas no pueden cancelarse arbitrariamente.
   * `test_discounts_and_financial_totals_calculation`: Valida el desglose de descuentos por producto, descuento global, base neta imponible y total.
 
+---
+
+## 13. Módulos 10, 11, 12 y 13: POS, Caja y Turnos, Facturación/Devoluciones y Reportes
+
+### 13.1 Migración de Base de Datos y Modelo de Datos
+* **Migración:** `2026_11_04_000003_create_pos_cash_and_returns_tables.php` ejecutada exitosamente en PostgreSQL (Supabase).
+* **Nuevas Tablas:**
+  * `cash_registers`: Cajas registradoras físicas o virtuales por negocio (`business_id`, `name`, `status`, `notes`).
+  * `cash_shifts`: Turnos de caja asociados a cajero y registradora (`business_id`, `cash_register_id`, `user_id`, `closed_by_user_id`, `opened_at`, `closed_at`, `initial_cash`, `expected_cash`, `closing_cash`, `difference`, `status`, `notes`).
+  * `cash_movements`: Entradas y salidas autorizadas de efectivo en un turno (`business_id`, `cash_shift_id`, `user_id`, `type: in/out`, `amount`, `reason`).
+  * `sale_returns`: Devoluciones y notas de crédito vinculadas a la venta original (`business_id`, `sale_id`, `user_id`, `cash_shift_id`, `return_number`, `total_refunded`, `refund_method: cash/credit_note/card_reversal`, `reason`).
+  * `sale_return_items`: Desglose de productos reintegrados (`business_id`, `sale_return_id`, `sale_item_id`, `product_id`, `quantity`, `unit_price`, `subtotal`).
+* **Extensiones a Tablas Existentes:**
+  * `sales`: `cash_shift_id` (FK a turno), `payment_method` (`cash`, `card`, `transfer`), `discount`, `paid_amount`, `change_amount`, `status` (`completed`, `partially_refunded`, `refunded`, `cancelled`), `idempotency_key` (UUID para prevenir doble cobro por reintentos de red).
+  * `sale_items`: `unit_cost` (costo histórico congelado para cálculo de rentabilidad bruta real), `discount`, `refunded_quantity`.
+
+### 13.2 Módulo 10: Punto de Venta (POS)
+* **Control de Idempotencia Garantizado:**
+  * Cada solicitud en mostrador genera un UUID del cliente (`crypto.randomUUID()`). Si la red reintenta la petición o el cajero hace doble clic, el servidor detecta el `idempotency_key` existente y devuelve el comprobante previo sin descontar inventario dos veces ni duplicar filas.
+* **Cálculo de Pagos y Vuelto en Tiempo Real:**
+  * En efectivo (`cash`): valida que el monto recibido cubra el total y calcula el cambio/vuelto (`change_amount = max(0, paid_amount - total)`).
+  * En tarjeta (`card`) o transferencia (`transfer`): asume pago exacto.
+* **Operación Rápida y Táctil:**
+  * Atajos de teclado: `F2` búsqueda instantánea, `F4` procesar cobro, `Esc` limpiar búsqueda.
+  * Interfaz optimizada para pantallas táctiles y dispositivos pequeños con botones amplios de incremento/decremento.
+* **Transaccionalidad Atómica y Bloqueo Concurrente:**
+  * Se bloquean las filas de producto con `lockForUpdate()`. Si el inventario disponible es insuficiente o concurrente con otro cajero, rechaza la operación limpiamente sin dejar registros huérfanos.
+* **Advertencia de Comprobante Interno (No Fiscal):**
+  * Tanto en el terminal POS como en el comprobante PDF se exhibe una leyenda clara: *"Comprobante interno para control de gestión y trazabilidad operativa. Documento no válido como comprobante fiscal o tributario."*
+
+### 13.3 Módulo 11: Caja y Cierre de Caja
+* **Apertura de Turno:**
+  * Validación estricta para evitar que una caja o un cajero tengan múltiples turnos abiertos simultáneos en la misma empresa.
+  * Registro del fondo inicial en efectivo (`initial_cash`).
+* **Movimientos Manuales Autorizados:**
+  * Registro de entradas (`in`) y salidas (`out`) de efectivo con justificación obligatoria y auditoría protegida.
+* **Arqueo y Cálculo de Diferencias:**
+  * Cálculo dinámico del efectivo esperado en gaveta:
+    $$\text{Efectivo Esperado} = \text{Fondo Inicial} + \text{Ventas Efectivo} + \text{Ingresos Efectivo} - \text{Salidas Efectivo} - \text{Devoluciones Efectivo}$$
+  * Diferencia calculada: $\text{Diferencia} = \text{Efectivo Arqueado} - \text{Efectivo Esperado}$.
+  * **Regla estricta:** Si existe una diferencia detectada ($| \text{Diferencia} | > 0.05$), el sistema exige obligatoriamente justificación u observaciones para asentar el cierre.
+  * Protección contra modificación de turnos históricos ya cerrados.
+
+### 13.4 Módulo 12: Facturación y Devoluciones
+* **Historial de Ventas:**
+  * Vista de consulta filtrable por comprobante, cliente, cajero, estado, método de pago y rango de fechas con paginación optimizada.
+  * Reimpresión y descarga de comprobante en PDF con desglose de ítems, descuentos y cambio entregado.
+* **Devoluciones Controladas sin Borrado Histórico:**
+  * Conserva la relación con la venta original y mantiene íntegros los datos históricos.
+  * Validación estricta de que la cantidad devuelta de cada ítem no exceda su remanente disponible (`quantity <= availableForRefund()`).
+  * Restitución automática e instantánea del stock en inventario vía `InventoryService::recordReturnRestock()` con registro `TYPE_IN` en Kardex.
+  * Si la devolución es en efectivo, se vincula y deduce del turno de caja activo.
+  * Actualización automática del estado de la venta original a `partially_refunded` o `refunded`.
+
+### 13.5 Módulo 13: Dashboard y Reportes
+* **Indicadores Reales (Sin Cifras Ficticias):**
+  * Ventas del día y ventas del mes en curso.
+  * Utilidad Bruta Estimada real:
+    $$\text{Margen Bruto} = \sum (\text{Subtotal Ítem} - (\text{Cantidad} \times \text{Costo Registrado}))$$
+  * Ticket promedio por transacción.
+  * Desglose por canal de cobro (Efectivo, Tarjeta, Transferencia).
+  * Monitoreo en vivo de la caja registradora activa (cajero en turno y efectivo en gaveta).
+  * Alertas de existencias bajas (`stock <= min_stock`) y agotadas (`stock <= 0`).
+  * Top 5 de productos más vendidos por volumen y facturación.
+* **Exportación Autorizada:**
+  * Descarga en CSV/Excel con aplicación de filtros por fecha y cajero, desglosando costo de mercancía y margen de ganancia calculado.
+
+### 13.6 Verificación y Suite de Pruebas
+* **Archivo de Pruebas:** `tests/Feature/PosCashAndReturnsTest.php`
+* **Resultados:** 4 tests, 51 aserciones, **100% PASS**:
+  1. `test_cash_register_shift_lifecycle_open_movement_and_close_with_arqueo`: Apertura con fondo inicial, bloqueo de doble apertura, movimientos in/out, cálculo de efectivo esperado, validación de justificación obligatoria por faltante/sobrante y cierre de turno.
+  2. `test_pos_sale_with_idempotency_prevents_duplicate_records`: Venta POS con descuentos, pago en efectivo y cambio, deducción garantizada de stock, y verificación de que el reenvío con la misma clave de idempotencia retorna la venta original sin duplicar registros ni volver a descontar stock.
+  3. `test_sale_return_restores_inventory_and_updates_sale_status`: Devolución parcial y total, validación contra exceder cantidades, restitución atómica en inventario y Kardex, y actualización progresiva del estado de la venta.
+  4. `test_reports_and_dashboard_metrics_accuracy_and_tenant_isolation`: Verificación de cálculo de margen bruto real, métricas diarias/mensuales y aislamiento estricto multitenant entre empresas.
+
+
 
 
 

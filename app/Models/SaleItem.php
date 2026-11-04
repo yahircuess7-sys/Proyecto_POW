@@ -16,8 +16,28 @@ class SaleItem extends Model
         'product_id',
         'quantity',
         'unit_price',
-        'subtotal'
+        'unit_cost',
+        'discount',
+        'refunded_quantity',
+        'subtotal',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'refunded_quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
+            'discount' => 'decimal:2',
+            'subtotal' => 'decimal:2',
+        ];
+    }
+
+    public function availableForRefund(): int
+    {
+        return max(0, (int) $this->quantity - (int) $this->refunded_quantity);
+    }
 
     public function sale()
     {

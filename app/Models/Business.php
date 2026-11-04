@@ -104,6 +104,30 @@ class Business extends Model
     }
 
     /**
+     * Cajas registradas en la empresa.
+     */
+    public function cashRegisters(): HasMany
+    {
+        return $this->hasMany(CashRegister::class);
+    }
+
+    /**
+     * Turnos y arqueos de caja.
+     */
+    public function cashShifts(): HasMany
+    {
+        return $this->hasMany(CashShift::class);
+    }
+
+    /**
+     * Devoluciones de ventas.
+     */
+    public function saleReturns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
+    }
+
+    /**
      * Comprueba si la empresa se encuentra activa en la plataforma.
      */
     public function isActive(): bool

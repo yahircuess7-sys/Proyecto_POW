@@ -12,17 +12,41 @@ class Sale extends Model
 {
     use HasFactory, BelongsToBusiness;
 
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
+    public const STATUS_REFUNDED = 'refunded';
+    public const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
         'business_id',
+        'cash_shift_id',
         'invoice_number',
         'user_id',
         'customer_id',
         'customer_name',
         'customer_document',
+        'payment_method',
         'subtotal',
+        'discount',
         'tax',
         'total',
+        'paid_amount',
+        'change_amount',
+        'status',
+        'idempotency_key',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'subtotal' => 'decimal:2',
+            'discount' => 'decimal:2',
+            'tax' => 'decimal:2',
+            'total' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
+            'change_amount' => 'decimal:2',
+        ];
+    }
 
     public function items(): HasMany
     {
@@ -37,5 +61,45 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function cashShift(): BelongsTo
+    {
+        return $this->belongsTo(CashShift::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->status === self::STATUS_REFUNDED;
+    }
+
+    public function isPartiallyRefunded(): bool
+    {
+        return $this->status === self::STATUS_PARTIALLY_REFUNDED;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
+    }
+
+    public function canBeRefunded(): bool
+    {
+        return ! in_array($this->status, [self::STATUS_REFUNDED, self::STATUS_CANCELLED], true);
+    }
+
+    public function totalRefundedAmount(): float
+    {
+        return (float) $this->returns()->sum('total_refunded');
+    }
+
+    public function refundableAmount(): float
+    {
+        return max(0, (float) $this->total - $this->totalRefundedAmount());
     }
 }

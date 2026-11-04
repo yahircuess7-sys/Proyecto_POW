@@ -114,6 +114,19 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Verifica si el usuario tiene acceso al negocio activo o indicado.
+     */
+    public function hasBusinessAccess(?int $businessId = null): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $target = $businessId ?: ($this->current_business_id ?: app(TenantManager::class)->getTenantId());
+        return $this->belongsToBusiness($target);
+    }
+
+    /**
      * Obtiene el rol efectivo del usuario en una empresa específica o en la empresa activa.
      * Posibles valores: 'super_admin', 'owner', 'admin', 'cajero'.
      */

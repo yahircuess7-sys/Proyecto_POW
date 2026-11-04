@@ -216,12 +216,33 @@
                     </a>
 
                     <a href="{{ route('pos.create') }}" 
-                       class="nav-link-anim flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                       class="nav-link-anim flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('pos.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
                         <div class="flex items-center gap-3">
-                            <i class="bi bi-cart4 text-base {{ request()->routeIs('sales.*') || request()->routeIs('pos.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
-                            <span>Caja Rápida</span>
+                            <i class="bi bi-cart4 text-base {{ request()->routeIs('pos.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                            <span>Punto de Venta</span>
                         </div>
                         <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500 text-slate-950 font-mono tracking-wide">POS</span>
+                    </a>
+
+                    <a href="{{ route('cash.current') }}" 
+                       class="nav-link-anim flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('cash.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="bi bi-wallet2 text-base {{ request()->routeIs('cash.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                            <span>Caja y Turnos</span>
+                        </div>
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-800 text-slate-300 border border-slate-700">M11</span>
+                    </a>
+
+                    <a href="{{ route('sales.history') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('sales.history') || (request()->routeIs('sales.show') && !request()->routeIs('pos.*')) ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-receipt text-base {{ request()->routeIs('sales.history') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Historial Ventas</span>
+                    </a>
+
+                    <a href="{{ route('sales.returns.index') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('sales.returns.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-arrow-counterclockwise text-base {{ request()->routeIs('sales.returns.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Devoluciones</span>
                     </a>
 
                     <a href="{{ route('customers.index') }}" 

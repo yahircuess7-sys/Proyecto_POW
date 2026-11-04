@@ -102,6 +102,39 @@ class InventoryService
     }
 
     /**
+     * Reintegra stock por devolución de venta con trazabilidad completa a la nota de devolución.
+     */
+    public function recordReturnRestock(Product $product, int $quantity, \App\Models\SaleReturn $saleReturn, ?User $user = null): InventoryMovement
+    {
+        if ($quantity <= 0) {
+            throw new InvalidArgumentException("La cantidad a devolver debe ser mayor a cero.");
+        }
+
+        /** @var Product $lockedProduct */
+        $lockedProduct = Product::where('id', $product->id)->lockForUpdate()->firstOrFail();
+
+        $previousStock = $lockedProduct->stock;
+        $newStock = $previousStock + $quantity;
+
+        $lockedProduct->stock = $newStock;
+        $lockedProduct->save();
+
+        return InventoryMovement::create([
+            'business_id' => $lockedProduct->business_id,
+            'product_id' => $lockedProduct->id,
+            'user_id' => $user?->id ?: $saleReturn->user_id,
+            'type' => InventoryMovement::TYPE_IN,
+            'quantity' => $quantity,
+            'previous_stock' => $previousStock,
+            'new_stock' => $newStock,
+            'unit_cost' => $lockedProduct->cost,
+            'reason' => "Devolución de mercadería comprobante #{$saleReturn->return_number} (Motivo: {$saleReturn->reason})",
+            'reference_type' => \App\Models\SaleReturn::class,
+            'reference_id' => $saleReturn->id,
+        ]);
+    }
+
+    /**
      * Realiza un ajuste manual de stock (entrada, salida o conteo físico) con motivo obligatorio.
      */
     public function adjustStock(

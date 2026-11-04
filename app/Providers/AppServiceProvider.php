@@ -3,17 +3,21 @@
 namespace App\Providers;
 
 use App\Models\Business;
+use App\Models\CashShift;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Models\SaleReturn;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Policies\BusinessPolicy;
+use App\Policies\CashShiftPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\ProductPolicy;
 use App\Policies\PurchasePolicy;
 use App\Policies\SalePolicy;
+use App\Policies\SaleReturnPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
 use App\Services\TenantManager;
@@ -46,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Customer::class, CustomerPolicy::class);
         Gate::policy(Supplier::class, SupplierPolicy::class);
         Gate::policy(Purchase::class, PurchasePolicy::class);
+        Gate::policy(CashShift::class, CashShiftPolicy::class);
+        Gate::policy(SaleReturn::class, SaleReturnPolicy::class);
 
         // Gates de Capacidades Operativas por Nivel de Rol
         Gate::define('manage-platform', fn (User $user): bool => $user->status === 'active' && $user->isSuperAdmin());

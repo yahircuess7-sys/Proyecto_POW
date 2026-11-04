@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'Registrar Compra - PuntoÁgil')
+@section('title', 'Registrar Compra o Abastecimiento - PuntoÁgil')
 
 @section('content')
-<div class="max-w-5xl mx-auto space-y-6" x-data="purchaseForm()">
+<div class="max-w-6xl mx-auto space-y-6" x-data="purchaseForm()">
 
     <!-- Top Navigation -->
     <div class="flex items-center justify-between">
@@ -14,7 +14,7 @@
         </a>
 
         <div class="text-xs text-slate-400 font-medium">
-            Entrada de mercadería directa a inventario
+            Módulo 9 &bull; Compras y Abastecimiento Multi-Tenant
         </div>
     </div>
 
@@ -28,8 +28,8 @@
                     <i class="bi bi-cart-plus-fill"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Nueva Orden / Factura de Compra</h1>
-                    <p class="text-xs text-slate-500 mt-0.5">Los productos ingresados incrementarán su stock automáticamente y actualizarán su costo unitario.</p>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Registro de Compra y Abastecimiento</h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Control de órdenes de compra, descuentos, costos y recepción controlada de mercadería en bodega.</p>
                 </div>
             </div>
         </div>
@@ -51,7 +51,44 @@
         <form action="{{ route('purchases.store') }}" method="POST" class="p-6 sm:p-8 space-y-8" @submit="isSubmitting = true">
             @csrf
 
-            <!-- Section 1: Supplier & Invoice Metadata -->
+            <!-- Section 1: Reception Status & Logistics -->
+            <div class="p-5 rounded-2xl bg-slate-50/75 border border-slate-200/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="bi bi-box2 text-emerald-600"></i>
+                        <span>Estado de Recepción de Mercancía</span>
+                    </h2>
+                    <span class="text-[11px] text-slate-400">Control de ingreso a existencias</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Option 1: Received immediately -->
+                    <label class="relative flex p-4 rounded-xl border cursor-pointer transition-all"
+                           :class="status === 'received' ? 'border-emerald-500 bg-emerald-50/30 ring-2 ring-emerald-500/10 shadow-sm' : 'border-slate-200 bg-white hover:bg-slate-50'">
+                        <input type="radio" name="status" value="received" x-model="status" class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
+                        <div class="ml-3">
+                            <span class="block text-xs font-bold text-slate-900">Mercancía Recibida en Bodega</span>
+                            <span class="block text-[11px] text-slate-500 mt-0.5 leading-snug">
+                                La mercadería ya está física y conforme. Se sumará inmediatamente al stock de inventario y se generará movimiento de Kardex.
+                            </span>
+                        </div>
+                    </label>
+
+                    <!-- Option 2: Pending reception -->
+                    <label class="relative flex p-4 rounded-xl border cursor-pointer transition-all"
+                           :class="status === 'pending' ? 'border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/10 shadow-sm' : 'border-slate-200 bg-white hover:bg-slate-50'">
+                        <input type="radio" name="status" value="pending" x-model="status" class="mt-0.5 text-amber-600 focus:ring-amber-500">
+                        <div class="ml-3">
+                            <span class="block text-xs font-bold text-slate-900">Orden de Compra Pendiente</span>
+                            <span class="block text-[11px] text-slate-500 mt-0.5 leading-snug">
+                                Pedido emitido al proveedor. <strong>NO alterará el stock</strong> hasta que confirmes la recepción física en el sistema.
+                            </span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Section 2: Supplier & Invoice Metadata -->
             <div>
                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
                     <i class="bi bi-building"></i>
@@ -101,7 +138,7 @@
                     <!-- Purchase Date -->
                     <div class="sm:col-span-3">
                         <label for="purchase_date" class="block text-xs font-bold text-slate-700 mb-1.5">
-                            Fecha de Compra <span class="text-rose-500">*</span>
+                            Fecha de Operación <span class="text-rose-500">*</span>
                         </label>
                         <input type="date" 
                                name="purchase_date" 
@@ -114,12 +151,12 @@
                 </div>
             </div>
 
-            <!-- Section 2: Items Table -->
+            <!-- Section 3: Items Table (Quantities, Costs, Line Discounts) -->
             <div>
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                         <i class="bi bi-box-seam"></i>
-                        <span>Detalle de Productos Recibidos</span>
+                        <span>Detalle de Artículos, Costos y Descuentos</span>
                     </h2>
                     
                     <button type="button" 
@@ -135,10 +172,11 @@
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr class="border-b border-slate-200 bg-slate-50/75 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
-                                    <th class="py-3 px-4 w-5/12">Producto del Catálogo</th>
+                                    <th class="py-3 px-4 w-4/12">Producto del Catálogo</th>
                                     <th class="py-3 px-4 w-2/12 text-center">Cantidad</th>
-                                    <th class="py-3 px-4 w-2/12 text-right">Costo Unitario ($)</th>
-                                    <th class="py-3 px-4 w-2/12 text-right">Subtotal</th>
+                                    <th class="py-3 px-4 w-2/12 text-right">Costo Unit. ($)</th>
+                                    <th class="py-3 px-4 w-2/12 text-right">Descto. Línea ($)</th>
+                                    <th class="py-3 px-4 w-2/12 text-right">Subtotal Neto</th>
                                     <th class="py-3 px-4 w-1/12 text-center"></th>
                                 </tr>
                             </thead>
@@ -188,9 +226,24 @@
                                             </div>
                                         </td>
 
+                                        <!-- Line Discount -->
+                                        <td class="py-3 px-4">
+                                            <div class="relative">
+                                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-xs">$</span>
+                                                <input type="number" 
+                                                       :name="`items[${index}][discount]`" 
+                                                       x-model.number="item.discount" 
+                                                       @input="calculateTotals()" 
+                                                       min="0" 
+                                                       step="0.01" 
+                                                       class="w-full text-right pl-6 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                                       placeholder="0.00">
+                                            </div>
+                                        </td>
+
                                         <!-- Row Subtotal -->
                                         <td class="py-3 px-4 text-right font-mono font-bold text-slate-800">
-                                            $<span x-text="(item.quantity * item.unit_cost).toFixed(2)"></span>
+                                            $<span x-text="Math.max(0, (item.quantity * item.unit_cost) - (parseFloat(item.discount) || 0)).toFixed(2)"></span>
                                         </td>
 
                                         <!-- Delete row -->
@@ -211,19 +264,41 @@
                 </div>
             </div>
 
-            <!-- Section 3: Notes & Totals Summary -->
+            <!-- Section 4: Notes & Financial Totals Summary -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-slate-100">
                 
                 <!-- Notes -->
-                <div class="md:col-span-7">
-                    <label for="notes" class="block text-xs font-bold text-slate-700 mb-1.5">
-                        Observaciones / Condiciones de Pago
-                    </label>
-                    <textarea name="notes" 
-                              id="notes" 
-                              rows="4" 
-                              placeholder="Ej. Factura a crédito 30 días, mercadería recibida conforme en bodega principal..." 
-                              class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700 placeholder-slate-400">{{ old('notes') }}</textarea>
+                <div class="md:col-span-7 space-y-4">
+                    <div>
+                        <label for="notes" class="block text-xs font-bold text-slate-700 mb-1.5">
+                            Observaciones / Condiciones Comerciales
+                        </label>
+                        <textarea name="notes" 
+                                  id="notes" 
+                                  rows="3" 
+                                  placeholder="Ej. Factura a crédito 30 días, mercadería transportada por Encomiendas Express..." 
+                                  class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700 placeholder-slate-400">{{ old('notes') }}</textarea>
+                    </div>
+
+                    <!-- Global Discount Input -->
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <label for="global_discount" class="block text-xs font-bold text-slate-700 mb-1">
+                            Descuento Global Adicional ($)
+                        </label>
+                        <div class="relative max-w-xs">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-xs">$</span>
+                            <input type="number" 
+                                   name="discount" 
+                                   id="global_discount" 
+                                   x-model.number="globalDiscount" 
+                                   @input="calculateTotals()" 
+                                   min="0" 
+                                   step="0.01" 
+                                   placeholder="0.00" 
+                                   class="w-full pl-6 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        </div>
+                        <span class="text-[11px] text-slate-400 mt-1 block">Aplica sobre el subtotal acumulado de la factura.</span>
+                    </div>
                 </div>
 
                 <!-- Financial Totals -->
@@ -232,7 +307,17 @@
                         
                         <div class="flex items-center justify-between text-slate-600">
                             <span>Subtotal Bruto:</span>
-                            <span class="font-mono font-bold text-slate-800">$<span x-text="subtotal.toFixed(2)"></span></span>
+                            <span class="font-mono font-bold text-slate-800">$<span x-text="grossSubtotal.toFixed(2)"></span></span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-rose-600 font-medium">
+                            <span>Total Descuentos:</span>
+                            <span class="font-mono font-bold">-$<span x-text="totalDiscount.toFixed(2)"></span></span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>Base Imponible (Neto):</span>
+                            <span class="font-mono font-bold text-slate-800">$<span x-text="netSubtotal.toFixed(2)"></span></span>
                         </div>
 
                         <div class="flex items-center justify-between text-slate-600">
@@ -261,7 +346,7 @@
                         :disabled="isSubmitting || items.length === 0" 
                         class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                     <i class="bi bi-check-lg text-base"></i>
-                    <span x-text="isSubmitting ? 'Procesando entrada...' : 'Confirmar e Ingresar a Inventario'"></span>
+                    <span x-text="isSubmitting ? 'Procesando operación...' : (status === 'received' ? 'Guardar y Cargar a Inventario' : 'Guardar Orden de Compra Pendiente')"></span>
                 </button>
             </div>
 
@@ -275,14 +360,18 @@ function purchaseForm() {
     return {
         isSubmitting: false,
         taxRate: 0.12,
-        subtotal: 0,
+        status: '{{ old('status', 'received') }}',
+        grossSubtotal: 0,
+        globalDiscount: {{ old('discount', 0) }},
+        totalDiscount: 0,
+        netSubtotal: 0,
         tax: 0,
         total: 0,
         items: [
-            { product_id: '', quantity: 1, unit_cost: 0 }
+            { product_id: '', quantity: 1, unit_cost: 0, discount: 0 }
         ],
         addItem() {
-            this.items.push({ product_id: '', quantity: 1, unit_cost: 0 });
+            this.items.push({ product_id: '', quantity: 1, unit_cost: 0, discount: 0 });
         },
         removeItem(index) {
             if (this.items.length > 1) {
@@ -299,15 +388,23 @@ function purchaseForm() {
             this.calculateTotals();
         },
         calculateTotals() {
-            let sum = 0;
+            let sumGross = 0;
+            let sumItemDiscounts = 0;
+
             for (let item of this.items) {
                 const qty = parseFloat(item.quantity) || 0;
                 const cost = parseFloat(item.unit_cost) || 0;
-                sum += qty * cost;
+                const disc = parseFloat(item.discount) || 0;
+                sumGross += (qty * cost);
+                sumItemDiscounts += disc;
             }
-            this.subtotal = sum;
-            this.tax = sum * this.taxRate;
-            this.total = this.subtotal + this.tax;
+
+            const globalDisc = parseFloat(this.globalDiscount) || 0;
+            this.grossSubtotal = sumGross;
+            this.totalDiscount = sumItemDiscounts + globalDisc;
+            this.netSubtotal = Math.max(0, this.grossSubtotal - this.totalDiscount);
+            this.tax = this.netSubtotal * this.taxRate;
+            this.total = this.netSubtotal + this.tax;
         },
         init() {
             this.calculateTotals();

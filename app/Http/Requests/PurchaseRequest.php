@@ -26,6 +26,8 @@ class PurchaseRequest extends FormRequest
             ],
             'purchase_date' => ['required', 'date'],
             'supplier_invoice_number' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'string', 'in:pending,received,completed'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => [
@@ -35,6 +37,7 @@ class PurchaseRequest extends FormRequest
             ],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
+            'items.*.discount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
@@ -44,10 +47,13 @@ class PurchaseRequest extends FormRequest
             'supplier_id' => 'proveedor',
             'purchase_date' => 'fecha de compra',
             'supplier_invoice_number' => 'número de factura de proveedor',
+            'status' => 'estado de la compra',
+            'discount' => 'descuento global',
             'items' => 'artículos de la compra',
             'items.*.product_id' => 'producto',
             'items.*.quantity' => 'cantidad',
             'items.*.unit_cost' => 'costo unitario',
+            'items.*.discount' => 'descuento por producto',
         ];
     }
 }

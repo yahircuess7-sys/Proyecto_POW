@@ -391,6 +391,57 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
   * `test_purchase_registers_inventory_in_movement_and_updates_product_cost`: Verifica la creación de órdenes de compra, la liquidación de impuestos, la actualización de costos de producto y el registro del movimiento de inventario de entrada.
   * `test_sale_associates_customer_and_prevents_unsafe_deletion`: Verifica el enlace cliente-venta en el POS, cálculo de métricas de cliente y bloqueo de borrado de clientes con ventas.
 
+---
+
+## 12. Módulo 9: Compras, Abastecimiento y Recepción Controlada de Mercancía con Kardex
+
+### 12.1 Esquema de Base de Datos y Migración Incremental (`2026_11_04_000002_add_discounts_and_reception_to_purchases.php`)
+* **Extensión de `purchases`:**
+  * `discount` (`DECIMAL(10,2) DEFAULT 0.00`): Descuentos globales acumulados en la factura de compra.
+  * `received_at` (`TIMESTAMP NULL`): Fecha y hora exacta de la recepción física de la mercadería.
+  * `received_by` (`BIGINT NULL`, FK a `users` con `ON DELETE SET NULL`): Usuario responsable de verificar e ingresar el stock a bodega.
+* **Extensión de `purchase_items`:**
+  * `discount` (`DECIMAL(10,2) DEFAULT 0.00`): Descuento específico aplicado a la línea de producto.
+
+### 12.2 Máquina de Estados de Compra y Recepción
+* **`Purchase::STATUS_PENDING ('pending')` (Orden de Compra / En Espera):**
+  * La orden de compra se registra como compromiso con el proveedor.
+  * **Regla estricta:** NO se tocan existencias físicas ni se crean movimientos en `inventory_movements`.
+* **`Purchase::STATUS_RECEIVED ('received' / 'completed')` (Mercancía Recibida):**
+  * Indica que los artículos fueron entregados y verificados físicamente.
+  * Ejecuta una transacción atómica con `lockForUpdate()` sobre cada producto, incrementa el stock, actualiza el costo unitario del catálogo y genera el movimiento de Kardex (`InventoryMovement::TYPE_IN`).
+* **`Purchase::STATUS_CANCELLED ('cancelled')` (Orden Cancelada):**
+  * Anula una orden pendiente antes de su arribo, sin desfasar el stock del catálogo.
+
+### 12.3 Idempotencia y Protección contra Doble Recepción
+* En `PurchaseController@receive`:
+  * Verificación previa con `if ($purchase->isReceived())`: si la orden ya fue recibida, rechaza la operación e impide duplicar el stock.
+  * Rechaza recepciones de órdenes que hayan sido canceladas previamente.
+* En `PurchaseController@cancel`:
+  * Verificación previa con `if ($purchase->isReceived())`: bloquea la cancelación de compras que ya ingresaron a inventario (protección de consistencia contable).
+
+### 12.4 Liquidación Financiera con Descuentos
+* Soporta descuentos por ítem y descuento global adicional.
+* Fórmula implementada:
+  $$\text{Subtotal Bruto} = \sum (\text{cantidad} \times \text{costo})$$
+  $$\text{Descuento Total} = \sum \text{descuento}_{\text{ítem}} + \text{descuento}_{\text{global}}$$
+  $$\text{Base Imponible (Neto)} = \max(0, \text{Subtotal Bruto} - \text{Descuento Total})$$
+  $$\text{Impuesto IVA (12\%)} = \text{Base Imponible} \times 0.12$$
+  $$\text{Total Factura} = \text{Base Imponible} + \text{Impuesto}$$
+
+### 12.5 Rutas y Políticas
+* `PATCH /purchases/{purchase}/receive` -> `PurchaseController@receive` (autorizado por `PurchasePolicy@receive`).
+* `PATCH /purchases/{purchase}/cancel` -> `PurchaseController@cancel` (autorizado por `PurchasePolicy@cancel`).
+* Restricción por rol: Solo administradores, propietarios o super admin pueden crear, recibir o anular compras.
+
+### 12.6 Suite de Pruebas Automatizadas
+* Archivo creado: `tests/Feature/PurchaseAndSupplyManagementTest.php` (4 tests, 35 aserciones, 100% PASS).
+  * `test_pending_purchase_does_not_affect_inventory_until_explicitly_received`: Comprueba que compras pendientes no alteran stock ni generan Kardex hasta pulsar recepción.
+  * `test_prevents_duplicate_reception_idempotency`: Comprueba que volver a recibir una compra genera error y no duplica existencias.
+  * `test_cancelling_pending_purchase_and_protection_against_cancelling_received`: Comprueba que órdenes pendientes pueden anularse sin tocar stock, y que compras recibidas no pueden cancelarse arbitrariamente.
+  * `test_discounts_and_financial_totals_calculation`: Valida el desglose de descuentos por producto, descuento global, base neta imponible y total.
+
+
 
 
 

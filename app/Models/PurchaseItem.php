@@ -17,6 +17,7 @@ class PurchaseItem extends Model
         'product_id',
         'quantity',
         'unit_cost',
+        'discount',
         'subtotal',
     ];
 
@@ -25,6 +26,7 @@ class PurchaseItem extends Model
         return [
             'quantity' => 'integer',
             'unit_cost' => 'decimal:2',
+            'discount' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
     }

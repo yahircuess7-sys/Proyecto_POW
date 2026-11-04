@@ -52,6 +52,34 @@ class PurchasePolicy
     }
 
     /**
+     * Recepcionar mercancía e ingresar stock a inventario.
+     */
+    public function receive(User $user, Purchase $purchase): bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return $user->status === 'active'
+            && $user->belongsToBusiness($purchase->business_id)
+            && $user->isAdmin($purchase->business_id);
+    }
+
+    /**
+     * Cancelar orden de compra pendiente.
+     */
+    public function cancel(User $user, Purchase $purchase): bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return $user->status === 'active'
+            && $user->belongsToBusiness($purchase->business_id)
+            && $user->isAdmin($purchase->business_id);
+    }
+
+    /**
      * Anular compras.
      */
     public function delete(User $user, Purchase $purchase): bool

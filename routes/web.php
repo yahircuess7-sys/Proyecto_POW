@@ -88,7 +88,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::patch('suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])->name('suppliers.toggle-status');
     Route::resource('suppliers', SupplierController::class);
 
-    // Compras a Proveedores e Ingreso de Stock
+    // Compras a Proveedores, Recepción de Mercancía e Ingreso de Stock
+    Route::patch('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
+    Route::patch('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
     Route::resource('purchases', PurchaseController::class)->except(['edit', 'update', 'destroy']);
 
     // Módulos con permiso de Administración (Super Admin, Propietario o Administrador de Empresa)

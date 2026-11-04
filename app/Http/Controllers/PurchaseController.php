@@ -66,8 +66,10 @@ class PurchaseController extends Controller
 
         $kpis = [
             'total_purchases' => Purchase::count(),
-            'total_amount' => (float) Purchase::where('status', Purchase::STATUS_COMPLETED)->sum('total'),
-            'this_month' => (float) Purchase::where('status', Purchase::STATUS_COMPLETED)
+            'pending_purchases' => Purchase::where('status', Purchase::STATUS_PENDING)->count(),
+            'received_purchases' => Purchase::whereIn('status', [Purchase::STATUS_RECEIVED, Purchase::STATUS_COMPLETED])->count(),
+            'total_amount' => (float) Purchase::whereIn('status', [Purchase::STATUS_RECEIVED, Purchase::STATUS_COMPLETED])->sum('total'),
+            'this_month' => (float) Purchase::whereIn('status', [Purchase::STATUS_RECEIVED, Purchase::STATUS_COMPLETED])
                 ->whereMonth('purchase_date', now()->month)
                 ->whereYear('purchase_date', now()->year)
                 ->sum('total'),
@@ -97,17 +99,28 @@ class PurchaseController extends Controller
         DB::beginTransaction();
 
         try {
-            $subtotal = 0;
+            $grossSubtotal = 0;
+            $itemsDiscounts = 0;
+
             foreach ($validated['items'] as $item) {
-                $subtotal += $item['quantity'] * $item['unit_cost'];
+                $lineGross = $item['quantity'] * $item['unit_cost'];
+                $lineDiscount = (float) ($item['discount'] ?? 0);
+                $grossSubtotal += $lineGross;
+                $itemsDiscounts += $lineDiscount;
             }
+
+            $globalDiscount = (float) ($validated['discount'] ?? 0);
+            $totalDiscount = $itemsDiscounts + $globalDiscount;
+            $netSubtotal = max(0, $grossSubtotal - $totalDiscount);
 
             $business = $this->tenantManager->getTenant() ?: $user->currentBusiness;
             $taxPercentage = (float) ($business?->settings['tax_percentage'] ?? 12.0);
-            $tax = $subtotal * ($taxPercentage / 100);
-            $total = $subtotal + $tax;
+            $tax = $netSubtotal * ($taxPercentage / 100);
+            $total = $netSubtotal + $tax;
 
             $purchaseNumber = 'COM-' . date('Ymd') . '-' . Str::upper(Str::random(4));
+            $status = $validated['status'] ?? Purchase::STATUS_RECEIVED;
+            $isReceivedImmediately = in_array($status, [Purchase::STATUS_RECEIVED, Purchase::STATUS_COMPLETED], true);
 
             $purchase = Purchase::create([
                 'supplier_id' => $supplier->id,
@@ -115,10 +128,13 @@ class PurchaseController extends Controller
                 'purchase_number' => $purchaseNumber,
                 'supplier_invoice_number' => $validated['supplier_invoice_number'] ?? null,
                 'purchase_date' => $validated['purchase_date'],
-                'subtotal' => $subtotal,
+                'subtotal' => $grossSubtotal,
+                'discount' => $totalDiscount,
                 'tax' => $tax,
                 'total' => $total,
-                'status' => Purchase::STATUS_COMPLETED,
+                'status' => $status,
+                'received_at' => $isReceivedImmediately ? now() : null,
+                'received_by' => $isReceivedImmediately ? $user->id : null,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -126,50 +142,54 @@ class PurchaseController extends Controller
                 /** @var Product $product */
                 $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
 
-                $itemSubtotal = $item['quantity'] * $item['unit_cost'];
+                $lineDiscount = (float) ($item['discount'] ?? 0);
+                $itemSubtotal = max(0, ($item['quantity'] * $item['unit_cost']) - $lineDiscount);
 
                 PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'unit_cost' => $item['unit_cost'],
+                    'discount' => $lineDiscount,
                     'subtotal' => $itemSubtotal,
                 ]);
 
-                // Actualizar costo unitario del producto con el valor más reciente de compra
-                $previousStock = $product->stock;
-                $newStock = $previousStock + $item['quantity'];
+                // Actualizar inventario ÚNICAMENTE si la mercancía ya fue recibida
+                if ($isReceivedImmediately) {
+                    $previousStock = $product->stock;
+                    $newStock = $previousStock + $item['quantity'];
 
-                $product->update([
-                    'cost' => $item['unit_cost'],
-                    'stock' => $newStock,
-                    'supplier_id' => $supplier->id, // Asocia el proveedor a la ficha del producto
-                ]);
+                    $product->update([
+                        'cost' => $item['unit_cost'],
+                        'stock' => $newStock,
+                        'supplier_id' => $supplier->id,
+                    ]);
 
-                // Registrar movimiento de inventario de entrada con trazabilidad a la compra
-                InventoryMovement::create([
-                    'business_id' => $purchase->business_id,
-                    'product_id' => $product->id,
-                    'user_id' => $user->id,
-                    'type' => InventoryMovement::TYPE_IN,
-                    'quantity' => $item['quantity'],
-                    'previous_stock' => $previousStock,
-                    'new_stock' => $newStock,
-                    'unit_cost' => $item['unit_cost'],
-                    'reason' => "Compra #{$purchaseNumber} - Factura: " . ($purchase->supplier_invoice_number ?: 'S/N') . " (Proveedor: {$supplier->name})",
-                    'reference_type' => Purchase::class,
-                    'reference_id' => $purchase->id,
-                ]);
+                    InventoryMovement::create([
+                        'business_id' => $purchase->business_id,
+                        'product_id' => $product->id,
+                        'user_id' => $user->id,
+                        'type' => InventoryMovement::TYPE_IN,
+                        'quantity' => $item['quantity'],
+                        'previous_stock' => $previousStock,
+                        'new_stock' => $newStock,
+                        'unit_cost' => $item['unit_cost'],
+                        'reason' => "Compra #{$purchaseNumber} - Factura: " . ($purchase->supplier_invoice_number ?: 'S/N') . " (Proveedor: {$supplier->name})",
+                        'reference_type' => Purchase::class,
+                        'reference_id' => $purchase->id,
+                    ]);
+                }
             }
 
             AuditLogger::record(
                 'purchase.created',
-                "Se registró la compra #{$purchase->purchase_number} a {$supplier->name} por un total de \${$total}.",
+                "Se registró la compra #{$purchase->purchase_number} a {$supplier->name} por un total de \${$total} (" . ($isReceivedImmediately ? 'Mercancía Recibida e Ingresada' : 'Pendiente de Recepción') . ").",
                 $purchase,
                 [
                     'purchase_number' => $purchase->purchase_number,
                     'supplier_name' => $supplier->name,
                     'total' => $total,
+                    'status' => $purchase->status,
                     'items_count' => count($validated['items']),
                 ],
                 $purchase->business_id
@@ -177,8 +197,12 @@ class PurchaseController extends Controller
 
             DB::commit();
 
+            $successMsg = $isReceivedImmediately
+                ? "Compra #{$purchase->purchase_number} registrada correctamente e inventario actualizado."
+                : "Orden de compra #{$purchase->purchase_number} guardada como PENDIENTE. El inventario se actualizará cuando se registre la recepción de la mercancía.";
+
             return redirect()->route('purchases.show', $purchase->id)
-                ->with('success', "Compra #{$purchase->purchase_number} registrada correctamente e inventario actualizado.");
+                ->with('success', $successMsg);
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()
@@ -187,11 +211,124 @@ class PurchaseController extends Controller
         }
     }
 
+    /**
+     * Recepción física de mercancía para órdenes de compra pendientes.
+     * Incrementa inventario, actualiza costos y genera movimientos de Kardex.
+     */
+    public function receive(Request $request, Purchase $purchase): RedirectResponse
+    {
+        Gate::authorize('receive', $purchase);
+
+        // Guard: Evitar registrar dos veces una recepción
+        if ($purchase->isReceived()) {
+            $formattedDate = $purchase->received_at ? $purchase->received_at->format('d/m/Y H:i') : 'previamente';
+            return redirect()->back()->with('error', "Esta compra ya fue recibida {$formattedDate}. No es posible duplicar el ingreso de mercadería.");
+        }
+
+        // Guard: No recibir órdenes canceladas
+        if ($purchase->isCancelled()) {
+            return redirect()->back()->with('error', 'No se puede recibir mercancía de una orden de compra cancelada.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user = Auth::user();
+            $purchase->load(['items.product', 'supplier']);
+
+            foreach ($purchase->items as $item) {
+                /** @var Product $product */
+                $product = Product::where('id', $item->product_id)->lockForUpdate()->firstOrFail();
+
+                $previousStock = $product->stock;
+                $newStock = $previousStock + $item->quantity;
+
+                $product->update([
+                    'cost' => $item->unit_cost,
+                    'stock' => $newStock,
+                    'supplier_id' => $purchase->supplier_id,
+                ]);
+
+                InventoryMovement::create([
+                    'business_id' => $purchase->business_id,
+                    'product_id' => $product->id,
+                    'user_id' => $user->id,
+                    'type' => InventoryMovement::TYPE_IN,
+                    'quantity' => $item->quantity,
+                    'previous_stock' => $previousStock,
+                    'new_stock' => $newStock,
+                    'unit_cost' => $item->unit_cost,
+                    'reason' => "Recepción de Mercancía - Compra #{$purchase->purchase_number} (Factura: " . ($purchase->supplier_invoice_number ?: 'S/N') . " - Proveedor: " . ($purchase->supplier?->name ?? 'N/D') . ")",
+                    'reference_type' => Purchase::class,
+                    'reference_id' => $purchase->id,
+                ]);
+            }
+
+            $purchase->update([
+                'status' => Purchase::STATUS_RECEIVED,
+                'received_at' => now(),
+                'received_by' => $user->id,
+            ]);
+
+            AuditLogger::record(
+                'purchase.received',
+                "Se recepcionó la mercadería de la compra #{$purchase->purchase_number} y se cargó a inventario.",
+                $purchase,
+                [
+                    'purchase_number' => $purchase->purchase_number,
+                    'total' => $purchase->total,
+                    'items_count' => $purchase->items->count(),
+                ],
+                $purchase->business_id
+            );
+
+            DB::commit();
+
+            return redirect()->route('purchases.show', $purchase->id)
+                ->with('success', "Mercancía de la orden #{$purchase->purchase_number} recibida con éxito e ingresada al inventario.");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error al procesar la recepción: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Cancelación de órdenes de compra pendientes sin recepción física.
+     */
+    public function cancel(Request $request, Purchase $purchase): RedirectResponse
+    {
+        Gate::authorize('cancel', $purchase);
+
+        // Guard: Prohibido cancelar compras ya recibidas e ingresadas a inventario
+        if ($purchase->isReceived()) {
+            return redirect()->back()->with('error', 'No se puede cancelar una compra que ya fue recibida e incorporada al inventario.');
+        }
+
+        if ($purchase->isCancelled()) {
+            return redirect()->back()->with('error', 'Esta orden de compra ya se encuentra cancelada.');
+        }
+
+        $purchase->update([
+            'status' => Purchase::STATUS_CANCELLED,
+        ]);
+
+        AuditLogger::record(
+            'purchase.cancelled',
+            "Se canceló la orden de compra pendiente #{$purchase->purchase_number}.",
+            $purchase,
+            ['purchase_number' => $purchase->purchase_number],
+            $purchase->business_id
+        );
+
+        return redirect()->route('purchases.show', $purchase->id)
+            ->with('success', "Orden de compra #{$purchase->purchase_number} cancelada exitosamente.");
+    }
+
     public function show(Purchase $purchase): View
     {
         Gate::authorize('view', $purchase);
 
-        $purchase->load(['supplier', 'user', 'items.product']);
+        $purchase->load(['supplier', 'user', 'receiver', 'items.product']);
 
         return view('purchases.show', compact('purchase'));
     }

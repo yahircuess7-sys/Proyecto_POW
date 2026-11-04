@@ -229,7 +229,7 @@ class CustomerAndSupplierManagementTest extends TestCase
         $this->assertEquals(210.00, (float) $purchase->subtotal);
         $this->assertEquals(25.20, (float) $purchase->tax);
         $this->assertEquals(235.20, (float) $purchase->total);
-        $this->assertEquals(Purchase::STATUS_COMPLETED, $purchase->status);
+        $this->assertTrue($purchase->isReceived());
 
         // Verificar actualización en producto
         $product->refresh();

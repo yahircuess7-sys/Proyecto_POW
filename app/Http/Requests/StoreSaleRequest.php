@@ -39,11 +39,7 @@ class StoreSaleRequest extends FormRequest
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'idempotency_key' => ['nullable', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => [
-                'required',
-                'integer',
-                Rule::exists('products', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
-            ],
+            'items.*.product_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.discount' => ['nullable', 'numeric', 'min:0'],

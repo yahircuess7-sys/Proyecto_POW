@@ -137,16 +137,21 @@ class SaleController extends Controller
                     ->first();
 
                 if (! $product) {
-                    throw new \Exception("Producto #{$item['product_id']} no existe o no pertenece al catálogo del negocio.");
+                    throw new \Exception("Producto no autorizado o no encontrado en el inventario de este negocio.");
+                }
+
+                if (! $product->isActive()) {
+                    throw new \Exception("El producto '{$product->name}' se encuentra desactivado para ventas.");
                 }
 
                 $qty = (int) $item['quantity'];
                 if ($product->stock < $qty) {
-                    throw new \Exception("Existencias insuficientes para '{$product->name}'. Disponibles: {$product->stock}, Solicitadas: {$qty}");
+                    throw new \Exception("Stock insuficiente para '{$product->name}'. Existencias actuales: {$product->stock}, solicitadas: {$qty}.");
                 }
 
                 $itemDiscount = max(0, (float) ($item['discount'] ?? 0));
-                $unitPrice = (float) $item['unit_price'];
+                // Validar precio real del catálogo en el servidor para impedir manipulación desde el cliente
+                $unitPrice = (float) ($product->price > 0 ? $product->price : $item['unit_price']);
                 $lineSubtotal = max(0, ($qty * $unitPrice) - $itemDiscount);
 
                 $subtotal += $lineSubtotal;

@@ -158,9 +158,11 @@
                     <i class="bi bi-trophy-fill text-amber-500"></i>
                     <span>Productos más Vendidos</span>
                 </h3>
+                @can('view-reports')
                 <a href="{{ route('reports.index') }}" class="text-xs text-emerald-700 hover:underline font-semibold">
                     Ver Reporte
                 </a>
+                @endcan
             </div>
 
             <div class="overflow-x-auto">
@@ -250,6 +252,115 @@
                                 <td colspan="4" class="py-6 text-center text-slate-400">
                                     <i class="bi bi-check-circle text-emerald-500 text-base"></i>
                                     <p class="mt-1">Todos los productos cuentan con existencias óptimas.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tertiary Grid: Movimientos Recientes de Inventario & Ventas Recientes -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Movimientos Recientes de Inventario -->
+        <div class="rounded-2xl bg-white border border-slate-200/80 shadow-subtle p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                    <i class="bi bi-arrow-left-right text-emerald-600"></i>
+                    <span>Movimientos Recientes de Inventario (Kardex)</span>
+                </h3>
+                <a href="{{ route('inventory.index') }}" class="text-xs text-emerald-700 hover:underline font-semibold">
+                    Catálogo
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3">Producto</th>
+                            <th class="py-2.5 px-3">Motivo</th>
+                            <th class="py-2.5 px-3 text-right">Cantidad</th>
+                            <th class="py-2.5 px-3 text-right">Stock Final</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($recentMovements as $mv)
+                            <tr>
+                                <td class="py-2 px-3">
+                                    <div class="font-bold text-slate-900">{{ $mv->product->name ?? 'Producto' }}</div>
+                                    <div class="text-[10px] text-slate-400">{{ $mv->user->name ?? 'Sistema' }}</div>
+                                </td>
+                                <td class="py-2 px-3 text-slate-600 truncate max-w-[160px]" title="{{ $mv->reason }}">
+                                    {{ $mv->reason }}
+                                </td>
+                                <td class="py-2 px-3 text-right font-mono font-bold {{ $mv->quantity >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ $mv->quantity > 0 ? '+' . $mv->quantity : $mv->quantity }}
+                                </td>
+                                <td class="py-2 px-3 text-right font-mono font-semibold text-slate-800">
+                                    {{ $mv->new_stock }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-6 text-center text-slate-400">
+                                    Sin movimientos recientes en inventario.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ventas Recientes -->
+        <div class="rounded-2xl bg-white border border-slate-200/80 shadow-subtle p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                    <i class="bi bi-receipt text-blue-600"></i>
+                    <span>Ventas Recientes</span>
+                </h3>
+                <a href="{{ route('sales.history') }}" class="text-xs text-emerald-700 hover:underline font-semibold">
+                    Ver Todas
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3">Comprobante</th>
+                            <th class="py-2.5 px-3">Cliente</th>
+                            <th class="py-2.5 px-3">Método</th>
+                            <th class="py-2.5 px-3 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($recentSales as $rs)
+                            <tr>
+                                <td class="py-2 px-3">
+                                    <a href="{{ route('sales.show', $rs) }}" class="font-mono font-bold text-emerald-700 hover:underline">
+                                        {{ $rs->invoice_number }}
+                                    </a>
+                                    <div class="text-[10px] text-slate-400">{{ $rs->created_at->format('d/m H:i') }}</div>
+                                </td>
+                                <td class="py-2 px-3 font-medium text-slate-800">
+                                    {{ $rs->customer_name }}
+                                </td>
+                                <td class="py-2 px-3 uppercase text-[10px] font-bold text-slate-600">
+                                    {{ $rs->payment_method ?? 'CASH' }}
+                                </td>
+                                <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                                    ${{ number_format($rs->total, 2) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="py-6 text-center text-slate-400">
+                                    No hay ventas registradas recientemente.
                                 </td>
                             </tr>
                         @endforelse

@@ -24,6 +24,17 @@ class SubscriptionAndSuperAdminTest extends TestCase
         app(TenantManager::class)->setTenant(null);
     }
 
+    protected function tearDown(): void
+    {
+        $officialPlan = Plan::where('slug', 'puntoagil')->first();
+        if ($officialPlan) {
+            Subscription::where('plan_id', '!=', $officialPlan->id)
+                ->update(['plan_id' => $officialPlan->id]);
+            Plan::where('id', '!=', $officialPlan->id)->delete();
+        }
+        parent::tearDown();
+    }
+
     private function createBusinessWithPlan(string $prefix, ?Plan $plan = null, array $planLimits = []): array
     {
         $business = Business::create([

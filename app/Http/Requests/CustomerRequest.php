@@ -32,7 +32,7 @@ class CustomerRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'document_type' => ['required', 'string', 'in:DNI,Cédula,RUC,RFC,Pasaporte,Otro'],
+            'document_type' => ['required', 'string', 'in:Cédula,RUC'],
             'document_number' => [
                 'required',
                 'string',

@@ -88,11 +88,8 @@
                 <select name="document_type" 
                         class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700">
                     <option value="">Todos los Documentos</option>
-                    <option value="DNI" {{ request('document_type') === 'DNI' ? 'selected' : '' }}>DNI / Cédula</option>
-                    <option value="RUC" {{ request('document_type') === 'RUC' ? 'selected' : '' }}>RUC</option>
-                    <option value="RFC" {{ request('document_type') === 'RFC' ? 'selected' : '' }}>RFC</option>
-                    <option value="Pasaporte" {{ request('document_type') === 'Pasaporte' ? 'selected' : '' }}>Pasaporte</option>
-                    <option value="Otro" {{ request('document_type') === 'Otro' ? 'selected' : '' }}>Otro</option>
+                    <option value="Cédula" {{ request('document_type') === 'Cédula' ? 'selected' : '' }}>Cédula de Identidad (Personal)</option>
+                    <option value="RUC" {{ request('document_type') === 'RUC' ? 'selected' : '' }}>RUC (Empresa)</option>
                 </select>
             </div>
 

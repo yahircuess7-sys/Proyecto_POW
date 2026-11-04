@@ -68,7 +68,7 @@ class CustomerAndSupplierManagementTest extends TestCase
 
         // 1. Cajero de Empresa A crea cliente
         $response = $this->actingAs($cashierA)->post(route('customers.store'), [
-            'document_type' => 'DNI',
+            'document_type' => 'Cédula',
             'document_number' => '0928374651',
             'name' => 'Constructora Alvarado S.A.',
             'email' => 'compras@alvarado.com',
@@ -89,7 +89,7 @@ class CustomerAndSupplierManagementTest extends TestCase
 
         // 2. Modificación de cliente por Admin A
         $updateResp = $this->actingAs($adminA)->put(route('customers.update', $customerA->id), [
-            'document_type' => 'DNI',
+            'document_type' => 'Cédula',
             'document_number' => '0928374651',
             'name' => 'Constructora Alvarado & Hijos S.A.',
             'email' => 'gerencia@alvarado.com',
@@ -115,7 +115,7 @@ class CustomerAndSupplierManagementTest extends TestCase
         $this->assertTrue(in_array($unauthorizedShow->status(), [403, 404]));
 
         $unauthorizedEdit = $this->actingAs($adminB)->put(route('customers.update', $customerA->id), [
-            'document_type' => 'DNI',
+            'document_type' => 'Cédula',
             'document_number' => '0928374651',
             'name' => 'Intrusión Ilegal',
         ]);
@@ -123,7 +123,7 @@ class CustomerAndSupplierManagementTest extends TestCase
 
         // 5. Unicidad por negocio: Empresa B puede registrar el MISMO documento sin colisión
         $bizBCustomerResp = $this->actingAs($adminB)->post(route('customers.store'), [
-            'document_type' => 'DNI',
+            'document_type' => 'Cédula',
             'document_number' => '0928374651',
             'name' => 'Cliente en Empresa B',
             'status' => 'active',

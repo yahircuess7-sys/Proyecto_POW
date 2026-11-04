@@ -55,12 +55,8 @@
                     <select name="document_type" id="document_type" 
                             class="w-full px-4 py-2.5 rounded-xl border {{ $errors->has('document_type') ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-slate-50/50' }} text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-700" 
                             required>
-                        <option value="DNI" {{ old('document_type', $customer->document_type ?? 'DNI') === 'DNI' ? 'selected' : '' }}>DNI / Documento Nacional</option>
-                        <option value="Cédula" {{ old('document_type', $customer->document_type ?? '') === 'Cédula' ? 'selected' : '' }}>Cédula de Identidad</option>
-                        <option value="RUC" {{ old('document_type', $customer->document_type ?? '') === 'RUC' ? 'selected' : '' }}>RUC (Registro Único de Contribuyentes)</option>
-                        <option value="RFC" {{ old('document_type', $customer->document_type ?? '') === 'RFC' ? 'selected' : '' }}>RFC / Identificación Fiscal</option>
-                        <option value="Pasaporte" {{ old('document_type', $customer->document_type ?? '') === 'Pasaporte' ? 'selected' : '' }}>Pasaporte</option>
-                        <option value="Otro" {{ old('document_type', $customer->document_type ?? '') === 'Otro' ? 'selected' : '' }}>Otro</option>
+                        <option value="Cédula" {{ old('document_type', $customer->document_type ?? 'Cédula') === 'Cédula' ? 'selected' : '' }}>Cédula de Identidad (Personal)</option>
+                        <option value="RUC" {{ old('document_type', $customer->document_type ?? '') === 'RUC' ? 'selected' : '' }}>RUC (Empresa)</option>
                     </select>
                     @error('document_type')
                         <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
@@ -70,11 +66,11 @@
                 <!-- Document Number -->
                 <div>
                     <label for="document_number" class="block font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                        Número de Identificación / Fiscal <span class="text-rose-500">*</span>
+                        Número de Cédula o RUC <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" name="document_number" id="document_number" 
                            class="w-full px-4 py-2.5 rounded-xl border {{ $errors->has('document_number') ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-slate-50/50' }} font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
-                           placeholder="Ej: 0928374651 o RFC..." 
+                           placeholder="Ej: 0928374651 (Cédula) o 1792345678001 (RUC)" 
                            value="{{ old('document_number', $customer->document_number ?? '') }}" 
                            required>
                     <p class="mt-1 text-[11px] text-slate-400">Debe ser único dentro de tu empresa.</p>

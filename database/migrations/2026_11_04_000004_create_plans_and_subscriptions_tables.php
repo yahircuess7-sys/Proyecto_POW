@@ -70,68 +70,16 @@ return new class extends Migration
             });
         }
 
-        // 4. Sembrar Planes Predefinidos de la Plataforma PuntoÁgil
+        // 4. Sembrar Plan Único Oficial de la Plataforma PuntoÁgil ($30.00 / mes)
         $plansCount = DB::table('plans')->count();
         if ($plansCount === 0) {
-            $starterPlanId = DB::table('plans')->insertGetId([
-                'name' => 'Emprendedor / Básico',
-                'slug' => 'emprendedor',
-                'description' => 'Ideal para pequeños negocios, ferreterías familiares y puestos de mostrador.',
-                'price' => 15.00,
+            $singlePlanId = DB::table('plans')->insertGetId([
+                'name' => 'Plan PuntoÁgil',
+                'slug' => 'puntoagil',
+                'description' => 'Acceso integral y completo a todos los módulos: POS, Inventario, Compras, Facturación, Devoluciones, Cajas y Reportes.',
+                'price' => 30.00,
                 'billing_cycle' => 'monthly',
                 'trial_days' => 14,
-                'max_users' => 2,
-                'max_products' => 150,
-                'max_cash_registers' => 1,
-                'features' => json_encode([
-                    'pos_sales' => true,
-                    'inventory_basic' => true,
-                    'reports_basic' => true,
-                    'export_csv' => true,
-                    'export_pdf' => true,
-                    'multi_cash_registers' => false,
-                    'advanced_reports' => false,
-                ]),
-                'is_active' => true,
-                'sort_order' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $proPlanId = DB::table('plans')->insertGetId([
-                'name' => 'Profesional / Crecimiento',
-                'slug' => 'profesional',
-                'description' => 'Para comercios en expansión con múltiples cajeros y control exhaustivo de inventario.',
-                'price' => 35.00,
-                'billing_cycle' => 'monthly',
-                'trial_days' => 14,
-                'max_users' => 6,
-                'max_products' => 1500,
-                'max_cash_registers' => 3,
-                'features' => json_encode([
-                    'pos_sales' => true,
-                    'inventory_basic' => true,
-                    'reports_basic' => true,
-                    'export_csv' => true,
-                    'export_pdf' => true,
-                    'multi_cash_registers' => true,
-                    'advanced_reports' => true,
-                    'sale_returns' => true,
-                    'supplier_purchases' => true,
-                ]),
-                'is_active' => true,
-                'sort_order' => 2,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $enterprisePlanId = DB::table('plans')->insertGetId([
-                'name' => 'Empresarial / Ilimitado',
-                'slug' => 'empresarial',
-                'description' => 'Control total corporativo con usuarios, productos y cajas registradoras ilimitadas.',
-                'price' => 79.00,
-                'billing_cycle' => 'monthly',
-                'trial_days' => 30,
                 'max_users' => null, // ilimitado
                 'max_products' => null, // ilimitado
                 'max_cash_registers' => null, // ilimitado
@@ -147,27 +95,30 @@ return new class extends Migration
                     'supplier_purchases' => true,
                     'priority_support' => true,
                     'audit_extended' => true,
+                    'purchases' => true,
+                    'returns' => true,
+                    'reports_export' => true,
                 ]),
                 'is_active' => true,
-                'sort_order' => 3,
+                'sort_order' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Asignar suscripción Pro/Empresarial por defecto a las empresas existentes sin suscripción
+            // Asignar el Plan Único de $30 a las empresas existentes sin suscripción
             $businesses = DB::table('businesses')->get();
             foreach ($businesses as $b) {
                 DB::table('subscriptions')->insert([
                     'business_id' => $b->id,
-                    'plan_id' => $proPlanId,
+                    'plan_id' => $singlePlanId,
                     'status' => 'active',
                     'billing_cycle' => 'monthly',
-                    'price' => 35.00,
+                    'price' => 30.00,
                     'starts_at' => now(),
                     'ends_at' => now()->addYear(),
                     'trial_ends_at' => null,
                     'payment_provider' => 'manual',
-                    'notes' => 'Suscripción inicial asignada en migración de fase 4',
+                    'notes' => 'Suscripción oficial de Plan Único asignada en migración de fase 4',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

@@ -34,9 +34,13 @@ class SubscriptionController extends Controller
 
         $subscription = $business->currentSubscription();
 
-        // Si el negocio no tiene suscripción creada aún, asignar el plan básico o profesional por defecto
+        // Si el negocio no tiene suscripción creada aún, asignar el plan oficial de $30 por defecto
         if (! $subscription) {
-            $defaultPlan = Plan::where('slug', 'profesional')->first() ?: Plan::first();
+            $defaultPlan = Plan::where('price', 30.00)->where('is_active', true)->first()
+                ?: Plan::where('slug', 'puntoagil')->first()
+                ?: Plan::where('is_active', true)->first()
+                ?: Plan::first();
+
             if ($defaultPlan) {
                 $subscription = Subscription::create([
                     'business_id' => $business->id,
@@ -47,7 +51,7 @@ class SubscriptionController extends Controller
                     'starts_at' => now(),
                     'ends_at' => now()->addMonth(),
                     'payment_provider' => 'manual',
-                    'notes' => 'Suscripción inicial asignada automáticamente.',
+                    'notes' => 'Suscripción oficial asignada automáticamente.',
                 ]);
             }
         }

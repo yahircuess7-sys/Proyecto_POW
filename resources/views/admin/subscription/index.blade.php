@@ -128,9 +128,15 @@
                     </form>
                 @endif
 
+                @if($plans->count() > 1)
                 <a href="#catalogo-planes" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 transition-all">
                     <i class="bi bi-arrow-up-circle mr-1"></i> Mejorar o Cambiar Plan
                 </a>
+                @else
+                <a href="#catalogo-planes" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 transition-all">
+                    <i class="bi bi-patch-check mr-1"></i> Ver Cobertura del Plan ($30/mes)
+                </a>
+                @endif
             </div>
         </div>
     </div>
@@ -240,12 +246,16 @@
 
     <!-- Plan Catalog Grid -->
     <div id="catalogo-planes" class="space-y-6 pt-4">
-        <div>
-            <h2 class="text-lg font-bold text-slate-900 tracking-tight">Planes de Suscripción Disponibles</h2>
-            <p class="text-xs text-slate-500">Selecciona el plan que mejor se adapte al crecimiento y volumen de operaciones de tu negocio.</p>
+        <div class="text-center sm:text-left">
+            <h2 class="text-lg font-bold text-slate-900 tracking-tight">
+                {{ $plans->count() === 1 ? 'Membresía Oficial PuntoÁgil' : 'Planes de Suscripción Disponibles' }}
+            </h2>
+            <p class="text-xs text-slate-500">
+                {{ $plans->count() === 1 ? 'Tarifa única con acceso integral a todos los módulos y funciones del sistema por solo $30.00/mes.' : 'Selecciona el plan que mejor se adapte al crecimiento y volumen de operaciones de tu negocio.' }}
+            </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div class="grid grid-cols-1 {{ $plans->count() === 1 ? 'max-w-xl mx-auto' : ($plans->count() === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-3') }} gap-6 items-stretch">
             @foreach($plans as $plan)
                 @php
                     $isCurrentPlan = ($subscription?->plan_id === $plan->id);

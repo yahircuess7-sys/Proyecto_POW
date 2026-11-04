@@ -53,7 +53,7 @@ class SubscriptionAndSuperAdminTest extends TestCase
                 'name' => "Plan Test {$prefix}",
                 'slug' => "plan-test-{$prefix}-" . uniqid(),
                 'description' => 'Plan de prueba',
-                'price' => 25.00,
+                'price' => 30.00,
                 'billing_cycle' => 'monthly',
                 'trial_days' => 14,
                 'max_users' => 2,

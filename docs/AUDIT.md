@@ -524,7 +524,7 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
 * **Catálogo y Modelo de Datos:**
   * Tabla `plans`: Almacena tiers de precios (`name`, `slug`, `price`, `billing_cycle`, `trial_days`, `max_users`, `max_products`, `max_cash_registers`, `features` en formato JSONB, `is_active`, `sort_order`).
   * Tabla `subscriptions`: Vincula a cada empresa cliente (`business_id`) con su plan activo, periodicidad, estado (`active`, `trialing`, `pending`, `past_due`, `cancelled`, `suspended`), fechas de vigencia (`starts_at`, `ends_at`, `trial_ends_at`, `cancelled_at`), y referencias al proveedor de pasarela (`payment_provider`, `provider_subscription_id`, `provider_customer_id`).
-  * Planes base inicializados: *Emprendedor* ($15/mes), *Profesional* ($35/mes), *Empresarial* ($79/mes).
+  * Modelo de Plan Único Oficial ($30.00 USD/mes): Por requerimiento comercial de PuntoÁgil, se consolidó la suscripción en un único plan integral ("Plan PuntoÁgil") a $30.00/mes sin restricciones modulares, migrando automáticamente a todos los clientes existentes. Se conservó en la plataforma la capacidad administrativa en Super Admin de crear y gestionar planes alternativos si se requieren a futuro.
 * **Control Estricto de Cuotas en Servidor:**
   * Se implementó validación a nivel de controlador y modelo: `$business->canAddUser()`, `$business->canAddProduct()`, `$business->canAddCashRegister()`.
   * La interfaz gráfica muestra barras de progreso del consumo de recursos vs. el límite contratado.

@@ -582,6 +582,70 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
   * `tests/Feature/PosCashAndReturnsTest.php`: 4 tests, 51 aserciones, **100% PASS**.
   * **Cero regresiones** detectadas en la plataforma.
 
+---
+
+## 15. Fase 5: Endurecimiento de Seguridad, Pruebas Integrales, Validación Fiscal de Nicaragua y Producción
+
+### 15.1 Módulo 17: Revisión Técnica y Endurecimiento de Seguridad
+Se ejecutó una revisión técnica sobre el código, base de datos y dependencias de PuntoÁgil, documentando cada hallazgo, su gravedad, la corrección aplicada y los riesgos residuales:
+
+| # | Hallazgo Detectado | Gravedad | Corrección Implementada | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **43 vulnerabilidades CVE en dependencias PHP** (`dompdf/dompdf < 3.1.6`, `symfony/* < 7.4.23`, `laravel/framework < 12.71.0`) reportadas por `composer audit`. | **Alta** | Se actualizaron los paquetes mediante `composer update` (`dompdf/dompdf v3.1.6`, `laravel/framework v12.71.0`, `symfony/* v7.4.23`). `composer audit` ahora reporta **0 vulnerabilidades**. | **CORREGIDO** |
+| **2** | **`isRemoteEnabled = true` en Dompdf** (`SaleController@exportPdf` y `ProductController@exportPdf`), lo que abría superficie innecesaria de SSRF al renderizar PDFs. | **Media** | Se deshabilitó la carga remota (`isRemoteEnabled = false`) y la evaluación de PHP embebido (`isPhpEnabled = false`) en ambos controladores. | **CORREGIDO** |
+| **3** | **Políticas RLS parciales y cláusula permisiva en Supabase:** Solo 3 de 31 tablas tenían `ROW LEVEL SECURITY` activo, y sus políticas incluían `OR current_setting('app.current_business_id', true) IS NULL`, lo que permitía lecturas sin contexto si se consultaba vía PostgREST. | **Alta** | Mediante la migración [`2026_11_04_000007_harden_supabase_rls_and_postgrest_security.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/database/migrations/2026_11_04_000007_harden_supabase_rls_and_postgrest_security.php), se activó `ENABLE ROW LEVEL SECURITY` en las **31 tablas** del esquema `public`, se eliminó la cláusula `OR ... IS NULL` en las 17 tablas multitenant y se revocaron permisos directos a los roles públicos `anon` y `authenticated` de PostgREST. | **CORREGIDO** |
+| **4** | **Interpolación directa en `SET app.current_business_id`** dentro de [`TenantManager.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Services/TenantManager.php). | **Baja (Defensa en profundidad)** | Se reemplazó por consulta parametrizada `SELECT set_config('app.current_business_id', ?, false)` con casteo explícito a entero `(string) (int) $tenant->id`. | **CORREGIDO** |
+| **5** | **Ausencia de cabeceras HTTP de seguridad y `trustProxies`** para entornos detrás de balanceadores o Vercel Edge. | **Media** | Se implementó el middleware [`SecurityHeaders.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Middleware/SecurityHeaders.php) (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`) y se configuró `$middleware->trustProxies(at: '*')` en [`bootstrap/app.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/bootstrap/app.php) junto con `URL::forceScheme('https')` en producción. | **CORREGIDO** |
+| **6** | **Verificación de estado de suscripción en rutas operativas:** Una empresa activa en `businesses` pero con suscripción `suspended` o `past_due` podía seguir operando el POS si no se validaba en el middleware. | **Media** | Se reforzó [`IdentifyTenant.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Middleware/IdentifyTenant.php) para bloquear operaciones de POS/inventario cuando la suscripción de la empresa no esté activa, redirigiendo al propietario a `/admin/subscription` o respondiendo `403` en llamadas JSON. | **CORREGIDO** |
+| **7** | **Sanitización contra inyección de fórmulas CSV (CSV Injection)** en exportaciones de inventario y auditoría. | **Baja** | Se reforzó `escapeCsvValue()` en [`ProductController.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Controllers/ProductController.php) y [`AuditLogController.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Controllers/Admin/AuditLogController.php) prefijando con comilla simple `'` cualquier celda que inicie con `=`, `+`, `-` o `@`. | **CORREGIDO** |
+
+* **Riesgos Residuales y Consideraciones de Arquitectura:**
+  * Laravel se conecta a Supabase mediante el pooler PgBouncer (`puerto 6543`) utilizando el rol administrativo `postgres` (`rolbypassrls = true`). Por tanto, el aislamiento entre negocios durante las peticiones de Laravel depende primariamente de `IdentifyTenant`, `BusinessScope` (`BelongsToBusiness`) y las Eloquent Policies, mientras que el RLS de PostgreSQL protege la base de datos frente a accesos externos por la API PostgREST de Supabase o roles no privilegiados.
+
+---
+
+### 15.2 Módulo 18: Integración y Pruebas Completas
+Se ejecutaron todas las suites de pruebas automatizadas del sistema verificando autenticación, roles, aislamiento multiempresa, inventario, compras, POS, caja, devoluciones, suscripciones, Super Admin, auditoría inmutable y reglas fiscales de Nicaragua:
+
+* [`tests/Feature/SecurityAndNicaraguaFiscalTest.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/tests/Feature/SecurityAndNicaraguaFiscalTest.php): **3 passed (40 aserciones)** — Cabeceras HTTP, RateLimiter de login, verificación de 31/31 tablas con RLS en PostgreSQL, bloqueo por suscripción suspendida, cálculo de IVA 15% (Régimen General Nicaragua) y 0% (Cuota Fija), restitución proporcional de IVA en devoluciones e inmutabilidad física de ventas y devoluciones.
+* [`tests/Feature/SubscriptionAndSuperAdminTest.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/tests/Feature/SubscriptionAndSuperAdminTest.php): **5 passed (60 aserciones)** — Cuotas de plan en servidor, upgrades/downgrades, webhooks idempotentes con redacción PCI-DSS, panel Super Admin y auditoría inmutable con exportación CSV.
+* [`tests/Feature/PosCashAndReturnsTest.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/tests/Feature/PosCashAndReturnsTest.php): **4 passed (51 aserciones)** — Ciclo completo de turno de caja y arqueo, ventas POS idempotentes, devoluciones parciales/totales con Kardex y reportes con aislamiento multitenant.
+* [`tests/Feature/PurchaseAndSupplyManagementTest.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/tests/Feature/PurchaseAndSupplyManagementTest.php): **4 passed (35 aserciones)** — Órdenes de compra pendientes vs. recibidas, bloqueo de doble recepción, cancelación controlada y cálculo de descuentos/costos.
+* Suites adicionales de Fase 1, 2 y 3 (`ArchitectureAndSecurityTest`, `AuthAndAccessControlTest`, `BusinessAndUserManagementTest`, `MultiTenantIsolationTest`, `InventoryAndStockManagementTest`, `CustomerAndSupplierManagementTest`).
+
+---
+
+### 15.3 Módulo 19: Validación Fiscal de Nicaragua
+Se revisó el marco tributario vigente en Nicaragua para adaptar la configuración fiscal y los comprobantes de PuntoÁgil sin simular certificaciones oficiales no autorizadas:
+
+#### Fuentes Oficiales Consultadas
+1. **Ley No. 822 — Ley de Concertación Tributaria de la República de Nicaragua (LCT)** y su Reglamento (**Decreto No. 01-2013**):
+   * **Art. 109 LCT:** Alícuota general del Impuesto al Valor Agregado (**IVA del 15%**) en enajenación de bienes y prestación de servicios gravados.
+   * **Art. 123 LCT:** Rebajas, bonificaciones y devoluciones — requisito de hacer constar de forma clara y expresa la restitución o cancelación del IVA trasladado en las notas de crédito/devolución y el reingreso físico al inventario.
+   * **Art. 143 LCT:** Obligaciones de los responsables recaudadores de IVA — traslado expreso y por separado del IVA, e inclusión del **Número RUC** o **Cédula** del comprador cuando sea responsable recaudador de IVA/ISC, agente retenedor de IR o contribuyente de Cuota Fija.
+   * **Arts. 251–259 LCT:** **Régimen Simplificado de Cuota Fija** — los pequeños contribuyentes inscritos en este régimen pagan una tarifa mensual fija y **no están autorizados a trasladar ni cobrar IVA (0%)** en sus ventas.
+2. **Ley No. 562 — Código Tributario de la República de Nicaragua**:
+   * **Art. 43 y Art. 103 numeral 3:** Plazo general de prescripción tributaria de **4 años** (6 años en casos de ocultamiento) y deber formal de conservar en buen estado los registros, facturas y soportes contables por el tiempo de la prescripción.
+3. **Dirección General de Ingresos (DGI Nicaragua) — Disposiciones sobre Facturación y Sistema SACFI**:
+   * **Pie de Imprenta Fiscal (SACFI):** Todo documento con validez de Crédito Fiscal (Factura o Nota de Crédito fiscal) debe contar con numeración, serie y Pie de Imprenta Fiscal otorgado a través del **Sistema de Autorización de Comprobantes Fiscales e Imprentas (SACFI)** o sistema computarizado expresamente homologado por la DGI.
+
+#### Mejoras Técnicas Implementadas
+* **Helper Tributario [`NicaraguaFiscalHelper.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Support/NicaraguaFiscalHelper.php):**
+  * Constantes oficiales (`GENERAL_IVA_RATE = 15.0`, `MIN_DOCUMENT_RETENTION_YEARS = 4`), catálogo de regímenes tributarios (`regimen_general`, `cuota_fija`, `exento`) y validadores de formato para **Cédula de Identidad Ciudadana de Nicaragua** (`13 dígitos + 1 letra`, ej. `001-010190-0001A`) y **Número RUC DGI** (`14 caracteres alfanuméricos`, ej. `J0310000000001`).
+* **Régimen Tributario y Cálculo Dinámico de IVA en Servidor ([`Business.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Models/Business.php), [`SaleController.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Controllers/SaleController.php), [`settings.blade.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/resources/views/admin/business/settings.blade.php)):**
+  * El propietario puede configurar el **Régimen Tributario** (`Régimen General 15%`, `Régimen Simplificado de Cuota Fija 0%`, `Exento 0%`), el **Departamento/Municipio** y aplicar con un clic el **Perfil Fiscal Nicaragua (`NIO C$`, `IVA 15%`, `America/Managua`)**.
+  * En [`SaleController::store()`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Http/Controllers/SaleController.php#L170-L176) y en la pantalla del POS ([`sales/index.blade.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/resources/views/sales/index.blade.php)), el IVA se calcula dinámicamente según `effectiveTaxPercentage()`, garantizando `15%` en Régimen General y forzando `0%` en Cuota Fija o Exento.
+* **Desglose de IVA Restituido en Devoluciones e Inmutabilidad ([`Sale.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Models/Sale.php), [`SaleReturn.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/app/Models/SaleReturn.php), [`returns/show.blade.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/resources/views/sales/returns/show.blade.php)):**
+  * Los modelos `Sale` y `SaleReturn` prohíben cualquier eliminación física (`DELETE`) lanzando `\LogicException` para cumplir con el deber de conservación de 4 años (Art. 103 Ley No. 562).
+  * Los comprobantes de devolución desglosan expresamente la **Base Gravable Devuelta**, el **IVA Restituido / Cancelado (Art. 123 Ley No. 822)** y el **Total Reembolsado**, manteniendo el vínculo con la venta original y el movimiento en Kardex.
+* **Separación Estricta entre Comprobante Interno y Factura Fiscal DGI:**
+  * Tanto el comprobante PDF de venta ([`invoice_pdf.blade.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/resources/views/sales/invoice_pdf.blade.php)) como la nota de devolución ([`returns/show.blade.php`](file:///d:/Proyecto_PuntoAgil/Punto_Agil/resources/views/sales/returns/show.blade.php)) muestran un aviso destacado aclarando que constituyen **comprobantes internos de control de caja** y que **no poseen Pie de Imprenta Fiscal (SACFI - DGI Nicaragua)** ni confieren Crédito Fiscal de IVA por sí mismos.
+
+#### Validaciones Externas Pendientes para Facturación Fiscal Oficial en Nicaragua
+1. **Homologación de Sistema Computarizado ante la DGI (SACFI):** Si un comercio suscriptor desea que el ticket impreso por PuntoÁgil tenga validez fiscal directa para Crédito Fiscal de IVA (en lugar de usar talonario preimpreso paralelo), dicho contribuyente debe tramitar ante la DGI Nicaragua la resolución administrativa de autorización de sistema computarizado de facturación, asignando su serie, rango de numeración oficial y Pie de Imprenta Fiscal.
+2. **Asesoría Contable para Retenciones en la Fuente (IR 2% / Alcaldía 1%):** En operaciones entre contribuyentes del Régimen General donde el comprador actúa como Agente Retenedor, el registro contable de certificados de retención recibidos como medio parcial de pago debe validarse con el contador del comercio según su giro de negocio.
+
+
 
 
 

@@ -215,7 +215,10 @@
                         <span class="font-mono font-semibold text-rose-600" id="val_discount">-$0.00</span>
                     </div>
                     <div class="flex items-center justify-between text-slate-500">
-                        <span>IVA (12%):</span>
+                        @php
+                            $posEffectiveTaxPercentage = isset($currentBusiness) ? $currentBusiness->effectiveTaxPercentage(12.0) : 12.0;
+                        @endphp
+                        <span>IVA ({{ $posEffectiveTaxPercentage }}%):</span>
                         <span class="font-mono font-semibold text-slate-700" id="val_tax">$0.00</span>
                     </div>
                     
@@ -251,6 +254,7 @@
 @section('scripts')
 <script>
     const rawProducts = @json($products->toArray());
+    const posTaxRate = {{ (isset($currentBusiness) ? $currentBusiness->effectiveTaxPercentage(12.0) : 12.0) / 100.0 }};
 
     const products = rawProducts.map(product => ({
         ...product,
@@ -531,7 +535,7 @@
 
         const effectiveDiscount = Math.min(discountVal, subtotal);
         const taxableBase = Math.max(0, subtotal - effectiveDiscount);
-        const tax = taxableBase * 0.12;
+        const tax = taxableBase * posTaxRate;
         const total = taxableBase + tax;
 
         subtotalEl.textContent = formatCurrency(subtotal);
@@ -587,7 +591,7 @@
 
         const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
         const discount = Math.max(0, parseFloat(saleDiscountInput.value) || 0);
-        const total = Math.max(0, subtotal - discount) * 1.12;
+        const total = Math.max(0, subtotal - discount) * (1 + posTaxRate);
         let paidAmount = total;
 
         if (selectedPaymentMethod === 'cash') {

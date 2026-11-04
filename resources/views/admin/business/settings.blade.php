@@ -74,14 +74,18 @@
         @csrf
         @method('PUT')
 
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <h2 class="text-sm font-bold text-slate-900">Datos Comerciales y Fiscales</h2>
-                <p class="text-xs text-slate-500">Se reflejan automáticamente en los tickets de venta, facturación interna y reportes.</p>
+                <h2 class="text-sm font-bold text-slate-900">Datos Comerciales y Fiscales (Normativa DGI Nicaragua - Ley No. 822)</h2>
+                <p class="text-xs text-slate-500">Se reflejan automáticamente en los tickets de venta, comprobantes internos y reportes contables.</p>
             </div>
-            <span class="p-2 rounded-xl bg-slate-100 text-slate-600">
-                <i class="bi bi-building-gear"></i>
-            </span>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="applyNicaraguaPreset()"
+                        class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-[11px] transition-colors flex items-center gap-1.5">
+                    <i class="bi bi-flag-fill"></i>
+                    <span>Aplicar Perfil Fiscal Nicaragua (C$ / IVA 15%)</span>
+                </button>
+            </div>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -92,9 +96,30 @@
             </div>
 
             <div>
-                <label class="block font-semibold text-slate-700 mb-1.5">RUC / NIT / Identificación Fiscal</label>
-                <input type="text" name="tax_id" value="{{ old('tax_id', $business->tax_id) }}"
+                <label class="block font-semibold text-slate-700 mb-1.5">Número RUC (DGI Nicaragua - 14 caracteres) / Identificación Fiscal</label>
+                <input type="text" name="tax_id" id="input_tax_id" value="{{ old('tax_id', $business->tax_id) }}"
+                       placeholder="ej. J0310000000001 o 0010101900001A"
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1.5">Régimen Tributario (Ley No. 822 LCT)</label>
+                @php
+                    $currentRegime = old('tax_regime', $business->settings['tax_regime'] ?? 'regimen_general');
+                @endphp
+                <select name="tax_regime" id="input_tax_regime" onchange="handleTaxRegimeChange(this.value)"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
+                    <option value="regimen_general" {{ $currentRegime === 'regimen_general' ? 'selected' : '' }}>Régimen General (Responsable Recaudador IVA - 15%)</option>
+                    <option value="cuota_fija" {{ $currentRegime === 'cuota_fija' ? 'selected' : '' }}>Régimen Simplificado de Cuota Fija (No traslada IVA - 0%)</option>
+                    <option value="exento" {{ $currentRegime === 'exento' ? 'selected' : '' }}>Exento de IVA (0%)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1.5">Departamento / Municipio</label>
+                <input type="text" name="municipality" id="input_municipality" value="{{ old('municipality', $business->settings['municipality'] ?? 'Managua, Nicaragua') }}"
+                       placeholder="ej. Managua, Nicaragua"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
             </div>
 
             <div class="sm:col-span-2">
@@ -117,26 +142,26 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label class="block font-semibold text-slate-700 mb-1.5">Dirección de Sucursal / Matriz</label>
+                <label class="block font-semibold text-slate-700 mb-1.5">Dirección de Sucursal / Casa Matriz</label>
                 <input type="text" name="address" value="{{ old('address', $business->address) }}"
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
             </div>
 
             <div>
-                <label class="block font-semibold text-slate-700 mb-1.5">Moneda Base <span class="text-rose-500">*</span></label>
-                <input type="text" name="currency" value="{{ old('currency', $business->settings['currency'] ?? 'USD') }}" required
+                <label class="block font-semibold text-slate-700 mb-1.5">Moneda Base (NIO = Córdoba C$, USD = Dólar $) <span class="text-rose-500">*</span></label>
+                <input type="text" name="currency" id="input_currency" value="{{ old('currency', $business->settings['currency'] ?? 'USD') }}" required
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
             </div>
 
             <div>
-                <label class="block font-semibold text-slate-700 mb-1.5">Porcentaje IVA (%) <span class="text-rose-500">*</span></label>
-                <input type="number" step="0.01" name="tax_percentage" value="{{ old('tax_percentage', $business->settings['tax_percentage'] ?? 12) }}" required
+                <label class="block font-semibold text-slate-700 mb-1.5">Alícuota IVA (%) <span class="text-rose-500">*</span></label>
+                <input type="number" step="0.01" name="tax_percentage" id="input_tax_percentage" value="{{ old('tax_percentage', $business->settings['tax_percentage'] ?? 15) }}" required
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
             </div>
 
             <div class="sm:col-span-2">
                 <label class="block font-semibold text-slate-700 mb-1.5">Zona Horaria <span class="text-rose-500">*</span></label>
-                <input type="text" name="timezone" value="{{ old('timezone', $business->settings['timezone'] ?? 'America/Guayaquil') }}" required
+                <input type="text" name="timezone" id="input_timezone" value="{{ old('timezone', $business->settings['timezone'] ?? 'America/Managua') }}" required
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
             </div>
         </div>
@@ -178,4 +203,27 @@
         </div>
     </form>
 </div>
+
+<script>
+    function applyNicaraguaPreset() {
+        document.getElementById('input_tax_regime').value = 'regimen_general';
+        document.getElementById('input_currency').value = 'NIO';
+        document.getElementById('input_tax_percentage').value = '15';
+        document.getElementById('input_timezone').value = 'America/Managua';
+        const munInput = document.getElementById('input_municipality');
+        if (munInput && !munInput.value.trim()) {
+            munInput.value = 'Managua, Nicaragua';
+        }
+    }
+
+    function handleTaxRegimeChange(regime) {
+        const taxInput = document.getElementById('input_tax_percentage');
+        if (!taxInput) return;
+        if (regime === 'cuota_fija' || regime === 'exento') {
+            taxInput.value = '0';
+        } else if (parseFloat(taxInput.value) === 0) {
+            taxInput.value = '15';
+        }
+    }
+</script>
 @endsection

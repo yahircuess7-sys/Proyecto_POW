@@ -18,19 +18,22 @@ if (file_exists(__DIR__ . '/../.env')) {
     }
 }
 
-return Application::configure(basePath: dirname(__DIR__))
+return tap(Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'tenant' => \App\Http\Middleware\IdentifyTenant::class,
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\IdentifyTenant::class,
         ]);
 
@@ -50,4 +53,21 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route('login')->with('error', 'Tu sesión ha expirado por inactividad. Por favor, ingresa nuevamente.');
         });
-    })->create();
+    })->create(), function (Application $app): void {
+        // Soporte nativo para entorno Serverless de solo lectura (Vercel / AWS Lambda)
+        if (! empty($_ENV['VERCEL']) || ! empty($_SERVER['VERCEL']) || getenv('VERCEL')) {
+            $tmpStorage = '/tmp/storage';
+            foreach ([
+                $tmpStorage . '/framework/views',
+                $tmpStorage . '/framework/cache/data',
+                $tmpStorage . '/framework/sessions',
+                $tmpStorage . '/logs',
+                $tmpStorage . '/app/public',
+            ] as $dir) {
+                if (! is_dir($dir)) {
+                    @mkdir($dir, 0777, true);
+                }
+            }
+            $app->useStoragePath($tmpStorage);
+        }
+    });

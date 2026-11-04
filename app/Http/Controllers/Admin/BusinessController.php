@@ -57,7 +57,10 @@ class BusinessController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'commercial_name' => ['nullable', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:50'],
+            'tax_regime' => ['nullable', 'string', 'in:regimen_general,cuota_fija,exento'],
+            'municipality' => ['nullable', 'string', 'max:150'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
@@ -69,10 +72,18 @@ class BusinessController extends Controller
             'receipt_footer_note' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $taxRegime = $validated['tax_regime'] ?? ($business->settings['tax_regime'] ?? 'regimen_general');
+        $taxPercentage = in_array($taxRegime, ['cuota_fija', 'exento'], true)
+            ? 0.0
+            : (float) ($validated['tax_percentage'] ?? ($business->settings['tax_percentage'] ?? 15));
+
         $settings = array_merge($business->settings ?? [], [
-            'currency' => strtoupper(trim($validated['currency'] ?? ($business->settings['currency'] ?? 'USD'))),
-            'tax_percentage' => (float) ($validated['tax_percentage'] ?? ($business->settings['tax_percentage'] ?? 12)),
-            'timezone' => $validated['timezone'] ?? ($business->settings['timezone'] ?? 'America/Guayaquil'),
+            'commercial_name' => $validated['commercial_name'] ?? ($business->settings['commercial_name'] ?? $validated['name']),
+            'tax_regime' => $taxRegime,
+            'municipality' => $validated['municipality'] ?? ($business->settings['municipality'] ?? 'Managua, Nicaragua'),
+            'currency' => strtoupper(trim($validated['currency'] ?? ($business->settings['currency'] ?? 'NIO'))),
+            'tax_percentage' => $taxPercentage,
+            'timezone' => $validated['timezone'] ?? ($business->settings['timezone'] ?? 'America/Managua'),
             'slogan' => $validated['slogan'] ?? ($business->settings['slogan'] ?? null),
             'receipt_format' => $validated['receipt_format'] ?? ($business->settings['receipt_format'] ?? 'ticket_80mm'),
             'receipt_footer_note' => $validated['receipt_footer_note'] ?? ($business->settings['receipt_footer_note'] ?? 'Comprobante interno emitido por PuntoÁgil Cloud POS.'),
@@ -80,7 +91,7 @@ class BusinessController extends Controller
 
         $business->update([
             'name' => $validated['name'],
-            'tax_id' => $validated['tax_id'],
+            'tax_id' => $validated['tax_id'] ? strtoupper(trim($validated['tax_id'])) : null,
             'email' => $validated['email'],
             'phone' => $validated['phone'],
             'address' => $validated['address'],
@@ -94,6 +105,7 @@ class BusinessController extends Controller
             [
                 'name' => $business->name,
                 'tax_id' => $business->tax_id,
+                'tax_regime' => $settings['tax_regime'],
                 'currency' => $settings['currency'],
                 'tax_percentage' => $settings['tax_percentage'],
             ],
@@ -299,7 +311,12 @@ class BusinessController extends Controller
             $business->id
         );
 
-        return back()
+        if (str_contains((string) url()->previous(), '/superadmin/businesses')) {
+            return redirect()->route('admin.superadmin.businesses')
+                ->with('success', "Estado de {$business->name} actualizado a {$newStatus}.");
+        }
+
+        return redirect()->route('admin.businesses.index')
             ->with('success', "Estado de {$business->name} actualizado a {$newStatus}.");
     }
 }

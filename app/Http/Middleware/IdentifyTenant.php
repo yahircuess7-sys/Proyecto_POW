@@ -79,6 +79,35 @@ class IdentifyTenant
             // Compartir la empresa y rol actual con todas las vistas Blade
             view()->share('currentBusiness', $business);
             view()->share('currentBusinessUserRole', $user->roleLabel($business?->id));
+
+            // Control en servidor del estado de la licencia/suscripción (Módulo 14 y 17)
+            if ($business && ! $user->isSuperAdmin()) {
+                $subscription = $business->currentSubscription();
+                if ($subscription && ! $subscription->isActive()) {
+                    $allowedRoutesWhenInactive = [
+                        'admin.subscription.*',
+                        'business.switch',
+                        'logout',
+                        'verification.*',
+                    ];
+
+                    if (! $request->routeIs($allowedRoutesWhenInactive)) {
+                        if ($request->expectsJson() || $request->ajax()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'La suscripción de la empresa no se encuentra activa (' . $subscription->statusLabel() . '). Regularice su licencia para operar.',
+                            ], 403);
+                        }
+
+                        if ($user->isOwner() || $user->isAdmin()) {
+                            return redirect()->route('admin.subscription.index')
+                                ->with('error', 'La suscripción de tu empresa se encuentra en estado "' . $subscription->statusLabel() . '". Regulariza tu plan para continuar operando.');
+                        }
+
+                        abort(403, 'La suscripción de la empresa se encuentra vencida o suspendida. Contacte al propietario del negocio.');
+                    }
+                }
+            }
         }
 
         return $next($request);

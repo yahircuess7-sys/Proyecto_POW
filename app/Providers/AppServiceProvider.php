@@ -27,6 +27,7 @@ use App\Policies\UserPolicy;
 use App\Services\TenantManager;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production') || filter_var(env('FORCE_HTTPS', false), FILTER_VALIDATE_BOOLEAN)) {
+            URL::forceScheme('https');
+        }
+
         Paginator::useBootstrapFive();
 
         // Registro explícito de Políticas de Autorización por Modelo

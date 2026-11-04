@@ -149,6 +149,9 @@ class AuditLogController extends Controller
         $value = trim($value ?? '');
         $value = str_replace('"', '""', $value);
         $value = str_replace(["\r\n", "\n", "\r"], ' ', $value);
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
+            $value = "'" . $value;
+        }
         return $value;
     }
 }

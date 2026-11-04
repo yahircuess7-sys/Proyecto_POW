@@ -17,6 +17,13 @@ class Sale extends Model
     public const STATUS_REFUNDED = 'refunded';
     public const STATUS_CANCELLED = 'cancelled';
 
+    protected static function booted(): void
+    {
+        static::deleting(function () {
+            throw new \LogicException('Los comprobantes de venta confirmados son documentos históricos inmutables y no pueden eliminarse físicamente (Art. 103 Código Tributario de Nicaragua - Ley No. 562). Utilice devoluciones o anulaciones controladas.');
+        });
+    }
+
     protected $fillable = [
         'business_id',
         'cash_shift_id',

@@ -464,7 +464,8 @@ class ProductController extends Controller
         $html = view('inventory.export_pdf', compact('products'))->render();
 
         $options = new Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('isPhpEnabled', false);
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'landscape');
@@ -540,6 +541,9 @@ class ProductController extends Controller
         $value = $value ?? '';
         $value = str_replace(["\\r\\n", "\\n", "\\r", "\r\n", "\n", "\r", "\\t", "\t"], ' ', $value);
         $value = $this->normalizeCsvText($value);
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
+            $value = "'" . $value;
+        }
         return str_replace('"', '""', $value);
     }
 

@@ -219,4 +219,44 @@ class Business extends Model
     {
         return $this->status === 'active';
     }
+
+    /**
+     * Devuelve el régimen tributario configurado del negocio (por defecto 'regimen_general').
+     */
+    public function taxRegime(): string
+    {
+        return (string) ($this->settings['tax_regime'] ?? 'regimen_general');
+    }
+
+    /**
+     * Calcula el porcentaje de IVA efectivo según el régimen tributario del negocio (Módulo 19 - Ley No. 822 Nicaragua).
+     * En Régimen de Cuota Fija (Art. 251 LCT) o Exento, no se traslada IVA (0%).
+     */
+    public function effectiveTaxPercentage(float $default = 12.0): float
+    {
+        $regime = $this->taxRegime();
+        if (in_array($regime, ['cuota_fija', 'exento'], true)) {
+            return 0.0;
+        }
+
+        return isset($this->settings['tax_percentage'])
+            ? (float) $this->settings['tax_percentage']
+            : $default;
+    }
+
+    /**
+     * Código ISO de la moneda base del negocio (ej. NIO o USD).
+     */
+    public function currencyCode(): string
+    {
+        return strtoupper((string) ($this->settings['currency'] ?? 'USD'));
+    }
+
+    /**
+     * Símbolo monetario para comprobantes e interfaz (C$ para Córdoba Nicaragüense NIO, $ para USD).
+     */
+    public function currencySymbol(): string
+    {
+        return $this->currencyCode() === 'NIO' ? 'C$' : '$';
+    }
 }

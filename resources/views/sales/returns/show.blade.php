@@ -94,8 +94,16 @@
                     </tbody>
                     <tfoot class="bg-slate-50 font-bold border-t border-slate-200">
                         <tr>
-                            <td colspan="3" class="py-3 px-4 text-right uppercase text-slate-700">Total Reembolsado:</td>
-                            <td class="py-3 px-4 text-right font-mono text-base text-rose-700">-${{ number_format($saleReturn->total_refunded, 2) }}</td>
+                            <td colspan="3" class="py-2 px-4 text-right uppercase text-slate-600">Base Gravable Devuelta (Subtotal):</td>
+                            <td class="py-2 px-4 text-right font-mono text-slate-800">-${{ number_format($saleReturn->total_refunded, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="py-2 px-4 text-right uppercase text-slate-600">IVA Restituido / Cancelado (Art. 123 Ley No. 822):</td>
+                            <td class="py-2 px-4 text-right font-mono text-slate-800">-${{ number_format($saleReturn->restitutedTaxAmount(), 2) }}</td>
+                        </tr>
+                        <tr class="border-t border-slate-200">
+                            <td colspan="3" class="py-3 px-4 text-right uppercase text-slate-900">Total Reembolsado (Con Impuesto Restituido):</td>
+                            <td class="py-3 px-4 text-right font-mono text-base text-rose-700">-${{ number_format($saleReturn->totalWithTax(), 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -110,7 +118,11 @@
 
         <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-2.5 text-emerald-900">
             <i class="bi bi-shield-check text-base text-emerald-600"></i>
-            <span><strong>Trazabilidad de Inventario:</strong> Los productos devueltos fueron restituidos con registro tipo ENTRADA en la bitácora de movimientos (Kardex).</span>
+            <span><strong>Trazabilidad de Inventario y Fiscal (Art. 123 Ley No. 822):</strong> Los productos devueltos fueron restituidos físicamente con registro tipo ENTRADA en el Kardex y se deja constancia expresa de la proporción de IVA restituido respecto a la venta original ({{ $saleReturn->sale->invoice_number }}).</span>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-[11px] text-slate-600 text-center">
+            <strong>AVISO DE DOCUMENTO INTERNO:</strong> Esta nota de devolución es un soporte contable interno del POS. No sustituye a una Nota de Crédito preimpresa o computadorizada autorizada con Pie de Imprenta Fiscal por la DGI (SACFI).
         </div>
 
         <!-- Firmas -->

@@ -36,6 +36,7 @@ class FailedJobProvider implements FailedJobProviderInterface, CountableFailedJo
         protected FailedJobProviderInterface $failer,
         protected Events $events,
         protected StringEncrypter $encrypter,
+        protected ?ExceptionReporter $reporter = null,
     ) {
         //
     }
@@ -69,7 +70,19 @@ class FailedJobProvider implements FailedJobProviderInterface, CountableFailedJo
             'started_at' => $processingJobDetails['started_at']->toDateTimeString('microsecond'),
             'attempts' => $processingJobDetails['attempts'],
             'payload' => $payload,
-            'exception' => (string) mb_convert_encoding($exception, 'UTF-8'),
+            'exception_preview' => mb_substr(
+                string: $exception->getMessage()
+                    ? $exception::class.': '.$exception->getMessage().' in '.$exception->getFile().':'.$exception->getLine()
+                    : $exception::class.' in '.$exception->getFile().':'.$exception->getLine(),
+                start: 0,
+                length: 1001,
+                encoding: 'UTF-8',
+            ),
+            'job_name' => (json_decode($payload, associative: true) ?? [])['displayName'] ?? '',
+            'exception' => (string) $exception,
+            ...$this->reporter === null ? [] : [
+                'exception_id' => $this->reporter->exceptionId($exception),
+            ],
         ]);
 
         $this->queue->finishProcessingJob(timestamp: $timestamp);
@@ -135,14 +148,12 @@ class FailedJobProvider implements FailedJobProviderInterface, CountableFailedJo
             return false;
         }
 
-        $this->events->emit([
+        return $this->events->emit([
             '_cloud_event' => 'failed_job',
             'id' => $job->id,
             'queue' => $job->queue,
             'retried_at' => CarbonImmutable::now('UTC')->toDateTimeString('microsecond'),
         ]);
-
-        return true;
     }
 
     /**

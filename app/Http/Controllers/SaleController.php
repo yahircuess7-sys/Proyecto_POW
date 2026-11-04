@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Models\Business;
 use App\Models\CashShift;
 use App\Models\Customer;
 use App\Models\Product;
@@ -168,7 +169,10 @@ class SaleController extends Controller
 
             $saleDiscount = max(0, (float) ($validated['discount'] ?? 0));
             $taxableBase = max(0, $subtotal - $saleDiscount);
-            $tax = round($taxableBase * 0.12, 2); // IVA 12%
+
+            $activeBusiness = $this->tenantManager->getTenant() ?: Business::find($businessId);
+            $effectiveTaxRate = ($activeBusiness ? $activeBusiness->effectiveTaxPercentage(12.0) : 12.0) / 100.0;
+            $tax = round($taxableBase * $effectiveTaxRate, 2);
             $total = round($taxableBase + $tax, 2);
 
             $paymentMethod = $validated['payment_method'] ?? 'cash';
@@ -330,7 +334,8 @@ class SaleController extends Controller
             : $this->normalizeText(request()->input('customer_document', $sale->customer_document ?: '---'));
 
         $options = new Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('isPhpEnabled', false);
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml(view('sales.invoice_pdf', compact('sale', 'business', 'customerName', 'customerDocument'))->render());
         $dompdf->setPaper('A4', 'portrait');

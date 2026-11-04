@@ -19,15 +19,16 @@ class TenantManager
 
         if ($tenant) {
             try {
-                // Sincroniza el parámetro de sesión en PostgreSQL para soporte RLS en capa de datos
-                DB::statement("SET app.current_business_id = '{$tenant->id}'");
+                // Sincroniza el parámetro de sesión en PostgreSQL de forma parametrizada para soporte RLS
+                $tenantId = (string) (int) $tenant->id;
+                DB::statement("SELECT set_config('app.current_business_id', ?, false)", [$tenantId]);
             } catch (\Throwable $e) {
                 // Silencioso si la conexión aún no está inicializada o en modo testing de baja conexión
                 Log::debug("No se pudo asignar app.current_business_id en PostgreSQL: " . $e->getMessage());
             }
         } else {
             try {
-                DB::statement("RESET app.current_business_id");
+                DB::statement("SELECT set_config('app.current_business_id', '', false)");
             } catch (\Throwable $e) {
                 // Silencioso
             }

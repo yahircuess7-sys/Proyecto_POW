@@ -21,8 +21,38 @@ class AuthAndAccessControlTest extends TestCase
 
     public function test_cashier_can_view_inventory_but_is_forbidden_from_mutating_products(): void
     {
-        $cashier = User::where('email', 'cajero@puntoagil.com')->firstOrFail();
-        $product = Product::firstOrFail();
+        $business = Business::where('slug', 'puntoagil-central')->first() ?: Business::firstOrFail();
+
+        $cashier = User::firstOrCreate(
+            ['email' => 'cajero@puntoagil.com'],
+            [
+                'name' => 'Cajero Central',
+                'password' => Hash::make('password123'),
+                'role' => 'cajero',
+                'status' => 'active',
+                'current_business_id' => $business->id,
+            ]
+        );
+        $cashier->update(['status' => 'active', 'role' => 'cajero', 'current_business_id' => $business->id]);
+        if (! $cashier->businesses()->where('businesses.id', $business->id)->exists()) {
+            $cashier->businesses()->attach($business->id, ['role' => 'cajero', 'is_default' => true]);
+        }
+
+        $product = Product::withoutBusinessScope()->where('business_id', $business->id)->first();
+        if (! $product) {
+            $product = Product::create([
+                'business_id' => $business->id,
+                'sku' => 'CAJ-PROD-' . uniqid(),
+                'name' => 'Producto Demo Cajero',
+                'category' => 'General',
+                'cost' => 5.00,
+                'price' => 10.00,
+                'stock' => 20,
+                'min_stock' => 2,
+                'unit' => 'Unidades',
+                'status' => 'active',
+            ]);
+        }
 
         // El cajero puede consultar el catálogo y el detalle de productos
         $this->actingAs($cashier)->get('/inventory')->assertStatus(200);

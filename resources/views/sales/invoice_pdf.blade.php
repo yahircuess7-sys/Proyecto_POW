@@ -27,14 +27,18 @@
     <div class="header">
         <div>
             <div class="brand">{{ $business->name ?? 'PuntoÁgil' }}</div>
-            <span>{{ $business->settings['slogan'] ?? 'Comprobante de Venta Electrónico • Plataforma SaaS' }}</span>
+            <span>{{ $business->settings['slogan'] ?? 'Comprobante de Venta Interno • Plataforma SaaS' }}</span>
             @if(!empty($business->tax_id))
-                <span>RUC / NIT: {{ $business->tax_id }}</span>
+                <span>RUC Emisor: {{ $business->tax_id }}</span>
+            @endif
+            @if(!empty($business->address))
+                <span>Dirección: {{ $business->address }} ({{ $business->settings['municipality'] ?? 'Nicaragua' }})</span>
             @endif
         </div>
         <div class="invoice-meta">
-            <strong>Factura / Recibo: {{ $sale->invoice_number }}</strong>
+            <strong>Recibo Interno: {{ $sale->invoice_number }}</strong>
             <span>Fecha: {{ $sale->created_at->format('d/m/Y H:i') }}</span>
+            <span>Condición de Operación: CONTADO</span>
             <span>Atendido por: {{ $sale->user->name ?? 'Cajero' }}</span>
         </div>
     </div>
@@ -125,7 +129,7 @@
     </div>
 
     <div style="text-align: center; margin-top: 20px; padding: 10px 14px; font-size: 10.5px; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
-        <strong>AVISO DE CONTROL INTERNO:</strong> Este comprobante ha sido generado para control de gestión y entrega de mercancía interna. No constituye una factura electrónica fiscal ni confiere crédito tributario ante entidades fiscales.
+        <strong>AVISO DE CONTROL INTERNO (SIN VALIDEZ DE PIE DE IMPRENTA FISCAL DGI):</strong> Este documento es un comprobante interno de control de caja y entrega de mercancía. No posee numeración autorizada por el sistema SACFI de la Dirección General de Ingresos (DGI Nicaragua) ni constituye factura fiscal para respaldo de Crédito Fiscal de IVA (Ley No. 822).
     </div>
 </body>
 </html>

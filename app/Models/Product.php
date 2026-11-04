@@ -16,6 +16,7 @@ class Product extends Model
 
     protected $fillable = [
         'business_id',
+        'supplier_id',
         'sku',
         'barcode',
         'name',
@@ -42,6 +43,16 @@ class Product extends Model
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function supplier(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
     }
 
     public function movements(): HasMany

@@ -98,21 +98,39 @@
                 <!-- Customer Info -->
                 <div class="p-4 bg-slate-50 border-b border-slate-200/80 space-y-2.5">
                     <div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-                        <span>Datos del Cliente</span>
-                        <span>Consumidor Final</span>
+                        <span class="flex items-center gap-1.5">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Datos del Cliente</span>
+                        </span>
+                        <a href="{{ route('customers.create') }}" target="_blank" class="text-emerald-600 hover:underline lowercase text-[11px] font-normal">
+                            + nuevo cliente
+                        </a>
                     </div>
+                    
+                    <div>
+                        <select id="customer_selector" onchange="handleCustomerSelect(this)" class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 mb-2">
+                            <option value="" data-name="Consumidor Final" data-doc="9999999999">Consumidor Final (Sin RUC / General)</option>
+                            @foreach($customers as $c)
+                                <option value="{{ $c->id }}" data-name="{{ $c->name }}" data-doc="{{ $c->document_number }}" {{ request('customer_id') == $c->id ? 'selected' : '' }}>
+                                    {{ $c->name }} ({{ $c->document_type }}: {{ $c->document_number }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" id="customer_id" value="{{ request('customer_id') ?? '' }}">
+                    </div>
+
                     <div class="grid grid-cols-12 gap-2">
                         <div class="col-span-5">
                             <input type="text" id="customer_dni" 
                                    class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" 
                                    placeholder="DNI / RUC" 
-                                   value="0932184912">
+                                   value="{{ request('customer_id') && ($matched = $customers->firstWhere('id', request('customer_id'))) ? $matched->document_number : '9999999999' }}">
                         </div>
                         <div class="col-span-7">
                             <input type="text" id="customer_name" 
                                    class="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" 
                                    placeholder="Nombre de cliente" 
-                                   value="Consumidor Final">
+                                   value="{{ request('customer_id') && ($matched = $customers->firstWhere('id', request('customer_id'))) ? $matched->name : 'Consumidor Final' }}">
                         </div>
                     </div>
                 </div>
@@ -415,6 +433,17 @@
         return tokenMeta ? tokenMeta.getAttribute('content') : '';
     }
 
+    function handleCustomerSelect(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        const custId = opt.value || '';
+        const custName = opt.dataset.name || 'Consumidor Final';
+        const custDoc = opt.dataset.doc || '9999999999';
+
+        document.getElementById('customer_id').value = custId;
+        document.getElementById('customer_name').value = custName;
+        document.getElementById('customer_dni').value = custDoc;
+    }
+
     async function submitSale() {
         if (!cart.length) {
             alert('Agrega al menos un producto antes de guardar la venta.');
@@ -424,6 +453,7 @@
         submitButton.disabled = true;
         submitButton.innerHTML = '<span class="inline-block animate-spin mr-2"><i class="bi bi-arrow-repeat"></i></span> Procesando Ticket...';
 
+        const customerId = document.getElementById('customer_id').value || null;
         const customerName = document.getElementById('customer_name').value.trim() || 'Consumidor Final';
         const customerDocument = document.getElementById('customer_dni').value.trim() || '---';
 
@@ -436,6 +466,9 @@
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({
+                    customer_id: customerId,
+                    customer_name: customerName,
+                    customer_document: customerDocument,
                     items: cart.map(item => ({
                         product_id: item.id,
                         quantity: item.quantity,

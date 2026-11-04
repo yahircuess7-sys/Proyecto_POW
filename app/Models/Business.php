@@ -80,6 +80,30 @@ class Business extends Model
     }
 
     /**
+     * Clientes registrados en la empresa.
+     */
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    /**
+     * Proveedores registrados en la empresa.
+     */
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
+
+    /**
+     * Compras registradas en la empresa.
+     */
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
+    /**
      * Comprueba si la empresa se encuentra activa en la plataforma.
      */
     public function isActive(): bool

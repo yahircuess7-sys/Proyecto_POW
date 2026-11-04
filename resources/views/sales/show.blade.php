@@ -71,6 +71,24 @@
                 </div>
 
                 <div>
+                    <span class="text-slate-400 block font-medium">Cliente Asignado</span>
+                    <div class="text-slate-800 font-medium mt-0.5">
+                        @if($sale->customer)
+                            <a href="{{ route('customers.show', $sale->customer->id) }}" class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+                                <i class="bi bi-person-check-fill"></i>
+                                <span>{{ $sale->customer->name }}</span>
+                            </a>
+                            <div class="font-mono text-[11px] text-slate-400">{{ $sale->customer->document_type }}: {{ $sale->customer->document_number }}</div>
+                        @else
+                            <span class="text-slate-800">{{ $sale->customer_name ?: 'Consumidor Final' }}</span>
+                            @if($sale->customer_document)
+                                <div class="font-mono text-[11px] text-slate-400">Doc: {{ $sale->customer_document }}</div>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                <div>
                     <span class="text-slate-400 block font-medium">Establecimiento / Emisor</span>
                     <div class="text-slate-700 font-medium mt-0.5">
                         PuntoÁgil Cloud POS

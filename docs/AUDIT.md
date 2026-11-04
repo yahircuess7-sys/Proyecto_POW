@@ -321,6 +321,77 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
   * Modales en Alpine.js para ajuste manual de existencias con motivo y para importación masiva CSV.
   * Pestaña histórica de movimientos en la ficha de detalle de cada producto.
 
+---
+
+## 11. Módulo 8: Clientes, Proveedores y Compras con Trazabilidad Multi-Tenant
+
+### 11.1 Esquema de Base de Datos y Migración Incremental (`2026_11_04_000001_create_customers_suppliers_and_purchases_tables.php`)
+* **Tabla `customers`:**
+  * Campos: `id`, `business_id` (FK a `businesses`), `document_type` (`DNI`, `RUC`, `Pasaporte`, `Otro`), `document_number` (`VARCHAR(50)`), `name` (`VARCHAR(255)`), `email` (`VARCHAR(255) NULL`), `phone` (`VARCHAR(50) NULL`), `address` (`TEXT NULL`), `status` (`'active'` / `'inactive'`), `notes` (`TEXT NULL`), timestamps y soft-deletes.
+  * Restricción de Unicidad Multi-Tenant: `UNIQUE(business_id, document_number)`. Distintas empresas pueden tener el mismo número de documento, pero se evitan duplicados en la misma empresa.
+  * Índices de consulta rápida: `(business_id, status)`, `(business_id, name)`.
+* **Tabla `suppliers`:**
+  * Campos: `id`, `business_id` (FK), `tax_id` (`VARCHAR(50)` - RUC/NIT), `name` (`VARCHAR(255)`), `contact_name` (`VARCHAR(255) NULL`), `email` (`VARCHAR(255) NULL`), `phone` (`VARCHAR(50) NULL`), `address` (`TEXT NULL`), `status` (`'active'` / `'inactive'`), `notes` (`TEXT NULL`), timestamps y soft-deletes.
+  * Restricción de Unicidad Multi-Tenant: `UNIQUE(business_id, tax_id)`.
+  * Índices: `(business_id, status)`, `(business_id, name)`.
+* **Modificación en `sales`:**
+  * Agregado `customer_id` (FK nullable a `customers` con `ON DELETE SET NULL`), `customer_name` (`VARCHAR(255) NULL`), `customer_document` (`VARCHAR(50) NULL`). Permite asociar clientes formales o conservar la instantánea fiscal sin romper recibos si el cliente se desvincula.
+* **Modificación en `products`:**
+  * Agregado `supplier_id` (FK nullable a `suppliers` con `ON DELETE SET NULL`) para identificar al proveedor habitual de cada artículo.
+* **Tablas `purchases` y `purchase_items`:**
+  * `purchases`: `id`, `business_id` (FK), `supplier_id` (FK), `user_id` (FK), `purchase_number` (`VARCHAR(50)` único por empresa), `supplier_invoice_number` (`VARCHAR(100) NULL`), `purchase_date` (`DATE`), `subtotal` (`DECIMAL(12,2)`), `tax` (`DECIMAL(12,2)`), `total` (`DECIMAL(12,2)`), `status` (`'completed'` / `'cancelled'`), `notes` (`TEXT NULL`), timestamps.
+  * `purchase_items`: `id`, `purchase_id` (FK cascada), `product_id` (FK), `quantity` (`INTEGER`), `unit_cost` (`DECIMAL(12,2)`), `subtotal` (`DECIMAL(12,2)`), timestamps.
+
+### 11.2 Capa de Modelos Eloquent y Relaciones
+* **`Customer` (`app/Models/Customer.php`):**
+  * Usa trait `BelongsToBusiness` para aislamiento automático.
+  * Relación `sales()` (`HasMany(Sale::class)`).
+  * Métodos de métricas: `totalSpent()`, `totalPurchasesCount()`, `isActive()`.
+* **`Supplier` (`app/Models/Supplier.php`):**
+  * Usa trait `BelongsToBusiness`.
+  * Relación `purchases()` (`HasMany(Purchase::class)`) y `products()` (`HasMany(Product::class)`).
+  * Métodos de métricas: `totalPurchased()`, `totalPurchasesCount()`, `isActive()`.
+* **`Purchase` y `PurchaseItem` (`app/Models/Purchase.php`, `app/Models/PurchaseItem.php`):**
+  * Relaciones directas entre proveedor, usuario responsable, ítems y productos.
+* **Modelos Actualizados (`Sale`, `Product`, `Business`):**
+  * Relaciones `Sale::customer()`, `Product::supplier()`, `Business::customers()`, `Business::suppliers()`, `Business::purchases()`.
+
+### 11.3 Políticas de Autorización y Form Requests
+* **`CustomerPolicy` (`app/Policies/CustomerPolicy.php`):**
+  * Cajeros, Administradores y Propietarios pueden listar, ver y registrar clientes de su empresa.
+  * La edición está permitida a usuarios de la empresa; la eliminación o desactivación está reservada para roles con permisos administrativos.
+  * `delete` rechaza la eliminación física si el cliente cuenta con ventas registradas (protección de integridad fiscal).
+* **`SupplierPolicy` y `PurchasePolicy` (`app/Policies/SupplierPolicy.php`, `app/Policies/PurchasePolicy.php`):**
+  * Restringidas estrictamente a administradores y propietarios del negocio. Cajeros reciben `403 Forbidden`.
+* **Form Requests con Validación Multi-Tenant:**
+  * `CustomerRequest`: Regla `Rule::unique('customers', 'document_number')->where('business_id', $businessId)->ignore($customerId)`.
+  * `SupplierRequest`: Regla `Rule::unique('suppliers', 'tax_id')->where('business_id', $businessId)->ignore($supplierId)`.
+  * `PurchaseRequest`: Valida que el proveedor pertenezca a la empresa y que cada producto del array `items.*.product_id` exista y pertenezca al negocio del usuario.
+
+### 11.4 Integración de Compras con Inventario y Kardex Atómico
+* En `PurchaseController@store`:
+  * Ejecución dentro de una transacción `DB::beginTransaction()`.
+  * Bloqueo pesimista `lockForUpdate()` sobre cada producto para evitar condiciones de carrera concurrentes.
+  * Creación de `Purchase` y sus `PurchaseItem`.
+  * Actualización automática del costo unitario (`cost`) del producto con el valor negociado de compra.
+  * Incremento directo del stock (`stock = previous_stock + quantity`).
+  * Creación inmediata de `InventoryMovement` con `type = 'in'`, trazabilidad obligatoria a la compra (`reference_type = Purchase::class`, `reference_id = $purchase->id`) y auditoría en `audit_logs`.
+
+### 11.5 Terminal POS y Facturación con Clientes
+* En `SaleController` y `resources/views/sales/index.blade.php`:
+  * Selector dinámico de clientes registrados con auto-llenado de DNI/RUC y nombre.
+  * Opción predeterminada rápida para ventas a "Consumidor Final" sin fricción de caja.
+  * Persistencia de `customer_id`, `customer_name` y `customer_document` en el payload JSON de `sales.store`.
+  * Visualización del cliente en la consulta de recibo (`sales/show.blade.php`) y en la exportación PDF (`sales/invoice_pdf.blade.php`).
+
+### 11.6 Suite de Pruebas Automatizadas
+* Archivo creado: `tests/Feature/CustomerAndSupplierManagementTest.php`.
+  * `test_customer_creation_editing_and_tenant_isolation`: Valida creación, edición, desactivación lógica, protección multi-tenant (Empresa B no puede ver ni modificar clientes de Empresa A) y unicidad por negocio.
+  * `test_supplier_permissions_and_protection`: Comprueba que cajeros reciben 403, que administradores registran y desactivan proveedores, y que no se pueden eliminar proveedores con compras históricas.
+  * `test_purchase_registers_inventory_in_movement_and_updates_product_cost`: Verifica la creación de órdenes de compra, la liquidación de impuestos, la actualización de costos de producto y el registro del movimiento de inventario de entrada.
+  * `test_sale_associates_customer_and_prevents_unsafe_deletion`: Verifica el enlace cliente-venta en el POS, cálculo de métricas de cliente y bloqueo de borrado de clientes con ventas.
+
+
 
 
 

@@ -223,6 +223,26 @@
                         </div>
                         <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500 text-slate-950 font-mono tracking-wide">POS</span>
                     </a>
+
+                    <a href="{{ route('customers.index') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('customers.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-people-fill text-base {{ request()->routeIs('customers.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Clientes</span>
+                    </a>
+
+                    @if(auth()->user() && auth()->user()->isAdmin())
+                    <a href="{{ route('suppliers.index') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('suppliers.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-truck text-base {{ request()->routeIs('suppliers.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Proveedores</span>
+                    </a>
+
+                    <a href="{{ route('purchases.index') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('purchases.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-bag-check text-base {{ request()->routeIs('purchases.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                        <span>Compras</span>
+                    </a>
+                    @endif
                 </nav>
             </div>
 

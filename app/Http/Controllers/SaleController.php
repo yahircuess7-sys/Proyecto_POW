@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSaleRequest;
+use App\Models\Customer;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
@@ -27,7 +28,11 @@ class SaleController extends Controller
         $products = Product::where('stock', '>', 0)
             ->where('status', Product::STATUS_ACTIVE)
             ->get();
-        return view('sales.index', compact('products'));
+        $customers = Customer::where('status', Customer::STATUS_ACTIVE)
+            ->orderBy('name')
+            ->get();
+
+        return view('sales.index', compact('products', 'customers'));
     }
 
     public function create()
@@ -41,7 +46,13 @@ class SaleController extends Controller
     {
         Gate::authorize('create', Sale::class);
 
-        $items = $request->validated()['items'];
+        $validated = $request->validated();
+        $items = $validated['items'];
+
+        $customerId = $validated['customer_id'] ?? null;
+        $customer = $customerId ? Customer::find($customerId) : null;
+        $customerName = $customer ? $customer->name : ($validated['customer_name'] ?? 'Consumidor Final');
+        $customerDocument = $customer ? $customer->document_number : ($validated['customer_document'] ?? '---');
 
         DB::beginTransaction();
 
@@ -58,6 +69,9 @@ class SaleController extends Controller
             $sale = Sale::create([
                 'invoice_number' => 'INV-' . time(),
                 'user_id' => Auth::id() ?: 1,
+                'customer_id' => $customer?->id,
+                'customer_name' => $customerName,
+                'customer_document' => $customerDocument,
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'total' => $total,
@@ -95,7 +109,7 @@ class SaleController extends Controller
     {
         Gate::authorize('view', $sale);
 
-        $sale->load(['items.product', 'user']);
+        $sale->load(['items.product', 'user', 'customer']);
         return view('sales.show', compact('sale'));
     }
 
@@ -103,10 +117,15 @@ class SaleController extends Controller
     {
         Gate::authorize('view', $sale);
 
-        $sale->load(['items.product', 'user']);
+        $sale->load(['items.product', 'user', 'customer']);
 
-        $customerName = $this->normalizeText(request()->input('customer_name', 'Consumidor Final'));
-        $customerDocument = $this->normalizeText(request()->input('customer_document', '---'));
+        $customerName = $sale->customer
+            ? $sale->customer->name
+            : $this->normalizeText(request()->input('customer_name', $sale->customer_name ?: 'Consumidor Final'));
+
+        $customerDocument = $sale->customer
+            ? ($sale->customer->document_type . ': ' . $sale->customer->document_number)
+            : $this->normalizeText(request()->input('customer_document', $sale->customer_document ?: '---'));
 
         $options = new Options();
         $options->set('isRemoteEnabled', true);

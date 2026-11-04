@@ -12,6 +12,9 @@ use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\PurchaseController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -76,6 +79,17 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'exportPdf'])->name('sales.pdf');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+
+    // Clientes (Directorio Comercial, registro, búsqueda y ficha técnica)
+    Route::patch('customers/{customer}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('customers.toggle-status');
+    Route::resource('customers', CustomerController::class);
+
+    // Proveedores (Empresas proveedoras y contactos)
+    Route::patch('suppliers/{supplier}/toggle-status', [SupplierController::class, 'toggleStatus'])->name('suppliers.toggle-status');
+    Route::resource('suppliers', SupplierController::class);
+
+    // Compras a Proveedores e Ingreso de Stock
+    Route::resource('purchases', PurchaseController::class)->except(['edit', 'update', 'destroy']);
 
     // Módulos con permiso de Administración (Super Admin, Propietario o Administrador de Empresa)
     Route::middleware(['admin'])->group(function () {

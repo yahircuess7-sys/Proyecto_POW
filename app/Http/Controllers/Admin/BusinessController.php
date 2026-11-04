@@ -55,15 +55,21 @@ class BusinessController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
+            'slogan' => ['nullable', 'string', 'max:255'],
             'currency' => ['nullable', 'string', 'max:10'],
             'tax_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'timezone' => ['nullable', 'string', 'max:100'],
+            'receipt_format' => ['nullable', 'string', 'in:ticket_80mm,ticket_58mm,a4_pdf'],
+            'receipt_footer_note' => ['nullable', 'string', 'max:500'],
         ]);
 
         $settings = array_merge($business->settings ?? [], [
             'currency' => strtoupper(trim($validated['currency'] ?? ($business->settings['currency'] ?? 'USD'))),
             'tax_percentage' => (float) ($validated['tax_percentage'] ?? ($business->settings['tax_percentage'] ?? 12)),
             'timezone' => $validated['timezone'] ?? ($business->settings['timezone'] ?? 'America/Guayaquil'),
+            'slogan' => $validated['slogan'] ?? ($business->settings['slogan'] ?? null),
+            'receipt_format' => $validated['receipt_format'] ?? ($business->settings['receipt_format'] ?? 'ticket_80mm'),
+            'receipt_footer_note' => $validated['receipt_footer_note'] ?? ($business->settings['receipt_footer_note'] ?? 'Comprobante interno emitido por PuntoÁgil Cloud POS.'),
         ]);
 
         $business->update([

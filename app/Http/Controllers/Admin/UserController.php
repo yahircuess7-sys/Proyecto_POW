@@ -78,7 +78,15 @@ class UserController extends Controller
         Gate::authorize('assignRole', [User::class, $validated['role']]);
 
         $actor = Auth::user();
-        $businessId = $this->tenantManager->getTenantId() ?: $actor->current_business_id;
+        $business = $this->tenantManager->getTenant() ?: $actor->currentBusiness;
+        $businessId = $business?->id ?: ($this->tenantManager->getTenantId() ?: $actor->current_business_id);
+
+        if ($business && ! $business->canAddUser() && ! $actor->isSuperAdmin()) {
+            $planName = $business->currentPlan()?->name ?? 'actual';
+            return redirect()->back()
+                ->withInput()
+                ->with('error', "Has alcanzado el límite de usuarios permitidos en tu plan ({$planName}). Mejora tu suscripción para añadir más miembros.");
+        }
 
         $createdUser = DB::transaction(function () use ($validated, $businessId, $actor) {
             $payload = [
@@ -136,6 +144,13 @@ class UserController extends Controller
 
         $actor = Auth::user();
         $business = $this->tenantManager->getTenant() ?: $actor->currentBusiness;
+
+        if ($business && ! $business->canAddUser() && ! $actor->isSuperAdmin()) {
+            $planName = $business->currentPlan()?->name ?? 'actual';
+            return redirect()->route('admin.users.index')
+                ->with('error', "Has alcanzado el límite de usuarios de tu plan ({$planName}). Mejora tu suscripción para invitar más miembros.");
+        }
+
         $businessId = $business->id;
         $email = strtolower(trim($validated['email']));
 

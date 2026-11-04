@@ -284,6 +284,15 @@
                         <span>Reportes Contables</span>
                     </a>
 
+                    <a href="{{ route('admin.subscription.index') }}" 
+                       class="nav-link-anim flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.subscription.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="bi bi-patch-check text-base {{ request()->routeIs('admin.subscription.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
+                            <span>Mi Suscripción</span>
+                        </div>
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Plan</span>
+                    </a>
+
                     @can('manage-business-settings')
                     <a href="{{ route('admin.business.settings') }}" 
                        class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.business.*') ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 shadow-sm shadow-emerald-500/10' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
@@ -308,10 +317,28 @@
             <div>
                 <p class="px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase text-amber-400 font-mono">Super Admin Global</p>
                 <nav class="space-y-1">
-                    <a href="{{ route('admin.businesses.index') }}" 
-                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.businesses.*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
-                        <i class="bi bi-buildings text-base {{ request()->routeIs('admin.businesses.*') ? 'text-amber-400' : 'text-slate-400' }}"></i>
-                        <span>Empresas (Tenants)</span>
+                    <a href="{{ route('admin.superadmin.dashboard') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.superadmin.dashboard') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-speedometer2 text-base {{ request()->routeIs('admin.superadmin.dashboard') ? 'text-amber-400' : 'text-slate-400' }}"></i>
+                        <span>Panel Central SaaS</span>
+                    </a>
+
+                    <a href="{{ route('admin.superadmin.businesses') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.superadmin.businesses*') || request()->routeIs('admin.businesses.*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-buildings text-base {{ request()->routeIs('admin.superadmin.businesses*') ? 'text-amber-400' : 'text-slate-400' }}"></i>
+                        <span>Negocios (Tenants)</span>
+                    </a>
+
+                    <a href="{{ route('admin.superadmin.plans') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.superadmin.plans*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-tags text-base {{ request()->routeIs('admin.superadmin.plans*') ? 'text-amber-400' : 'text-slate-400' }}"></i>
+                        <span>Planes y Precios</span>
+                    </a>
+
+                    <a href="{{ route('admin.superadmin.users') }}" 
+                       class="nav-link-anim flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium {{ request()->routeIs('admin.superadmin.users*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white' }}">
+                        <i class="bi bi-person-gear text-base {{ request()->routeIs('admin.superadmin.users*') ? 'text-amber-400' : 'text-slate-400' }}"></i>
+                        <span>Usuarios Globales</span>
                     </a>
                 </nav>
             </div>

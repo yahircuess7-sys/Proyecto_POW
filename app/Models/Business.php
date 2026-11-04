@@ -128,6 +128,91 @@ class Business extends Model
     }
 
     /**
+     * Historial de suscripciones de la empresa.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Suscripción más reciente de la empresa.
+     */
+    public function currentSubscription(): ?Subscription
+    {
+        return $this->subscriptions()->latest('id')->first();
+    }
+
+    /**
+     * Plan actualmente contratado o asignado.
+     */
+    public function currentPlan(): ?Plan
+    {
+        return $this->currentSubscription()?->plan;
+    }
+
+    /**
+     * Valida en el servidor si la empresa tiene su suscripción activa o en prueba vigente.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        $sub = $this->currentSubscription();
+        return $sub ? $sub->isActive() : false;
+    }
+
+    /**
+     * Control estricto de límite de usuarios permitidos según el plan.
+     */
+    public function canAddUser(): bool
+    {
+        $plan = $this->currentPlan();
+        if (! $plan || $plan->isUnlimitedUsers()) {
+            return true;
+        }
+
+        return $this->users()->count() < $plan->max_users;
+    }
+
+    /**
+     * Control estricto de límite de productos permitidos según el plan.
+     */
+    public function canAddProduct(): bool
+    {
+        $plan = $this->currentPlan();
+        if (! $plan || $plan->isUnlimitedProducts()) {
+            return true;
+        }
+
+        return $this->products()->count() < $plan->max_products;
+    }
+
+    /**
+     * Control estricto de límite de cajas registradoras permitidas según el plan.
+     */
+    public function canAddCashRegister(): bool
+    {
+        $plan = $this->currentPlan();
+        if (! $plan || $plan->isUnlimitedCashRegisters()) {
+            return true;
+        }
+
+        return $this->cashRegisters()->count() < $plan->max_cash_registers;
+    }
+
+    /**
+     * Verifica si una funcionalidad avanzada está autorizada en el plan actual de la empresa.
+     */
+    public function hasFeature(string $feature): bool
+    {
+        $plan = $this->currentPlan();
+        if (! $plan) {
+            return false;
+        }
+
+        return $plan->hasFeature($feature);
+    }
+
+    /**
      * Comprueba si la empresa se encuentra activa en la plataforma.
      */
     public function isActive(): bool

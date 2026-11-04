@@ -17,6 +17,12 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\SaleReturnController;
+use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\SubscriptionWebhookController;
+
+// Webhooks de Proveedores de Pago (Sin autenticación de sesión, verificados por firma criptográfica e idempotencia)
+Route::post('/webhooks/subscriptions/{provider?}', [SubscriptionWebhookController::class, 'handle'])->name('webhooks.subscriptions');
 
 Route::get('/', function () {
     return view('welcome');
@@ -126,7 +132,14 @@ Route::middleware(['auth', 'tenant'])->group(function () {
             Route::get('business/settings', [AdminBusinessController::class, 'settings'])->name('business.settings');
             Route::put('business/settings', [AdminBusinessController::class, 'updateSettings'])->name('business.update');
 
+            // Suscripción y Licencia del Negocio (Módulo 14)
+            Route::get('subscription', [AdminSubscriptionController::class, 'index'])->name('subscription.index');
+            Route::post('subscription/change-plan', [AdminSubscriptionController::class, 'changePlan'])->name('subscription.change-plan');
+            Route::post('subscription/cancel', [AdminSubscriptionController::class, 'cancel'])->name('subscription.cancel');
+            Route::post('subscription/resume', [AdminSubscriptionController::class, 'resume'])->name('subscription.resume');
+
             // Bitácora de Auditoría Protegida (Protegido por Gate: view-audit-logs -> Owner / Super Admin)
+            Route::get('audit-logs/export', [AdminAuditLogController::class, 'exportCsv'])->name('audit.export');
             Route::get('audit-logs', [AdminAuditLogController::class, 'index'])->name('audit.index');
 
             // Administración Global de Negocios (Separada exclusivamente para Super Admin)
@@ -135,5 +148,18 @@ Route::middleware(['auth', 'tenant'])->group(function () {
             Route::post('businesses', [AdminBusinessController::class, 'store'])->name('businesses.store');
             Route::patch('businesses/{business}/toggle-status', [AdminBusinessController::class, 'toggleStatus'])->name('businesses.toggle-status');
         });
+    });
+
+    // Panel Central de Control Super Admin Global (Módulo 15)
+    Route::middleware(['can:manage-platform'])->prefix('superadmin')->name('admin.superadmin.')->group(function () {
+        Route::get('/', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/businesses', [SuperAdminController::class, 'businesses'])->name('businesses');
+        Route::post('/businesses/{business}/subscription', [SuperAdminController::class, 'updateBusinessSubscription'])->name('businesses.subscription');
+        Route::post('/businesses/{business}/impersonate', [SuperAdminController::class, 'impersonate'])->name('businesses.impersonate');
+        Route::get('/plans', [SuperAdminController::class, 'plans'])->name('plans');
+        Route::post('/plans', [SuperAdminController::class, 'storePlan'])->name('plans.store');
+        Route::patch('/plans/{plan}/toggle', [SuperAdminController::class, 'togglePlan'])->name('plans.toggle');
+        Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
+        Route::patch('/users/{user}/toggle-super-admin', [SuperAdminController::class, 'toggleSuperAdmin'])->name('users.toggle-super');
     });
 });

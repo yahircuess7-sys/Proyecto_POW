@@ -13,14 +13,44 @@
                 <span class="text-emerald-600 font-semibold">Configuración de Empresa</span>
             </div>
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ $business->name }}</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Parámetros fiscales, datos de contacto e impuestos configurables por el Propietario (Owner).</p>
+            <p class="text-xs text-slate-500 mt-0.5">Parámetros comerciales, fiscales, formato de tickets y zona horaria configurables por el Propietario.</p>
         </div>
 
-        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            Slug: {{ $business->slug }}
-        </span>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Slug: {{ $business->slug }}
+            </span>
+            <a href="{{ route('admin.subscription.index') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-sm transition-all flex items-center gap-1.5">
+                <i class="bi bi-patch-check text-emerald-600"></i>
+                <span>Mi Suscripción</span>
+            </a>
+        </div>
     </div>
+
+    <!-- Feedback Alerts -->
+    @if(session('success'))
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-check-circle-fill text-emerald-600 text-base"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-1">
+            <div class="font-bold flex items-center gap-1.5">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Por favor corrige los siguientes errores:
+            </div>
+            <ul class="list-disc pl-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <!-- Summary KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -40,13 +70,18 @@
 
     <!-- Configuration Form -->
     <form action="{{ route('admin.business.update') }}" method="POST"
-          class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden text-xs">
+          class="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden text-xs">
         @csrf
         @method('PUT')
 
-        <div class="px-6 py-4 border-b border-slate-100">
-            <h2 class="text-sm font-bold text-slate-900">Datos Comerciales y Fiscales</h2>
-            <p class="text-xs text-slate-500">Estos datos se utilizan en comprobantes, reportes y encabezados de la empresa.</p>
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-sm font-bold text-slate-900">Datos Comerciales y Fiscales</h2>
+                <p class="text-xs text-slate-500">Se reflejan automáticamente en los tickets de venta, facturación interna y reportes.</p>
+            </div>
+            <span class="p-2 rounded-xl bg-slate-100 text-slate-600">
+                <i class="bi bi-building-gear"></i>
+            </span>
         </div>
 
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -60,6 +95,13 @@
                 <label class="block font-semibold text-slate-700 mb-1.5">RUC / NIT / Identificación Fiscal</label>
                 <input type="text" name="tax_id" value="{{ old('tax_id', $business->tax_id) }}"
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
+            </div>
+
+            <div class="sm:col-span-2">
+                <label class="block font-semibold text-slate-700 mb-1.5">Lema Comercial / Slogan</label>
+                <input type="text" name="slogan" value="{{ old('slogan', $business->settings['slogan'] ?? '') }}"
+                       placeholder="ej. Lo mejor para tu hogar y tu negocio"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
             </div>
 
             <div>
@@ -99,9 +141,37 @@
             </div>
         </div>
 
+        <!-- Receipt & Printing Options (Módulo 16) -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Opciones de Impresión y Comprobantes</h3>
+            <p class="text-[11px] text-slate-500">Personaliza la presentación de los tickets generados en el Punto de Venta (POS).</p>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4">
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1.5">Formato de Ticket / Impresión</label>
+                @php
+                    $currentFormat = old('receipt_format', $business->settings['receipt_format'] ?? 'ticket_80mm');
+                @endphp
+                <select name="receipt_format"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
+                    <option value="ticket_80mm" {{ $currentFormat === 'ticket_80mm' ? 'selected' : '' }}>Ticket Térmico 80mm (Estándar)</option>
+                    <option value="ticket_58mm" {{ $currentFormat === 'ticket_58mm' ? 'selected' : '' }}>Ticket Térmico 58mm (Compacto)</option>
+                    <option value="a4_pdf" {{ $currentFormat === 'a4_pdf' ? 'selected' : '' }}>Comprobante Formato A4 / Carta</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1.5">Leyenda al Pie del Ticket</label>
+                <input type="text" name="receipt_footer_note"
+                       value="{{ old('receipt_footer_note', $business->settings['receipt_footer_note'] ?? 'Comprobante interno emitido por PuntoÁgil Cloud POS.') }}"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
+            </div>
+        </div>
+
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
             <button type="submit"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all">
+                    class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all">
                 <i class="bi bi-check-lg"></i>
                 <span>Guardar Configuración</span>
             </button>

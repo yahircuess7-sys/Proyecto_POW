@@ -516,6 +516,73 @@ MAIL_FROM_NAME="PuntoÁgil SaaS"
   3. `test_sale_return_restores_inventory_and_updates_sale_status`: Devolución parcial y total, validación contra exceder cantidades, restitución atómica en inventario y Kardex, y actualización progresiva del estado de la venta.
   4. `test_reports_and_dashboard_metrics_accuracy_and_tenant_isolation`: Verificación de cálculo de margen bruto real, métricas diarias/mensuales y aislamiento estricto multitenant entre empresas.
 
+---
+
+## 14. Fase 4: Planes, Licencias, Super Admin, Configuración y Auditoría SaaS
+
+### 14.1 Módulo 14: Planes, Licencias y Suscripciones
+* **Catálogo y Modelo de Datos:**
+  * Tabla `plans`: Almacena tiers de precios (`name`, `slug`, `price`, `billing_cycle`, `trial_days`, `max_users`, `max_products`, `max_cash_registers`, `features` en formato JSONB, `is_active`, `sort_order`).
+  * Tabla `subscriptions`: Vincula a cada empresa cliente (`business_id`) con su plan activo, periodicidad, estado (`active`, `trialing`, `pending`, `past_due`, `cancelled`, `suspended`), fechas de vigencia (`starts_at`, `ends_at`, `trial_ends_at`, `cancelled_at`), y referencias al proveedor de pasarela (`payment_provider`, `provider_subscription_id`, `provider_customer_id`).
+  * Planes base inicializados: *Emprendedor* ($15/mes), *Profesional* ($35/mes), *Empresarial* ($79/mes).
+* **Control Estricto de Cuotas en Servidor:**
+  * Se implementó validación a nivel de controlador y modelo: `$business->canAddUser()`, `$business->canAddProduct()`, `$business->canAddCashRegister()`.
+  * La interfaz gráfica muestra barras de progreso del consumo de recursos vs. el límite contratado.
+  * Si un cliente intenta registrar un usuario o producto excediendo su cuota mediante peticiones directas o API, el backend rechaza la operación con redirección y mensaje descriptivo de límite alcanzado.
+* **Validación de Cambio de Plan (Upgrades y Downgrades):**
+  * Las mejoras de plan (upgrade) se aplican de forma inmediata.
+  * Las reducciones de plan (downgrade) son verificadas por el servidor: si la cantidad actual de productos, usuarios o cajas activas supera las cuotas del nuevo plan solicitado, la operación es rechazada impidiendo estados inconsistentes o pérdida forzada de registros.
+* **Arquitectura de Webhooks de Pago y Cumplimiento PCI-DSS:**
+  * Endpoint seguro: `POST /webhooks/subscriptions/{provider?}` con exclusión en CSRF verify.
+  * Verificación criptográfica HMAC-SHA256 de firmas entrantes cuando existe secreto configurado en entorno.
+  * Idempotencia estricta en base de datos mediante la tabla `subscription_webhook_events` (`event_id` único): eventos duplicados son identificados y respondidos con HTTP 200 `status: ignored` sin reprocesar transacciones.
+  * Sanitización recursiva de payloads previa al almacenamiento: cualquier clave o atributo que contenga `card`, `cvv`, `cvc`, `password`, `secret`, `token` o igual a `number` es redactado con `[REDACTED_SECURE]`. El sistema nunca almacena números de tarjeta ni datos bancarios sensibles.
+
+### 14.2 Módulo 15: Panel de Super Admin
+* **Métricas SaaS Centralizadas:**
+  * Cálculo en tiempo real de MRR (Monthly Recurring Revenue) basado en suscripciones activas y ponderación por ciclo anual/mensual.
+  * Totales y estados globales: empresas activas vs. suspendidas, total de usuarios registrados, volumen transaccional de ventas en POS a nivel de plataforma.
+  * Gráfico de barras y distribución porcentual de clientes suscritos por tier de plan.
+  * Diagnóstico del entorno: versión de Laravel, versión de PHP, driver de PostgreSQL y estado de aislamiento multitenant.
+* **Administración de Negocios (Tenants):**
+  * Directorio de clientes con filtros de búsqueda por nombre, slug, RUC, estado y plan.
+  * Modales para suspensión y reactivación inmediata de empresas.
+  * Capacidad de anulación o asignación administrativa de planes y extensiones de vigencia por Super Admin con trazabilidad completa.
+  * Modo de asistencia técnica (impersonación de contexto para soporte).
+* **Gestión de Planes de la Plataforma:**
+  * Creación y edición de planes con límites de recursos y activación de módulos en caliente.
+  * Capacidad de alternar la disponibilidad pública de planes sin afectar suscriptores históricos.
+* **Seguridad y Privilegios Globales:**
+  * Separación estricta entre administradores locales de empresa y Super Admins globales.
+  * Rutas bajo el prefijo `/superadmin` protegidas por el Gate `manage-platform`.
+  * Asignación y revocación de privilegios de Super Admin con protección contra auto-revocación accidental si solo existe un Super Admin en la plataforma.
+
+### 14.3 Módulo 16: Configuración del Negocio y Auditoría
+* **Parámetros Comerciales y de Impresión:**
+  * Configuración completa de razón social, RUC/tax ID, slogan, correo, teléfono, dirección matriz, moneda base, porcentaje de IVA y zona horaria.
+  * Opciones de formato de ticket para POS: `ticket_80mm` (estándar), `ticket_58mm` (compacto) y comprobante `a4_pdf`.
+  * Leyenda y notas personalizadas al pie de comprobantes.
+* **Bitácora de Auditoría Inmutable:**
+  * Registro sistemático de operaciones críticas en `audit_logs`: cambios de configuración, gestión de usuarios, asignación de permisos, aperturas y cierres de caja, anulaciones, ajustes de inventario y cambios de suscripción.
+  * Campos registrados: usuario responsable, empresa asociada, acción codificada, descripción legible, dirección IP, metadatos estructurados en JSONB y marca temporal inmutable.
+  * Modal interactivo en frontend con Alpine.js para inspeccionar metadatos JSON sin romper el diseño.
+  * Filtros avanzados por acción, usuario, rango de fechas y switch de consulta global para Super Admin.
+  * Exportación a CSV formateada con codificación UTF-8 y delimitadores de alta compatibilidad con hojas de cálculo.
+
+### 14.4 Verificación y Suite de Pruebas Automatizadas
+* **Archivo de Pruebas de Fase 4:** `tests/Feature/SubscriptionAndSuperAdminTest.php`
+* **Resultados:** 5 tests, 58 aserciones, **100% PASS**:
+  1. `test_tenant_plan_limits_enforced_on_server`: Comprobación de que el servidor bloquea la creación de productos y usuarios cuando se alcanza la cuota máxima del plan de suscripción.
+  2. `test_tenant_subscription_plan_change_and_downgrade_validation`: Verificación de upgrade exitoso y rechazo de downgrade cuando los recursos en uso exceden los límites del plan destino.
+  3. `test_payment_webhook_idempotency_and_card_data_sanitization`: Verificación del flujo de webhook con activación de suscripción en mora, garantía de idempotencia contra reenvíos y sanitización estricta de números de tarjeta y secretos bancarios.
+  4. `test_superadmin_dashboard_metrics_and_tenant_management`: Restricción de acceso a no-superadmins (403), cálculo de métricas de plataforma, conmutación de estado de empresas, asignación manual de planes, creación de nuevos planes y blindaje contra auto-revocación del único Super Admin.
+  5. `test_business_settings_audit_immutability_and_csv_export`: Actualización de configuración comercial y opciones de ticket, registro inmutable en auditoría y exportación a archivo CSV con cabeceras íntegras.
+* **Pruebas de Regresión Fase 3:**
+  * `tests/Feature/PurchaseAndSupplyManagementTest.php`: 4 tests, 35 aserciones, **100% PASS**.
+  * `tests/Feature/PosCashAndReturnsTest.php`: 4 tests, 51 aserciones, **100% PASS**.
+  * **Cero regresiones** detectadas en la plataforma.
+
+
 
 
 

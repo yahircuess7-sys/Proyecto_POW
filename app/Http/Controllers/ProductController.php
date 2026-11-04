@@ -97,6 +97,16 @@ class ProductController extends Controller
     {
         Gate::authorize('create', Product::class);
 
+        $actor = Auth::user();
+        $business = $this->tenantManager->getTenant() ?: $actor?->currentBusiness;
+
+        if ($business && ! $business->canAddProduct() && ! $actor?->isSuperAdmin()) {
+            $planName = $business->currentPlan()?->name ?? 'actual';
+            return redirect()->back()
+                ->withInput()
+                ->with('error', "Has alcanzado el límite máximo de productos de tu plan ({$planName}). Actualiza tu suscripción para ampliar el catálogo.");
+        }
+
         $validatedData = $request->validated();
         $validatedData['sku'] = $this->skuService->resolveSku(
             $validatedData['sku'] ?? null,

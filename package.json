@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "node -e \"const fs=require('fs'); fs.mkdirSync('public/build',{recursive:true}); fs.writeFileSync('public/build/manifest.json','{}'); fs.mkdirSync('dist',{recursive:true}); fs.writeFileSync('dist/index.html',''); console.log('PuntoAgil build completed successfully.');\""
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
 }

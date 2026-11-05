@@ -31,18 +31,18 @@ class PasswordResetController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $user = User::where('email', $request->input('email'))->first();
-        if ($user && $user->status !== 'active') {
-            return back()->withInput($request->only('email'))->withErrors([
-                'email' => 'Esta cuenta se encuentra inactiva. Contacte al administrador de su empresa.',
-            ]);
-        }
-
         try {
+            $user = User::where('email', $request->input('email'))->first();
+            if ($user && $user->status !== 'active') {
+                return back()->withInput($request->only('email'))->withErrors([
+                    'email' => 'Esta cuenta se encuentra inactiva. Contacte al administrador de su empresa.',
+                ]);
+            }
+
             $status = Password::sendResetLink($request->only('email'));
         } catch (\Throwable $e) {
             return back()->withInput($request->only('email'))->withErrors([
-                'email' => 'No se pudo enviar el correo de recuperación. Verifique la configuración SMTP del servidor.',
+                'email' => 'No se pudo procesar la solicitud de recuperación. Verifique la conexión a la base de datos y configuración SMTP.',
             ]);
         }
 

@@ -45,28 +45,37 @@ class LoginController extends Controller
             'status' => 'active',
         ];
 
-        if (Auth::attempt($attemptCredentials, $request->filled('remember'))) {
-            RateLimiter::clear($throttleKey);
-            $request->session()->regenerate();
+        try {
+            if (Auth::attempt($attemptCredentials, $request->filled('remember'))) {
+                RateLimiter::clear($throttleKey);
+                $request->session()->regenerate();
 
-            $authenticatedUser = Auth::user();
-            if ($authenticatedUser) {
-                $authenticatedUser->forceFill([
-                    'last_login_at' => now(),
-                    'last_login_ip' => $request->ip(),
-                ])->save();
+                $authenticatedUser = Auth::user();
+                if ($authenticatedUser) {
+                    $authenticatedUser->forceFill([
+                        'last_login_at' => now(),
+                        'last_login_ip' => $request->ip(),
+                    ])->save();
+                }
+
+                return redirect()->intended('/dashboard');
             }
 
-            return redirect()->intended('/dashboard');
-        }
+            RateLimiter::hit($throttleKey, 60);
 
-        RateLimiter::hit($throttleKey, 60);
+            $user = User::where('email', $credentials['email'])->first();
+            if ($user && $user->status === 'inactive' && Hash::check($credentials['password'], $user->password)) {
+                return back()->withInput($request->only('email'))->withErrors([
+                    'email' => 'Esta cuenta se encuentra inactiva. Por favor, contacte al administrador.',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
 
-        $user = User::where('email', $credentials['email'])->first();
-        if ($user && $user->status === 'inactive' && Hash::check($credentials['password'], $user->password)) {
-            return back()->withInput($request->only('email'))->withErrors([
-                'email' => 'Esta cuenta se encuentra inactiva. Por favor, contacte al administrador.',
-            ]);
+            return back()->withInput($request->only('email'))->with(
+                'error',
+                'No fue posible conectar con la base de datos en este entorno. Si acabas de agregar las variables DB_HOST / DB_PASSWORD en Vercel, recuerda hacer clic en "Redeploy" en el panel de Vercel (o hacer git push) para que tomen efecto.'
+            );
         }
 
         return back()->withInput($request->only('email'))->withErrors([

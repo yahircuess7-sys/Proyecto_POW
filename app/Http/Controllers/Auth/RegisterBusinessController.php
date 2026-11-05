@@ -104,8 +104,7 @@ class RegisterBusinessController extends Controller
             CashRegister::withoutBusinessScope()->create([
                 'business_id' => $biz->id,
                 'name' => 'Caja Principal #1',
-                'code' => 'CAJA-01',
-                'status' => 'active',
+                'status' => CashRegister::STATUS_CLOSED,
             ]);
 
             $defaultPlan = Plan::where('price', 30.00)->where('is_active', true)->first()

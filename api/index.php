@@ -9,6 +9,18 @@ $_ENV['VERCEL'] = $_ENV['VERCEL'] ?? '1';
 $_SERVER['VERCEL'] = $_SERVER['VERCEL'] ?? '1';
 putenv('VERCEL=1');
 
+// Sincronizar variables de entorno inyectadas por Vercel en $_SERVER hacia $_ENV y putenv()
+foreach ($_SERVER as $key => $val) {
+    if (is_string($key) && (is_string($val) || is_numeric($val))) {
+        if (! isset($_ENV[$key])) {
+            $_ENV[$key] = (string) $val;
+        }
+        if (getenv($key) === false) {
+            @putenv("{$key}={$val}");
+        }
+    }
+}
+
 $tmpStorage = '/tmp/storage';
 foreach ([
     $tmpStorage . '/framework/views',

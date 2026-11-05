@@ -12,7 +12,11 @@ if (empty($_ENV['VERCEL']) && empty($_SERVER['VERCEL']) && ! getenv('VERCEL') &&
         $name = trim($name);
         $value = trim($value, "\"' ");
         if (!empty($name)) {
+            $value = preg_replace_callback('/\$\{([A-Z0-9_]+)\}/', function ($m) {
+                return $_ENV[$m[1]] ?? (getenv($m[1]) !== false ? getenv($m[1]) : $m[0]);
+            }, $value);
             $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
             putenv("$name=$value");
         }
     }

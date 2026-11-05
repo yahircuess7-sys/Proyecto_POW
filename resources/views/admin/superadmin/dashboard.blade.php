@@ -52,7 +52,7 @@
     <!-- Primary SaaS Metrics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <!-- MRR (Monthly Recurring Revenue) -->
-        <div class="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-5 shadow-card border border-slate-800 space-y-2 relative overflow-hidden">
+        <div class="bg-linear-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-5 shadow-card border border-slate-800 space-y-2 relative overflow-hidden">
             <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold font-mono tracking-wider uppercase text-emerald-400">MRR Mensual</span>
                 <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-sm">

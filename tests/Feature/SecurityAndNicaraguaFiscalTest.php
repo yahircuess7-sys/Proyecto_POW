@@ -47,6 +47,8 @@ class SecurityAndNicaraguaFiscalTest extends TestCase
         }
 
         foreach ($this->createdUsers as $userId) {
+            DB::table('audit_logs')->where('user_id', $userId)->delete();
+            DB::table('business_user')->where('user_id', $userId)->delete();
             DB::table('users')->where('id', $userId)->delete();
         }
 

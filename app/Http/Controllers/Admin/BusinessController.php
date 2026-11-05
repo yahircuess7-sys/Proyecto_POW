@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BusinessController extends Controller
@@ -55,10 +56,14 @@ class BusinessController extends Controller
 
         Gate::authorize('update', $business);
 
+        $request->merge([
+            'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'commercial_name' => ['nullable', 'string', 'max:255'],
-            'tax_id' => ['nullable', 'string', 'max:50'],
+            'tax_id' => ['nullable', 'string', 'max:50', Rule::unique('businesses', 'tax_id')->ignore($business->id)],
             'tax_regime' => ['nullable', 'string', 'in:regimen_general,cuota_fija,exento'],
             'municipality' => ['nullable', 'string', 'max:150'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -70,6 +75,8 @@ class BusinessController extends Controller
             'timezone' => ['nullable', 'string', 'max:100'],
             'receipt_format' => ['nullable', 'string', 'in:ticket_80mm,ticket_58mm,a4_pdf'],
             'receipt_footer_note' => ['nullable', 'string', 'max:500'],
+        ], [
+            'tax_id.unique' => 'Ya existe otra empresa registrada con este número RUC / Identificación Fiscal.',
         ]);
 
         $taxRegime = $validated['tax_regime'] ?? ($business->settings['tax_regime'] ?? 'regimen_general');
@@ -193,15 +200,21 @@ class BusinessController extends Controller
     {
         Gate::authorize('create', Business::class);
 
+        $request->merge([
+            'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'tax_id' => ['nullable', 'string', 'max:50'],
+            'tax_id' => ['nullable', 'string', 'max:50', Rule::unique('businesses', 'tax_id')],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255'],
             'owner_password' => ['nullable', 'string', 'min:8'],
+        ], [
+            'tax_id.unique' => 'Ya existe otra empresa registrada con este número RUC / Identificación Fiscal.',
         ]);
 
         $baseSlug = Str::slug($validated['name']) ?: 'negocio';
@@ -221,9 +234,14 @@ class BusinessController extends Controller
                 'address' => $validated['address'] ?? null,
                 'status' => 'active',
                 'settings' => [
-                    'currency' => 'USD',
-                    'tax_percentage' => 12,
-                    'timezone' => 'America/Guayaquil',
+                    'commercial_name' => $validated['name'],
+                    'tax_regime' => 'regimen_general',
+                    'municipality' => 'Managua, Nicaragua',
+                    'currency' => 'NIO',
+                    'tax_percentage' => 15.0,
+                    'timezone' => 'America/Managua',
+                    'receipt_format' => 'ticket_80mm',
+                    'receipt_footer_note' => 'Comprobante interno emitido por PuntoÁgil Cloud POS.',
                 ],
             ]);
 

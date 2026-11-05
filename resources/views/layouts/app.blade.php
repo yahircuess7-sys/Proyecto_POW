@@ -443,6 +443,15 @@
 
             <!-- Right Controls -->
             <div class="flex items-center gap-3">
+                @if(auth()->check() && auth()->user()->isSuperAdmin())
+                    <a href="{{ route('admin.superadmin.dashboard') }}"
+                       class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors"
+                       title="Volver al Panel Global de Super Admin">
+                        <i class="bi bi-shield-shaded"></i>
+                        <span>Super Admin: {{ $currentBusiness->name ?? 'Global' }}</span>
+                    </a>
+                @endif
+
                 <a href="{{ route('pos.create') }}" 
                    class="btn-shine inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 transition-all active:scale-95">
                     <i class="bi bi-plus-circle-fill"></i>
@@ -473,14 +482,20 @@
                             <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email ?? '' }}</p>
                         </div>
                         <div class="py-1">
+                            <a href="{{ route('profile.edit') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                <i class="bi bi-person-gear text-sm text-slate-400"></i>
+                                <span>Mi Perfil y Contraseña</span>
+                            </a>
                             <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
                                 <i class="bi bi-speedometer2 text-sm text-slate-400"></i>
                                 <span>Panel de Control</span>
                             </a>
-                            <a href="{{ route('inventory.index') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
-                                <i class="bi bi-boxes text-sm text-slate-400"></i>
-                                <span>Inventario</span>
-                            </a>
+                            @if(auth()->check() && (auth()->user()->isOwner() || auth()->user()->isSuperAdmin()))
+                                <a href="{{ route('admin.business.settings') }}" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                    <i class="bi bi-gear text-sm text-slate-400"></i>
+                                    <span>Configuración de Empresa</span>
+                                </a>
+                            @endif
                         </div>
                         <div class="py-1">
                             <form action="{{ route('logout') }}" method="POST">

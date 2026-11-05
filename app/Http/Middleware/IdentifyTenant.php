@@ -76,6 +76,15 @@ class IdentifyTenant
             // Fijar el tenant en el singleton de la aplicación
             $this->tenantManager->setTenant($business);
 
+            // Aplicar zona horaria configurada para el negocio activo en tiempo de ejecución
+            if ($business) {
+                $businessTimezone = (string) ($business->getSetting('timezone', config('app.timezone')) ?: 'America/Managua');
+                if (in_array($businessTimezone, timezone_identifiers_list(), true)) {
+                    config(['app.timezone' => $businessTimezone]);
+                    @date_default_timezone_set($businessTimezone);
+                }
+            }
+
             // Compartir la empresa y rol actual con todas las vistas Blade
             view()->share('currentBusiness', $business);
             view()->share('currentBusinessUserRole', $user->roleLabel($business?->id));
@@ -87,6 +96,7 @@ class IdentifyTenant
                     $allowedRoutesWhenInactive = [
                         'admin.subscription.*',
                         'business.switch',
+                        'profile.*',
                         'logout',
                         'verification.*',
                     ];

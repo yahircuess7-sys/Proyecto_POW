@@ -39,6 +39,7 @@ class SecurityAndNicaraguaFiscalTest extends TestCase
             DB::table('sales')->where('business_id', $bizId)->delete();
             DB::table('inventory_movements')->where('business_id', $bizId)->delete();
             DB::table('products')->where('business_id', $bizId)->delete();
+            DB::table('cash_registers')->where('business_id', $bizId)->delete();
             DB::table('subscriptions')->where('business_id', $bizId)->delete();
             DB::table('audit_logs')->where('business_id', $bizId)->delete();
             DB::table('business_user')->where('business_id', $bizId)->delete();
@@ -57,7 +58,7 @@ class SecurityAndNicaraguaFiscalTest extends TestCase
         $business = Business::create([
             'name' => 'Distribuidora Managua Test ' . uniqid(),
             'slug' => 'dist-managua-' . uniqid(),
-            'tax_id' => 'J0310000000001',
+            'tax_id' => 'J031' . rand(1000000000, 9999999999),
             'address' => 'Km 4.5 Carretera Norte',
             'status' => 'active',
             'settings' => array_merge([
@@ -283,5 +284,84 @@ class SecurityAndNicaraguaFiscalTest extends TestCase
         $this->assertEquals(350.00, (float) $saleCuotaFija->subtotal);
         $this->assertEquals(0.00, (float) $saleCuotaFija->tax, 'En Régimen de Cuota Fija no se debe trasladar IVA (0.00).');
         $this->assertEquals(350.00, (float) $saleCuotaFija->total);
+    }
+
+    /**
+     * Verifica las correcciones de la Auditoría Integral:
+     * 1. Aislamiento de rol por empresa en User::isAdmin() (Owner de Empresa A invitado como Cajero a Empresa B NO es Admin en B).
+     * 2. Bloqueo de auto-renovación gratuita en SubscriptionController@changePlan cuando la suscripción está vencida.
+     * 3. Auto-registro público de nuevo negocio (/register), unicidad de RUC y perfil propio (/profile).
+     */
+    public function test_audit_remediations_cross_tenant_role_isolation_subscription_protection_and_self_registration(): void
+    {
+        [$bizA, $ownerA] = $this->createTestTenant();
+        [$bizB, $ownerB, $subB] = $this->createTestTenant();
+
+        // 1. Invitar a $ownerA (cuyo users.role global es 'owner') como 'cajero' en $bizB
+        $ownerA->businesses()->attach($bizB->id, ['role' => User::ROLE_CASHIER, 'is_default' => false]);
+
+        $this->assertTrue($ownerA->isAdmin($bizA->id), 'Debe ser Admin/Owner en su propia empresa A.');
+        $this->assertFalse($ownerA->isAdmin($bizB->id), 'NO debe ser Admin en la empresa B donde su membresía pivote es Cajero.');
+        $this->assertTrue($ownerA->isCashier($bizB->id));
+
+        // 2. Bloqueo de auto-activación gratuita cuando una suscripción está vencida (past_due)
+        $expiredDate = now()->subDays(5);
+        $subB->update([
+            'status' => Subscription::STATUS_PAST_DUE,
+            'ends_at' => $expiredDate,
+        ]);
+
+        app(TenantManager::class)->setTenant($bizB);
+        $plan = Plan::where('slug', 'puntoagil')->first() ?: Plan::first();
+
+        $freeRenewalAttempt = $this->actingAs($ownerB)->post(route('admin.subscription.change-plan'), [
+            'plan_id' => $plan->id,
+            'billing_cycle' => 'yearly',
+        ]);
+
+        $freeRenewalAttempt->assertSessionHas('error');
+        $this->assertEquals(Subscription::STATUS_PAST_DUE, $subB->fresh()->status, 'Un propietario no puede reactivar gratis una suscripción vencida sin pago verificado.');
+
+        // 3. Auto-registro público de negocio (/register) y unicidad de RUC
+        auth()->logout();
+        $uniqueRuc = 'J031' . rand(1000000000, 9999999999);
+        $regEmail = 'nuevo_emprendedor_' . uniqid() . '@puntoagil.test';
+
+        $regResp = $this->post(route('register.store'), [
+            'business_name' => 'Comercial Masaya S.A.',
+            'tax_id' => $uniqueRuc,
+            'currency' => 'NIO',
+            'name' => 'Roberto Calderón',
+            'email' => $regEmail,
+            'phone' => '8888-7777',
+            'password' => 'ClaveSegura2026!',
+            'password_confirmation' => 'ClaveSegura2026!',
+        ]);
+
+        $regResp->assertRedirect(route('dashboard'));
+        $newUser = User::where('email', $regEmail)->firstOrFail();
+        $newBiz = Business::where('tax_id', $uniqueRuc)->firstOrFail();
+        $this->createdUsers[] = $newUser->id;
+        $this->createdBusinesses[] = $newBiz->id;
+
+        $this->assertTrue($newUser->isOwner($newBiz->id));
+        $this->assertEquals('C$', $newBiz->currencySymbol());
+        $this->assertEquals(Subscription::STATUS_TRIALING, $newBiz->currentSubscription()->status);
+
+        // 4. Actualización de perfil personal y contraseña (/profile)
+        $profileResp = $this->actingAs($newUser)->put(route('profile.update'), [
+            'name' => 'Roberto Calderón Actualizado',
+            'email' => $regEmail,
+        ]);
+        $profileResp->assertRedirect(route('profile.edit'));
+        $this->assertEquals('Roberto Calderón Actualizado', $newUser->fresh()->name);
+
+        $pwdResp = $this->actingAs($newUser)->put(route('profile.password'), [
+            'current_password' => 'ClaveSegura2026!',
+            'password' => 'NuevaClaveFuerte99!',
+            'password_confirmation' => 'NuevaClaveFuerte99!',
+        ]);
+        $pwdResp->assertRedirect(route('profile.edit'));
+        $this->assertTrue(Hash::check('NuevaClaveFuerte99!', $newUser->fresh()->password));
     }
 }

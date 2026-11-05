@@ -341,9 +341,14 @@ class SuperAdminController extends Controller
         $isCurrentlySuper = $user->isSuperAdmin();
         $newSuperAdminStatus = ! $isCurrentlySuper;
 
+        $primaryPivot = $user->businesses()->orderByDesc('business_user.is_default')->first();
+        $fallbackRole = ($primaryPivot && ! empty($primaryPivot->pivot?->role))
+            ? (string) $primaryPivot->pivot->role
+            : User::ROLE_CASHIER;
+
         $user->update([
             'is_super_admin' => $newSuperAdminStatus,
-            'role' => $newSuperAdminStatus ? User::ROLE_SUPER_ADMIN : User::ROLE_OWNER,
+            'role' => $newSuperAdminStatus ? User::ROLE_SUPER_ADMIN : $fallbackRole,
         ]);
 
         $actionDesc = $newSuperAdminStatus ? 'concedió privilegio de Super Admin a' : 'revocó privilegio de Super Admin de';

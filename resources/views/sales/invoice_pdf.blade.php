@@ -24,6 +24,7 @@
     </style>
 </head>
 <body>
+    @php $currencySymbol = $business?->currencySymbol() ?? '$'; @endphp
     <div class="header">
         <div>
             <div class="brand">{{ $business->name ?? 'PuntoÁgil' }}</div>
@@ -73,8 +74,8 @@
                     <tr>
                         <td>{{ $item->product->name ?? 'Producto eliminado' }}</td>
                         <td class="text-right">{{ $item->quantity }}</td>
-                        <td class="text-right">${{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-right">${{ number_format($item->subtotal, 2) }}</td>
+                        <td class="text-right">{{ $currencySymbol }}{{ number_format($item->unit_price, 2) }}</td>
+                        <td class="text-right">{{ $currencySymbol }}{{ number_format($item->subtotal, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -92,21 +93,21 @@
                     <tbody>
                         <tr>
                             <td>Subtotal</td>
-                            <td class="text-right">${{ number_format($sale->subtotal, 2) }}</td>
+                            <td class="text-right">{{ $currencySymbol }}{{ number_format($sale->subtotal, 2) }}</td>
                         </tr>
                         @if($sale->discount > 0)
                         <tr>
                             <td>Descuento</td>
-                            <td class="text-right text-rose-600">-${{ number_format($sale->discount, 2) }}</td>
+                            <td class="text-right text-rose-600">-{{ $currencySymbol }}{{ number_format($sale->discount, 2) }}</td>
                         </tr>
                         @endif
                         <tr>
-                            <td>IVA ({{ $business->settings['tax_percentage'] ?? 12 }}%)</td>
-                            <td class="text-right">${{ number_format($sale->tax, 2) }}</td>
+                            <td>IVA ({{ $business->settings['tax_percentage'] ?? 15 }}%)</td>
+                            <td class="text-right">{{ $currencySymbol }}{{ number_format($sale->tax, 2) }}</td>
                         </tr>
                         <tr class="total-row">
                             <td>Total Pagado</td>
-                            <td class="text-right">${{ number_format($sale->total, 2) }}</td>
+                            <td class="text-right">{{ $currencySymbol }}{{ number_format($sale->total, 2) }}</td>
                         </tr>
                         <tr>
                             <td>Método de Pago</td>
@@ -115,11 +116,11 @@
                         @if(($sale->payment_method ?? 'cash') === 'cash' && $sale->paid_amount)
                         <tr>
                             <td>Efectivo Recibido</td>
-                            <td class="text-right">${{ number_format($sale->paid_amount, 2) }}</td>
+                            <td class="text-right">{{ $currencySymbol }}{{ number_format($sale->paid_amount, 2) }}</td>
                         </tr>
                         <tr>
                             <td>Cambio / Vuelto</td>
-                            <td class="text-right">${{ number_format($sale->change_amount, 2) }}</td>
+                            <td class="text-right">{{ $currencySymbol }}{{ number_format($sale->change_amount, 2) }}</td>
                         </tr>
                         @endif
                     </tbody>

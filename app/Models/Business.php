@@ -253,6 +253,14 @@ class Business extends Model
     }
 
     /**
+     * Obtiene un valor de configuración del arreglo settings del negocio.
+     */
+    public function getSetting(string $key, mixed $default = null): mixed
+    {
+        return $this->settings[$key] ?? $default;
+    }
+
+    /**
      * Símbolo monetario para comprobantes e interfaz (C$ para Córdoba Nicaragüense NIO, $ para USD).
      */
     public function currencySymbol(): string

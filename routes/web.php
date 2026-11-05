@@ -5,10 +5,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterBusinessController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
@@ -28,10 +30,16 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Autenticación Local y OAuth 2.0 con Google
+// Autenticación Local, Auto-Registro de Negocios y OAuth 2.0 con Google
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
-Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/logout', fn () => redirect()->route('login'));
+
+Route::get('/register', [RegisterBusinessController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterBusinessController::class, 'register'])
+    ->middleware('throttle:5,1')
+    ->name('register.store');
 
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
     ->middleware('throttle:10,1')
@@ -69,6 +77,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // Cambio de Empresa Activa
     Route::post('/business/switch', [AdminBusinessController::class, 'switchBusiness'])->name('business.switch');
+
+    // Perfil Personal y Cambio de Contraseña del Usuario Autenticado
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -135,6 +148,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
             // Suscripción y Licencia del Negocio (Módulo 14)
             Route::get('subscription', [AdminSubscriptionController::class, 'index'])->name('subscription.index');
             Route::post('subscription/change-plan', [AdminSubscriptionController::class, 'changePlan'])->name('subscription.change-plan');
+            Route::post('subscription/checkout', [AdminSubscriptionController::class, 'checkout'])->name('subscription.checkout');
             Route::post('subscription/cancel', [AdminSubscriptionController::class, 'cancel'])->name('subscription.cancel');
             Route::post('subscription/resume', [AdminSubscriptionController::class, 'resume'])->name('subscription.resume');
 

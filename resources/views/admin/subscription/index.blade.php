@@ -137,6 +137,30 @@
                     <i class="bi bi-patch-check mr-1"></i> Ver Cobertura del Plan ($30/mes)
                 </a>
                 @endif
+
+                <!-- Online Checkout Buttons (Stripe / MercadoPago) -->
+                <div class="w-full pt-2 flex flex-wrap lg:justify-end gap-2">
+                    <form action="{{ route('admin.subscription.checkout') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="provider" value="stripe">
+                        <input type="hidden" name="billing_cycle" value="{{ $subscription?->billing_cycle ?? 'monthly' }}">
+                        <button type="submit"
+                                class="px-3.5 py-2 rounded-xl text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all inline-flex items-center gap-1.5">
+                            <i class="bi bi-credit-card-2-front"></i>
+                            <span>Pagar con Stripe</span>
+                        </button>
+                    </form>
+                    <form action="{{ route('admin.subscription.checkout') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="provider" value="mercadopago">
+                        <input type="hidden" name="billing_cycle" value="{{ $subscription?->billing_cycle ?? 'monthly' }}">
+                        <button type="submit"
+                                class="px-3.5 py-2 rounded-xl text-[11px] font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-all inline-flex items-center gap-1.5">
+                            <i class="bi bi-wallet2"></i>
+                            <span>Pagar con MercadoPago</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

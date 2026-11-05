@@ -216,10 +216,21 @@
                 </a>
             </div>
 
-            <!-- Quick Credentials Helper for Demo/Audit -->
-            <div class="mt-6 pt-5 border-t border-slate-100">
+            <!-- Self-Service Business Registration Link -->
+            <div class="mt-5 pt-4 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-500">
+                    ¿Aún no tienes una cuenta en PuntoÁgil?
+                    <a href="{{ route('register') }}" class="font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-2 ml-1">
+                        Registra tu negocio aquí
+                    </a>
+                </p>
+            </div>
+
+            @if(app()->environment('local', 'testing'))
+            <!-- Quick Credentials Helper for Local Development Only -->
+            <div class="mt-5 pt-4 border-t border-slate-100">
                 <span class="block text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
-                    Acceso Rápido (Demostración)
+                    Acceso Rápido (Solo Entorno Local)
                 </span>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button"
@@ -243,6 +254,7 @@
                     </button>
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Back to Home -->
@@ -254,6 +266,7 @@
         </div>
     </div>
 
+    @if(app()->environment('local', 'testing'))
     <script>
         function fillCredentials(email, password) {
             const emailInput = document.getElementById('email');
@@ -268,5 +281,6 @@
             }, 600);
         }
     </script>
+    @endif
 </body>
 </html>

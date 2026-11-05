@@ -403,9 +403,10 @@ class SubscriptionAndSuperAdminTest extends TestCase
 
         // 1. Actualizar configuración comercial (datos fiscales, slogan, receipt_format)
         $newSlogan = 'Tu punto de venta más confiable';
+        $uniqueTaxId = 'J031' . rand(1000000000, 9999999999);
         $updateResp = $this->put(route('admin.business.update'), [
             'name' => 'Ferretería Central Renovada',
-            'tax_id' => '1799999999001',
+            'tax_id' => $uniqueTaxId,
             'email' => 'contacto@ferreteria.com',
             'phone' => '0999999999',
             'address' => 'Av. Amazonas y Colón',

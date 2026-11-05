@@ -215,8 +215,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $effectiveRole = $this->roleInBusiness($businessId);
 
-        return in_array($effectiveRole, [self::ROLE_SUPER_ADMIN, self::ROLE_OWNER, self::ROLE_ADMIN], true)
-            || in_array($this->role, [self::ROLE_SUPER_ADMIN, self::ROLE_OWNER, self::ROLE_ADMIN], true);
+        return in_array($effectiveRole, [self::ROLE_SUPER_ADMIN, self::ROLE_OWNER, self::ROLE_ADMIN], true);
     }
 
     /**

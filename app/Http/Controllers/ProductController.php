@@ -11,6 +11,7 @@ use App\Services\SkuGeneratorService;
 use App\Services\TenantManager;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -131,7 +132,7 @@ class ProductController extends Controller
 
             AuditLogger::record(
                 'product.created',
-                "Se registró el producto {$product->name} (SKU: {$product->sku}) con precio \${$product->price} y stock inicial de {$initialStock}.",
+                "Se registró el producto {$product->name} (SKU: {$product->sku}) con precio C$ {$product->price} y stock inicial de {$initialStock}.",
                 $product,
                 [
                     'sku' => $product->sku,
@@ -212,6 +213,68 @@ class ProductController extends Controller
         }
 
         return redirect()->route('inventory.index')->with('success', 'Producto actualizado correctamente.');
+    }
+
+    /**
+     * Edición rápida en línea desde el listado (Precio Venta, Costo, Stock Mínimo).
+     */
+    public function quickUpdate(Request $request, Product $product): JsonResponse|RedirectResponse
+    {
+        Gate::authorize('update', $product);
+
+        $validated = $request->validate([
+            'price' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'cost' => ['nullable', 'numeric', 'min:0', 'max:9999999.99'],
+            'min_stock' => ['required', 'integer', 'min:0', 'max:999999'],
+        ], [
+            'price.required' => 'El precio de venta es obligatorio.',
+            'price.min' => 'El precio de venta no puede ser negativo.',
+            'min_stock.required' => 'El stock mínimo es obligatorio.',
+        ]);
+
+        $previous = [
+            'price' => (float) $product->price,
+            'cost' => (float) $product->cost,
+            'min_stock' => (int) $product->min_stock,
+        ];
+
+        $product->update([
+            'price' => round((float) $validated['price'], 2),
+            'cost' => isset($validated['cost']) ? round((float) $validated['cost'], 2) : $product->cost,
+            'min_stock' => (int) $validated['min_stock'],
+        ]);
+
+        AuditLogger::record(
+            'product.quick_updated',
+            "Edición rápida de {$product->name} (SKU: {$product->sku}): PVP C$ " . number_format((float) $product->price, 2) . ", Costo C$ " . number_format((float) $product->cost, 2) . ", Stock Mín. {$product->min_stock}.",
+            $product,
+            [
+                'previous' => $previous,
+                'updated' => [
+                    'price' => (float) $product->price,
+                    'cost' => (float) $product->cost,
+                    'min_stock' => (int) $product->min_stock,
+                ],
+            ],
+            $product->business_id
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Producto «{$product->name}» actualizado al instante.",
+                'product' => [
+                    'id' => $product->id,
+                    'price' => (float) $product->price,
+                    'cost' => (float) $product->cost,
+                    'min_stock' => (int) $product->min_stock,
+                    'stock' => (int) $product->stock,
+                    'stock_status' => $product->stockStatus(),
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Precio y stock mínimo de {$product->name} actualizados.");
     }
 
     /**
@@ -307,7 +370,52 @@ class ProductController extends Controller
     }
 
     /**
-     * Importación masiva de productos desde archivo CSV.
+     * Descarga plantilla CSV lista para abrir y rellenar en Microsoft Excel.
+     */
+    public function downloadTemplate(): Response
+    {
+        Gate::authorize('create', Product::class);
+
+        $handle = fopen('php://temp', 'r+');
+        fputs($handle, "\xEF\xBB\xBF");
+        fputs($handle, "sep=;\r\n");
+
+        fputcsv($handle, [
+            'Nombre',
+            'Codigo_SKU',
+            'Categoria',
+            'Precio_Compra',
+            'Precio_Venta',
+            'Stock_Inicial',
+            'Stock_Minimo',
+            'Codigo_Barras',
+            'Unidad',
+        ], ';', '"');
+
+        $examples = [
+            ['Martillo de Uña 16oz', 'HER-001', 'Herramientas', '180.00', '285.00', '15', '5', '750100010001', 'Unidades'],
+            ['Cemento Gris 42.5Kg', 'CON-001', 'Construcción', '340.00', '410.00', '40', '10', '750100010002', 'Bolsas'],
+            ['Tubo PVC Agua Fría 1/2"', 'PLO-001', 'Plomería', '75.00', '120.00', '25', '8', '750100010003', 'Unidades'],
+        ];
+
+        foreach ($examples as $row) {
+            fputcsv($handle, $row, ';', '"');
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="plantilla_inventario_puntoagil.csv"',
+            'Pragma' => 'public',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+        ]);
+    }
+
+    /**
+     * Importación masiva de productos desde archivo Excel/CSV.
      */
     public function importCsv(Request $request): RedirectResponse
     {
@@ -317,7 +425,7 @@ class ProductController extends Controller
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
         ], [
             'file.required' => 'Debe seleccionar un archivo CSV para importar.',
-            'file.mimes' => 'El archivo debe tener formato CSV o texto plano (.csv, .txt).',
+            'file.mimes' => 'El archivo debe tener formato CSV (.csv, .txt). Si tienes un Excel, guárdalo como "CSV UTF-8 (delimitado por comas)".',
             'file.max' => 'El archivo no debe exceder 4MB.',
         ]);
 
@@ -329,15 +437,31 @@ class ProductController extends Controller
             return redirect()->back()->with('error', 'No se pudo leer el archivo cargado.');
         }
 
-        // Leer primera línea para detectar delimitador y saltar posible UTF-8 BOM o sep=;
+        // Detectar directiva sep= de Excel y delimitador real (, o ;)
         $firstLine = fgets($handle);
-        $delimiter = str_contains($firstLine, ';') ? ';' : ',';
-
-        if (str_starts_with(trim($firstLine), 'sep=')) {
-            $firstLine = fgets($handle);
+        if ($firstLine === false) {
+            fclose($handle);
+            return redirect()->back()->with('error', 'El archivo CSV está vacío.');
         }
 
-        rewind($handle);
+        $cleanFirst = trim(str_replace("\xEF\xBB\xBF", '', $firstLine));
+        $delimiter = ',';
+
+        if (stripos($cleanFirst, 'sep=') === 0) {
+            $sepChar = substr($cleanFirst, 4, 1);
+            if (in_array($sepChar, [';', ',', "\t"], true)) {
+                $delimiter = $sepChar;
+            }
+            $headerLinePos = ftell($handle);
+            $peekHeader = fgets($handle) ?: '';
+            if (! in_array($sepChar ?? '', [';', ',', "\t"], true)) {
+                $delimiter = substr_count($peekHeader, ';') >= substr_count($peekHeader, ',') ? ';' : ',';
+            }
+            fseek($handle, $headerLinePos);
+        } else {
+            $delimiter = substr_count($cleanFirst, ';') > substr_count($cleanFirst, ',') ? ';' : ',';
+            rewind($handle);
+        }
 
         $header = fgetcsv($handle, 0, $delimiter);
         if (! $header) {
@@ -345,23 +469,54 @@ class ProductController extends Controller
             return redirect()->back()->with('error', 'El archivo CSV está vacío.');
         }
 
-        // Normalizar encabezados en minúsculas y sin caracteres raros
+        // Normalizar encabezados (sin acentos, minúsculas, espacios -> _)
         $headerMap = [];
         foreach ($header as $idx => $col) {
-            $colClean = strtolower(trim(str_replace(["\xEF\xBB\xBF", '"'], '', $col)));
+            $colClean = str_replace(["\xEF\xBB\xBF", '"', "'"], '', (string) $col);
+            $colClean = strtr(mb_strtolower(trim($colClean), 'UTF-8'), [
+                'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
+            ]);
+            $colClean = preg_replace('/[\s\/\-]+/', '_', $colClean);
             $headerMap[$colClean] = $idx;
         }
 
-        $requiredCols = ['nombre', 'categoria', 'precio'];
-        foreach ($requiredCols as $req) {
-            if (! isset($headerMap[$req])) {
-                fclose($handle);
-                return redirect()->back()->with(
-                    'error',
-                    "El archivo CSV debe contener las columnas: Nombre, Categoria y Precio. Columnas detectadas: " . implode(', ', array_keys($headerMap))
-                );
+        $resolveCol = function (array $aliases) use ($headerMap): ?int {
+            foreach ($aliases as $alias) {
+                if (array_key_exists($alias, $headerMap)) {
+                    return $headerMap[$alias];
+                }
             }
+            return null;
+        };
+
+        $nameIdx = $resolveCol(['nombre', 'name', 'producto', 'articulo', 'material']);
+        $catIdx = $resolveCol(['categoria', 'category', 'familia']);
+        $priceIdx = $resolveCol(['precio_venta', 'precio', 'price', 'pvp', 'valor_venta']);
+        $costIdx = $resolveCol(['precio_compra', 'costo', 'cost', 'costo_compra', 'costo_unitario']);
+        $stockIdx = $resolveCol(['stock_inicial', 'stock', 'existencias', 'cantidad']);
+        $minStockIdx = $resolveCol(['stock_minimo', 'min_stock', 'minimo']);
+        $skuIdx = $resolveCol(['codigo_sku', 'sku', 'codigo', 'referencia']);
+        $barcodeIdx = $resolveCol(['codigo_barras', 'codigo_de_barras', 'barcode', 'ean', 'upc']);
+        $unitIdx = $resolveCol(['unidad', 'unit', 'presentacion']);
+        $descIdx = $resolveCol(['descripcion', 'description', 'notas']);
+
+        if ($nameIdx === null || $priceIdx === null) {
+            fclose($handle);
+            return redirect()->back()->with(
+                'error',
+                'El archivo CSV debe incluir al menos las columnas Nombre y Precio_Venta (o Precio). Descarga la plantilla de ejemplo con 1 clic para ver el formato exacto.'
+            );
         }
+
+        $parseMoney = function (?string $raw): float {
+            $clean = str_ireplace(['c$', '$', 'nio', ' '], '', trim((string) $raw));
+            if (str_contains($clean, ',') && str_contains($clean, '.')) {
+                $clean = str_replace(',', '', $clean);
+            } elseif (str_contains($clean, ',')) {
+                $clean = str_replace(',', '.', $clean);
+            }
+            return is_numeric($clean) ? (float) $clean : 0.0;
+        };
 
         $importedCount = 0;
         $rowNum = 1;
@@ -373,23 +528,25 @@ class ProductController extends Controller
             while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                 $rowNum++;
 
-                if (count($row) < 3 || empty(trim($row[$headerMap['nombre']] ?? ''))) {
-                    continue; // Saltar líneas vacías
+                $name = trim((string) ($row[$nameIdx] ?? ''));
+                if ($name === '') {
+                    continue; // Saltar líneas en blanco
                 }
 
-                $name = trim($row[$headerMap['nombre']] ?? '');
-                $category = trim($row[$headerMap['categoria']] ?? 'General');
-                $price = (float) str_replace(['$', ','], ['', '.'], trim($row[$headerMap['precio']] ?? '0'));
-                $cost = isset($headerMap['costo']) ? (float) str_replace(['$', ','], ['', '.'], trim($row[$headerMap['costo']])) : 0.00;
-                $stock = isset($headerMap['stock']) ? (int) trim($row[$headerMap['stock']]) : 0;
-                $minStock = isset($headerMap['stock_minimo']) ? (int) trim($row[$headerMap['stock_minimo']]) : 5;
-                $unit = isset($headerMap['unidad']) ? trim($row[$headerMap['unidad']]) : 'Unidades';
-                $description = isset($headerMap['descripcion']) ? trim($row[$headerMap['descripcion']]) : null;
-                $barcode = isset($headerMap['codigo_barras']) ? trim($row[$headerMap['codigo_barras']]) : (isset($headerMap['barcode']) ? trim($row[$headerMap['barcode']]) : null);
-                $sku = isset($headerMap['sku']) ? trim($row[$headerMap['sku']]) : null;
+                $category = $catIdx !== null ? (trim((string) ($row[$catIdx] ?? '')) ?: 'General') : 'General';
+                $price = $parseMoney($row[$priceIdx] ?? '0');
+                $cost = $costIdx !== null ? $parseMoney($row[$costIdx] ?? '0') : 0.00;
+                $stock = $stockIdx !== null ? (int) round($parseMoney($row[$stockIdx] ?? '0')) : 0;
+                $minStock = $minStockIdx !== null && trim((string) ($row[$minStockIdx] ?? '')) !== ''
+                    ? (int) round($parseMoney($row[$minStockIdx]))
+                    : 5;
+                $unit = $unitIdx !== null ? (trim((string) ($row[$unitIdx] ?? '')) ?: 'Unidades') : 'Unidades';
+                $description = $descIdx !== null ? (trim((string) ($row[$descIdx] ?? '')) ?: null) : null;
+                $barcode = $barcodeIdx !== null ? (trim((string) ($row[$barcodeIdx] ?? '')) ?: null) : null;
+                $sku = $skuIdx !== null ? (trim((string) ($row[$skuIdx] ?? '')) ?: null) : null;
 
-                if (empty($name) || $price < 0) {
-                    $errors[] = "Fila {$rowNum}: Nombre o precio no válidos.";
+                if ($price < 0) {
+                    $errors[] = "Fila {$rowNum}: Precio no válido.";
                     continue;
                 }
 
@@ -405,7 +562,7 @@ class ProductController extends Controller
                     'price' => max(0, $price),
                     'stock' => 0,
                     'min_stock' => max(0, $minStock),
-                    'unit' => $unit ?: 'Unidades',
+                    'unit' => $unit,
                     'status' => Product::STATUS_ACTIVE,
                 ]);
 
@@ -435,7 +592,7 @@ class ProductController extends Controller
 
         $message = "Se importaron exitosamente {$importedCount} productos al inventario.";
         if (! empty($errors)) {
-            $message .= " Se detectaron " . count($errors) . " filas omitidas por inconsistencias.";
+            $message .= " Se omitieron " . count($errors) . " filas con datos incompletos.";
         }
 
         return redirect()->route('inventory.index')->with('success', $message);

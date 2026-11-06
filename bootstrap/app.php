@@ -46,7 +46,11 @@ return tap(Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+        $handleCsrfExpiration = function ($request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
             if ($request->is('logout')) {
                 \Illuminate\Support\Facades\Auth::logout();
                 $request->session()->invalidate();
@@ -55,6 +59,16 @@ return tap(Application::configure(basePath: dirname(__DIR__))
             }
 
             return redirect()->route('login')->with('error', 'Tu sesión ha expirado por inactividad. Por favor, ingresa nuevamente.');
+        };
+
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) use ($handleCsrfExpiration) {
+            return $handleCsrfExpiration($request);
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) use ($handleCsrfExpiration) {
+            if ($e->getStatusCode() === 419) {
+                return $handleCsrfExpiration($request);
+            }
         });
     })->create(), function (Application $app): void {
         // Soporte nativo para entorno Serverless de solo lectura (Vercel / AWS Lambda)

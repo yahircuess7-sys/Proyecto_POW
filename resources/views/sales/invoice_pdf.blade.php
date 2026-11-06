@@ -24,7 +24,7 @@
     </style>
 </head>
 <body>
-    @php $currencySymbol = $business?->currencySymbol() ?? '$'; @endphp
+    @php $currencySymbol = ($business?->currencySymbol() ?? 'C$') . ' '; @endphp
     <div class="header">
         <div>
             <div class="brand">{{ $business->name ?? 'PuntoÁgil' }}</div>

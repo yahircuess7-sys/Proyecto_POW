@@ -82,10 +82,13 @@ class PurchaseController extends Controller
     {
         Gate::authorize('create', Purchase::class);
 
+        $business = $this->tenantManager->getTenant() ?: Auth::user()?->currentBusiness;
+        $taxPercentage = $business ? $business->effectiveTaxPercentage(15.0) : 15.0;
+
         $suppliers = Supplier::where('status', Supplier::STATUS_ACTIVE)->orderBy('name')->get();
         $products = Product::where('status', Product::STATUS_ACTIVE)->orderBy('name')->get();
 
-        return view('purchases.create', compact('suppliers', 'products'));
+        return view('purchases.create', compact('suppliers', 'products', 'taxPercentage'));
     }
 
     public function store(PurchaseRequest $request): RedirectResponse
@@ -114,7 +117,7 @@ class PurchaseController extends Controller
             $netSubtotal = max(0, $grossSubtotal - $totalDiscount);
 
             $business = $this->tenantManager->getTenant() ?: $user->currentBusiness;
-            $taxPercentage = (float) ($business?->settings['tax_percentage'] ?? 12.0);
+            $taxPercentage = $business ? $business->effectiveTaxPercentage(15.0) : 15.0;
             $tax = $netSubtotal * ($taxPercentage / 100);
             $total = $netSubtotal + $tax;
 
@@ -183,7 +186,7 @@ class PurchaseController extends Controller
 
             AuditLogger::record(
                 'purchase.created',
-                "Se registró la compra #{$purchase->purchase_number} a {$supplier->name} por un total de \${$total} (" . ($isReceivedImmediately ? 'Mercancía Recibida e Ingresada' : 'Pendiente de Recepción') . ").",
+                "Se registró la compra #{$purchase->purchase_number} a {$supplier->name} por un total de C$ " . number_format((float) $total, 2) . " (" . ($isReceivedImmediately ? 'Mercancía Recibida e Ingresada' : 'Pendiente de Recepción') . ").",
                 $purchase,
                 [
                     'purchase_number' => $purchase->purchase_number,

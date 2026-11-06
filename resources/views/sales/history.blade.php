@@ -132,10 +132,10 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right font-mono text-slate-700">
-                                ${{ number_format($sale->subtotal, 2) }}
+                                C$ {{ number_format($sale->subtotal, 2) }}
                             </td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-slate-900">
-                                ${{ number_format($sale->total, 2) }}
+                                C$ {{ number_format($sale->total, 2) }}
                             </td>
                             <td class="px-4 py-3 text-center">
                                 @if($sale->status === 'completed')
@@ -161,12 +161,16 @@
                                     <a href="{{ route('sales.show', $sale) }}" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors" title="Ver Detalle">
                                         <i class="bi bi-eye text-sm"></i>
                                     </a>
-                                    <a href="{{ route('sales.pdf', $sale) }}" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="Descargar Comprobante PDF">
+                                    <a href="{{ route('sales.ticket', ['sale' => $sale->id, 'autoprint' => 1]) }}" target="_blank" class="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors" title="Imprimir Ticket Térmico 58mm/80mm">
+                                        <i class="bi bi-printer text-sm"></i>
+                                    </a>
+                                    <a href="{{ route('sales.pdf', $sale) }}" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="Descargar Comprobante PDF A4">
                                         <i class="bi bi-file-earmark-pdf text-sm"></i>
                                     </a>
                                     @if($sale->canBeRefunded())
-                                        <a href="{{ route('sales.returns.create', $sale) }}" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition-colors" title="Procesar Devolución">
-                                            <i class="bi bi-arrow-counterclockwise text-sm"></i>
+                                        <a href="{{ route('sales.returns.create', $sale) }}" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors" title="Procesar Devolución">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                            <span>Devolver</span>
                                         </a>
                                     @endif
                                 </div>

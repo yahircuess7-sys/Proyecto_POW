@@ -48,13 +48,13 @@ class RegisterBusinessController extends Controller
             'business_name' => ['required', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:50'],
             'phone' => ['nullable', 'string', 'max:50'],
-            'currency' => ['nullable', 'string', 'in:NIO,USD'],
+            'currency' => ['nullable', 'string', 'max:10'],
         ], [
             'password.confirmed' => 'La confirmación de contraseña no coincide.',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
-        $currency = $validated['currency'] ?? 'NIO';
+        $currency = 'NIO';
 
         try {
             $request->validate([

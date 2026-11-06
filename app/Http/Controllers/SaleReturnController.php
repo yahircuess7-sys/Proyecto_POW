@@ -29,9 +29,35 @@ class SaleReturnController extends Controller
     /**
      * Listado de devoluciones y notas de crédito de ventas.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         Gate::authorize('viewAny', SaleReturn::class);
+
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
+
+        // Búsqueda rápida de factura para iniciar una devolución desde esta misma pantalla
+        $invoiceQuery = trim((string) $request->input('invoice_lookup', ''));
+        $refundableSalesQuery = Sale::with(['items', 'customer', 'user'])
+            ->where('business_id', $businessId)
+            ->whereIn('status', [Sale::STATUS_COMPLETED, Sale::STATUS_PARTIALLY_REFUNDED])
+            ->orderByDesc('created_at');
+
+        if ($invoiceQuery !== '') {
+            $exactSale = (clone $refundableSalesQuery)
+                ->whereRaw('LOWER(invoice_number) = ?', [strtolower($invoiceQuery)])
+                ->first();
+
+            if ($exactSale && $exactSale->canBeRefunded()) {
+                return redirect()->route('sales.returns.create', $exactSale);
+            }
+
+            $refundableSalesQuery->where(function ($q) use ($invoiceQuery) {
+                $q->where('invoice_number', 'like', "%{$invoiceQuery}%")
+                    ->orWhere('customer_name', 'like', "%{$invoiceQuery}%");
+            });
+        }
+
+        $refundableSales = $refundableSalesQuery->take(8)->get()->filter(fn (Sale $s) => $s->canBeRefunded())->values();
 
         $query = SaleReturn::with(['sale', 'user', 'cashShift', 'items.product'])
             ->orderByDesc('created_at');
@@ -61,7 +87,7 @@ class SaleReturnController extends Controller
 
         $returns = $query->paginate(15)->withQueryString();
 
-        return view('sales.returns.index', compact('returns'));
+        return view('sales.returns.index', compact('returns', 'refundableSales', 'invoiceQuery'));
     }
 
     /**
@@ -72,12 +98,15 @@ class SaleReturnController extends Controller
         Gate::authorize('create', [SaleReturn::class, $sale]);
 
         if (! $sale->canBeRefunded()) {
-            return redirect()->route('sales.show', $sale)->withErrors(['error' => 'Esta venta ya ha sido devuelta totalmente o cancelada.']);
+            return redirect()->route('sales.show', $sale)
+                ->with('error', 'Esta venta ya ha sido devuelta en su totalidad o se encuentra anulada.');
         }
 
         $sale->load(['items.product', 'customer', 'user']);
 
-        $activeShift = CashShift::where('status', CashShift::STATUS_OPEN)
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
+        $activeShift = CashShift::where('business_id', $businessId)
+            ->where('status', CashShift::STATUS_OPEN)
             ->where('user_id', Auth::id())
             ->first();
 
@@ -92,7 +121,7 @@ class SaleReturnController extends Controller
         Gate::authorize('create', [SaleReturn::class, $sale]);
 
         if (! $sale->canBeRefunded()) {
-            return back()->withErrors(['error' => 'La venta no admite devoluciones adicionales.']);
+            return back()->with('error', 'La venta ya fue devuelta en su totalidad y no admite devoluciones adicionales.');
         }
 
         $validated = $request->validate([
@@ -101,6 +130,10 @@ class SaleReturnController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.sale_item_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:0'],
+        ], [
+            'reason.required' => 'Por favor indica el motivo de la devolución.',
+            'reason.min' => 'El motivo de la devolución debe tener al menos 4 caracteres.',
+            'refund_method.required' => 'Selecciona el método de reembolso.',
         ]);
 
         // Filtrar solo items con cantidad > 0
@@ -206,7 +239,7 @@ class SaleReturnController extends Controller
 
                 AuditLogger::record(
                     'sale_return_registered',
-                    "Devolución {$returnNumber} por $" . number_format($totalRefunded, 2) . " asociada a venta {$lockedSale->invoice_number}. Motivo: {$validated['reason']}",
+                    "Devolución {$returnNumber} por C$ " . number_format($totalRefunded, 2) . " asociada a venta {$lockedSale->invoice_number}. Motivo: {$validated['reason']}",
                     $saleReturn,
                     [
                         'sale_id' => $lockedSale->id,

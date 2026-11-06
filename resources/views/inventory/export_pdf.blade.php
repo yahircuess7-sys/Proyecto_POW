@@ -32,8 +32,8 @@
                 <th>Cód. Barras</th>
                 <th>Nombre del Producto</th>
                 <th>Categoría</th>
-                <th class="text-right">Costo</th>
-                <th class="text-right">Precio</th>
+                <th class="text-right">Costo (C$)</th>
+                <th class="text-right">Precio (C$)</th>
                 <th class="text-center">Stock</th>
                 <th class="text-center">Mínimo</th>
                 <th>Unidad</th>
@@ -47,8 +47,8 @@
                 <td class="font-mono">{{ $product['barcode'] ?: '---' }}</td>
                 <td><strong>{{ $product['name'] }}</strong></td>
                 <td>{{ $product['category'] }}</td>
-                <td class="text-right font-mono">${{ $product['cost'] }}</td>
-                <td class="text-right font-mono"><strong>${{ $product['price'] }}</strong></td>
+                <td class="text-right font-mono">C$ {{ $product['cost'] }}</td>
+                <td class="text-right font-mono"><strong>C$ {{ $product['price'] }}</strong></td>
                 <td class="text-center font-mono font-bold">{{ $product['stock'] }}</td>
                 <td class="text-center font-mono">{{ $product['min_stock'] }}</td>
                 <td>{{ $product['unit'] }}</td>

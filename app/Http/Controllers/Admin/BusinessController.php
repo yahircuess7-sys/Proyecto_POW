@@ -56,9 +56,12 @@ class BusinessController extends Controller
 
         Gate::authorize('update', $business);
 
-        $request->merge([
-            'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
-        ]);
+        $hadTaxIdInput = $request->exists('tax_id');
+        if ($hadTaxIdInput) {
+            $request->merge([
+                'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
+            ]);
+        }
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -70,6 +73,7 @@ class BusinessController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:500'],
             'slogan' => ['nullable', 'string', 'max:255'],
+            'logo_url' => ['nullable', 'url', 'max:500'],
             'currency' => ['nullable', 'string', 'max:10'],
             'tax_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'timezone' => ['nullable', 'string', 'max:100'],
@@ -88,20 +92,24 @@ class BusinessController extends Controller
             'commercial_name' => $validated['commercial_name'] ?? ($business->settings['commercial_name'] ?? $validated['name']),
             'tax_regime' => $taxRegime,
             'municipality' => $validated['municipality'] ?? ($business->settings['municipality'] ?? 'Managua, Nicaragua'),
-            'currency' => strtoupper(trim($validated['currency'] ?? ($business->settings['currency'] ?? 'NIO'))),
+            'currency' => 'NIO',
             'tax_percentage' => $taxPercentage,
             'timezone' => $validated['timezone'] ?? ($business->settings['timezone'] ?? 'America/Managua'),
             'slogan' => $validated['slogan'] ?? ($business->settings['slogan'] ?? null),
+            'logo_url' => array_key_exists('logo_url', $validated) ? $validated['logo_url'] : ($business->settings['logo_url'] ?? null),
+            'ticket_configured' => true,
             'receipt_format' => $validated['receipt_format'] ?? ($business->settings['receipt_format'] ?? 'ticket_80mm'),
             'receipt_footer_note' => $validated['receipt_footer_note'] ?? ($business->settings['receipt_footer_note'] ?? 'Comprobante interno emitido por PuntoÁgil Cloud POS.'),
         ]);
 
         $business->update([
             'name' => $validated['name'],
-            'tax_id' => $validated['tax_id'] ? strtoupper(trim($validated['tax_id'])) : null,
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'address' => $validated['address'],
+            'tax_id' => array_key_exists('tax_id', $validated)
+                ? ($validated['tax_id'] ? strtoupper(trim($validated['tax_id'])) : ($request->exists('tax_id') ? null : $business->tax_id))
+                : $business->tax_id,
+            'email' => array_key_exists('email', $validated) ? $validated['email'] : $business->email,
+            'phone' => array_key_exists('phone', $validated) ? $validated['phone'] : $business->phone,
+            'address' => array_key_exists('address', $validated) ? $validated['address'] : $business->address,
             'settings' => $settings,
         ]);
 
@@ -200,9 +208,12 @@ class BusinessController extends Controller
     {
         Gate::authorize('create', Business::class);
 
-        $request->merge([
-            'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
-        ]);
+        $hadTaxIdInput = $request->exists('tax_id');
+        if ($hadTaxIdInput) {
+            $request->merge([
+                'tax_id' => $request->filled('tax_id') ? strtoupper(trim((string) $request->input('tax_id'))) : null,
+            ]);
+        }
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],

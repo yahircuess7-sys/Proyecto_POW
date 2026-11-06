@@ -143,18 +143,18 @@
                 <!-- Cost -->
                 <div>
                     <label for="cost" class="block font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                        Costo Unitario de Adquisición ($)
+                        Costo Unitario de Adquisición (C$)
                     </label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 font-mono font-bold">
-                            $
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 font-mono font-bold text-xs">
+                            C$
                         </span>
                         <input type="number" step="0.01" min="0" name="cost" id="cost" 
-                               class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
+                               class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800"
                                placeholder="0.00" 
                                value="{{ old('cost', $product->cost ?? '0.00') }}">
                     </div>
-                    <p class="mt-1 text-[11px] text-slate-400">Utilizado para calcular márgenes brutos y valoración contable.</p>
+                    <p class="mt-1 text-[11px] text-slate-400">Utilizado para calcular márgenes brutos y valoración contable en Córdobas.</p>
                     @error('cost')
                         <p class="mt-1 text-xs text-rose-600 font-medium">{{ $message }}</p>
                     @enderror
@@ -163,14 +163,14 @@
                 <!-- Price -->
                 <div>
                     <label for="price" class="block font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                        Precio de Venta al Público ($) <span class="text-rose-500">*</span>
+                        Precio de Venta al Público (C$) <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 font-mono font-bold">
-                            $
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 font-mono font-bold text-xs">
+                            C$
                         </span>
                         <input type="number" step="0.01" min="0" name="price" id="price" 
-                               class="w-full pl-8 pr-4 py-2.5 rounded-xl border {{ $errors->has('price') ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-slate-50/50' }} font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 font-bold"
+                               class="w-full pl-10 pr-4 py-2.5 rounded-xl border {{ $errors->has('price') ? 'border-rose-400 bg-rose-50/30' : 'border-slate-200 bg-slate-50/50' }} font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 font-bold"
                                placeholder="0.00" 
                                value="{{ old('price', $product->price ?? '') }}" 
                                required>

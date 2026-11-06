@@ -70,14 +70,14 @@
                     </div>
 
                     <div>
-                        <label for="currency" class="block text-xs font-semibold text-slate-700 mb-1">
-                            Moneda Operativa *
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">
+                            Moneda Operativa
                         </label>
-                        <select name="currency" id="currency"
-                                class="w-full px-3.5 py-2.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                            <option value="NIO" @selected(old('currency', 'NIO') === 'NIO')>Córdobas (C$ - NIO)</option>
-                            <option value="USD" @selected(old('currency') === 'USD')>Dólares ($ - USD)</option>
-                        </select>
+                        <input type="hidden" name="currency" value="NIO">
+                        <div class="w-full px-3.5 py-2.5 text-xs font-semibold text-emerald-700 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                            <span>Córdobas (C$ - NIO)</span>
+                            <i class="bi bi-lock-fill text-[11px] text-emerald-500" title="Moneda oficial de facturación"></i>
+                        </div>
                     </div>
                 </div>
 

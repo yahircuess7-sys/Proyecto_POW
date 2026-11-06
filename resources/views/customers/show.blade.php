@@ -92,7 +92,7 @@
                     <div>
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">Total Facturado</span>
                         <div class="text-3xl font-extrabold font-mono text-emerald-600 mt-1">
-                            ${{ number_format($totalSpent, 2) }}
+                            C$ {{ number_format($totalSpent, 2) }}
                         </div>
                         <span class="text-xs text-slate-500 mt-0.5 block">Monto histórico consumido en esta empresa</span>
                     </div>
@@ -104,7 +104,7 @@
                         </div>
                         <div>
                             <span class="text-slate-400 text-[11px] block">Ticket Promedio:</span>
-                            <span class="font-mono text-slate-900 font-bold text-lg">${{ number_format($averageTicket, 2) }}</span>
+                            <span class="font-mono text-slate-900 font-bold text-lg">C$ {{ number_format($averageTicket, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -151,18 +151,21 @@
                             {{ $sale->user->name ?? 'Cajero' }}
                         </td>
                         <td class="py-3 px-4 text-right font-mono text-slate-600">
-                            ${{ number_format($sale->subtotal, 2) }}
+                            C$ {{ number_format($sale->subtotal, 2) }}
                         </td>
                         <td class="py-3 px-4 text-right font-mono text-slate-500">
-                            ${{ number_format($sale->tax, 2) }}
+                            C$ {{ number_format($sale->tax, 2) }}
                         </td>
                         <td class="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                            ${{ number_format($sale->total, 2) }}
+                            C$ {{ number_format($sale->total, 2) }}
                         </td>
                         <td class="py-3 px-6 text-right">
                             <div class="inline-flex items-center justify-end gap-1.5">
                                 <a href="{{ route('sales.show', $sale->id) }}" class="pa-btn-ghost py-1 px-2 text-xs" title="Ver Comprobante">
                                     <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ route('sales.ticket', $sale->id) }}" target="_blank" class="pa-btn-ghost py-1 px-2 text-xs text-emerald-700 hover:bg-emerald-50" title="Ticket Térmico 58/80mm">
+                                    <i class="bi bi-receipt"></i>
                                 </a>
                                 <a href="{{ route('sales.pdf', $sale->id) }}" class="pa-btn-ghost py-1 px-2 text-xs text-rose-600 hover:bg-rose-50" title="Descargar PDF">
                                     <i class="bi bi-file-earmark-pdf"></i>

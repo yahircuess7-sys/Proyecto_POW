@@ -28,8 +28,12 @@ class SaleReturnPolicy
             return false;
         }
 
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
         if ($sale) {
-            return $user->belongsToBusiness($sale->business_id) && $sale->canBeRefunded();
+            return $user->belongsToBusiness($sale->business_id);
         }
 
         return true;

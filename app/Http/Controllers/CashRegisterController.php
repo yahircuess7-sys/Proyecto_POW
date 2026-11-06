@@ -76,8 +76,16 @@ class CashRegisterController extends Controller
 
         $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
 
+        if ($businessId) {
+            CashRegister::firstOrCreate(
+                ['business_id' => $businessId, 'name' => 'Caja Principal'],
+                ['status' => CashRegister::STATUS_ACTIVE, 'notes' => 'Caja registradora inicial del negocio']
+            );
+        }
+
         // Buscar turno abierto para el usuario actual o en general para el negocio si es admin
         $shift = CashShift::with(['cashRegister', 'user'])
+            ->where('business_id', $businessId)
             ->where('status', CashShift::STATUS_OPEN)
             ->where('user_id', Auth::id())
             ->latest('opened_at')
@@ -85,6 +93,7 @@ class CashRegisterController extends Controller
 
         if (! $shift && (Auth::user()->isAdmin() || Auth::user()->isOwner())) {
             $shift = CashShift::with(['cashRegister', 'user'])
+                ->where('business_id', $businessId)
                 ->where('status', CashShift::STATUS_OPEN)
                 ->latest('opened_at')
                 ->first();
@@ -179,7 +188,7 @@ class CashRegisterController extends Controller
 
             AuditLogger::record(
                 'cash_shift_opened',
-                "Apertura de turno en caja '{$register->name}' con fondo inicial $" . number_format($shift->initial_cash, 2),
+                "Apertura de turno en caja '{$register->name}' con fondo inicial C$ " . number_format($shift->initial_cash, 2),
                 $shift,
                 ['initial_cash' => $shift->initial_cash, 'cash_register_id' => $register->id]
             );
@@ -187,7 +196,7 @@ class CashRegisterController extends Controller
             return $shift;
         });
 
-        return redirect()->route('cash.current')->with('success', 'Turno de caja abierto exitosamente con fondo inicial de $' . number_format($shift->initial_cash, 2));
+        return redirect()->route('cash.current')->with('success', 'Turno de caja abierto exitosamente con fondo inicial de C$ ' . number_format($shift->initial_cash, 2));
     }
 
     /**
@@ -221,7 +230,7 @@ class CashRegisterController extends Controller
 
             AuditLogger::record(
                 'cash_movement_recorded',
-                "{$typeLabel} de efectivo por $" . number_format($validated['amount'], 2) . " en turno #{$shift->id}. Motivo: {$validated['reason']}",
+                "{$typeLabel} de efectivo por C$ " . number_format($validated['amount'], 2) . " en turno #{$shift->id}. Motivo: {$validated['reason']}",
                 $movement,
                 ['type' => $validated['type'], 'amount' => $validated['amount'], 'shift_id' => $shift->id]
             );
@@ -230,7 +239,7 @@ class CashRegisterController extends Controller
         });
 
         $tipo = $movement->type === 'in' ? 'Entrada' : 'Salida';
-        return back()->with('success', "{$tipo} de efectivo por $" . number_format($movement->amount, 2) . " registrada correctamente.");
+        return back()->with('success', "{$tipo} de efectivo por C$ " . number_format($movement->amount, 2) . " registrada correctamente.");
     }
 
     /**
@@ -255,7 +264,8 @@ class CashRegisterController extends Controller
 
         // Si existe diferencia significativa (> 0.05) se exige observación explicativa
         if (abs($difference) > 0.05 && empty(trim($validated['notes'] ?? ''))) {
-            return back()->withErrors(['notes' => 'Se detectó una diferencia de caja de $' . number_format($difference, 2) . '. Debe ingresar obligatoriamente una justificación u observación para asentar el arqueo.'])->withInput();
+            $diffType = $difference > 0 ? 'un sobrante' : 'un faltante';
+            return back()->withErrors(['notes' => "El arqueo detectó {$diffType} de C$ " . number_format(abs($difference), 2) . '. Ingresa una observación o justificación breve para confirmar el cierre.'])->withInput();
         }
 
         DB::transaction(function () use ($shift, $closingCash, $expectedCash, $difference, $validated) {
@@ -281,7 +291,7 @@ class CashRegisterController extends Controller
 
             AuditLogger::record(
                 'cash_shift_closed',
-                "Cierre y arqueo de turno #{$shift->id}. Esperado: $" . number_format($expectedCash, 2) . ", Arqueado: $" . number_format($closingCash, 2) . ", Diferencia: $" . number_format($difference, 2),
+                "Cierre y arqueo de turno #{$shift->id}. Esperado: C$ " . number_format($expectedCash, 2) . ", Contado: C$ " . number_format($closingCash, 2) . ", Diferencia: C$ " . number_format($difference, 2),
                 $shift,
                 [
                     'expected_cash' => $expectedCash,

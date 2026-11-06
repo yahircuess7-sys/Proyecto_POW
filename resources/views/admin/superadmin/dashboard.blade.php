@@ -156,9 +156,9 @@
             <h2 class="text-sm font-bold text-slate-900">Salud del Sistema y Actividad</h2>
             
             <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
-                <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Volumen Global de Ventas</span>
-                <p class="text-2xl font-black font-mono text-emerald-400">${{ number_format($totalSalesVolume, 2) }}</p>
-                <p class="text-[11px] text-slate-400">Total transaccionado por los negocios en el POS.</p>
+                <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Volumen Global de Ventas POS</span>
+                <p class="text-2xl font-black font-mono text-emerald-400">C$ {{ number_format($totalSalesVolume, 2) }}</p>
+                <p class="text-[11px] text-slate-400">Total transaccionado por los negocios en Córdobas (NIO).</p>
             </div>
 
             <div class="space-y-2 text-xs">

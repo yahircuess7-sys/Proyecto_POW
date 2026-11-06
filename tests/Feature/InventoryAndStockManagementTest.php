@@ -308,4 +308,52 @@ class InventoryAndStockManagementTest extends TestCase
         $this->actingAs($admin)->get(route('inventory.export.csv'))->assertStatus(200);
         $this->actingAs($admin)->get(route('inventory.export.pdf'))->assertStatus(200);
     }
+
+    public function test_excel_template_download_and_spanish_headers_import_and_inline_quick_update(): void
+    {
+        [$business, $admin] = $this->createBusinessWithAdminAndCashier();
+        app(TenantManager::class)->setTenant($business);
+
+        // 1. Descargar plantilla Excel/CSV con 1 clic
+        $templateResp = $this->actingAs($admin)->get(route('inventory.template.csv'));
+        $templateResp->assertOk();
+        $this->assertStringContainsString('Nombre;Codigo_SKU;Categoria;Precio_Compra;Precio_Venta;Stock_Inicial', $templateResp->getContent());
+
+        // 2. Importar archivo con formato amigable de Excel (incluyendo línea sep=;)
+        $excelCsvContent = "sep=;\n"
+            . "Nombre;Codigo_SKU;Categoria;Precio_Compra;Precio_Venta;Stock_Inicial;Stock_Minimo;Unidad\n"
+            . "Tubo PVC 1/2 Pulgada;PVC-050;Plomería;85.00;135.00;40;8;Unidades\n";
+
+        $file = UploadedFile::fake()->createWithContent('plantilla_rellena.csv', $excelCsvContent);
+
+        $importResp = $this->actingAs($admin)->post(route('inventory.import.csv'), [
+            'file' => $file,
+        ]);
+        $importResp->assertRedirect(route('inventory.index'));
+        $importResp->assertSessionHas('success');
+
+        $product = Product::where('sku', 'PVC-050')->where('business_id', $business->id)->first();
+        $this->assertNotNull($product);
+        $this->assertEquals('Tubo PVC 1/2 Pulgada', $product->name);
+        $this->assertEquals(85.00, (float) $product->cost);
+        $this->assertEquals(135.00, (float) $product->price);
+        $this->assertEquals(40, $product->stock);
+        $this->assertEquals(8, $product->min_stock);
+
+        // 3. Edición rápida en línea (quick-update) desde el listado
+        $quickResp = $this->actingAs($admin)->patchJson(route('inventory.quick-update', $product->id), [
+            'cost' => 92.50,
+            'price' => 149.00,
+            'min_stock' => 12,
+        ]);
+        $quickResp->assertOk();
+        $quickResp->assertJson([
+            'success' => true,
+        ]);
+
+        $product->refresh();
+        $this->assertEquals(92.50, (float) $product->cost);
+        $this->assertEquals(149.00, (float) $product->price);
+        $this->assertEquals(12, $product->min_stock);
+    }
 }

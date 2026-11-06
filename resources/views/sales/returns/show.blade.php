@@ -55,7 +55,9 @@
             </div>
             <div>
                 <span class="text-[10px] text-slate-400 font-bold uppercase block">Método Reembolso</span>
-                <strong class="text-rose-700 font-semibold uppercase">{{ $saleReturn->refund_method }}</strong>
+                <strong class="text-rose-700 font-semibold uppercase">
+                    {{ match($saleReturn->refund_method) { 'cash' => 'Efectivo en Caja', 'credit_note' => 'Nota de Crédito', 'card_reversal' => 'Reverso Tarjeta', default => $saleReturn->refund_method } }}
+                </strong>
             </div>
         </div>
 
@@ -84,10 +86,10 @@
                                     {{ $item->quantity }}
                                 </td>
                                 <td class="py-2.5 px-4 text-right font-mono text-slate-700">
-                                    ${{ number_format($item->unit_price, 2) }}
+                                    C$ {{ number_format($item->unit_price, 2) }}
                                 </td>
                                 <td class="py-2.5 px-4 text-right font-mono font-bold text-rose-700">
-                                    -${{ number_format($item->subtotal, 2) }}
+                                    -C$ {{ number_format($item->subtotal, 2) }}
                                 </td>
                             </tr>
                         @endforeach
@@ -95,15 +97,15 @@
                     <tfoot class="bg-slate-50 font-bold border-t border-slate-200">
                         <tr>
                             <td colspan="3" class="py-2 px-4 text-right uppercase text-slate-600">Base Gravable Devuelta (Subtotal):</td>
-                            <td class="py-2 px-4 text-right font-mono text-slate-800">-${{ number_format($saleReturn->total_refunded, 2) }}</td>
+                            <td class="py-2 px-4 text-right font-mono text-slate-800">-C$ {{ number_format($saleReturn->total_refunded, 2) }}</td>
                         </tr>
                         <tr>
                             <td colspan="3" class="py-2 px-4 text-right uppercase text-slate-600">IVA Restituido / Cancelado (Art. 123 Ley No. 822):</td>
-                            <td class="py-2 px-4 text-right font-mono text-slate-800">-${{ number_format($saleReturn->restitutedTaxAmount(), 2) }}</td>
+                            <td class="py-2 px-4 text-right font-mono text-slate-800">-C$ {{ number_format($saleReturn->restitutedTaxAmount(), 2) }}</td>
                         </tr>
                         <tr class="border-t border-slate-200">
                             <td colspan="3" class="py-3 px-4 text-right uppercase text-slate-900">Total Reembolsado (Con Impuesto Restituido):</td>
-                            <td class="py-3 px-4 text-right font-mono text-base text-rose-700">-${{ number_format($saleReturn->totalWithTax(), 2) }}</td>
+                            <td class="py-3 px-4 text-right font-mono text-base text-rose-700">-C$ {{ number_format($saleReturn->totalWithTax(), 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>

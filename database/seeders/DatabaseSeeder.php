@@ -20,15 +20,15 @@ class DatabaseSeeder extends Seeder
             ['slug' => 'puntoagil-central'],
             [
                 'name' => 'PuntoÁgil Central',
-                'tax_id' => '0999999999001',
+                'tax_id' => 'J0310000000001',
                 'email' => 'admin@puntoagil.com',
-                'phone' => '+593 99 000 0000',
-                'address' => 'Sede Principal - Matriz',
+                'phone' => '+505 8888 0000',
+                'address' => 'Managua, Nicaragua',
                 'status' => 'active',
                 'settings' => [
-                    'currency' => 'USD',
-                    'tax_percentage' => 12,
-                    'timezone' => 'America/Guayaquil',
+                    'currency' => 'NIO',
+                    'tax_percentage' => 15,
+                    'timezone' => 'America/Managua',
                 ],
             ]
         );

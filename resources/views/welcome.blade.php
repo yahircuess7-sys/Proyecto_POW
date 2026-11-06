@@ -201,8 +201,8 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="p-3.5 rounded-xl bg-slate-800/70 border border-slate-700/60 flex items-center justify-between">
                             <div>
-                                <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Facturación Rápida</span>
-                                <span class="text-base font-bold font-mono text-white mt-0.5 block">IVA 12% Automático</span>
+                                <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Facturación en Córdobas (C$)</span>
+                                <span class="text-base font-bold font-mono text-white mt-0.5 block">IVA 15% Configurable</span>
                             </div>
                             <div class="w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
                                 <i class="bi bi-lightning-charge-fill"></i>
@@ -249,7 +249,7 @@
                     </div>
                     <h3 class="text-lg font-bold text-slate-900 mb-2">Terminal POS Express</h3>
                     <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                        Cobro rápido con soporte para pantallas táctiles, búsqueda instantánea por SKU o categoría, ajuste numérico de cantidades y liquidación automática de IVA 12%.
+                        Cobro ultrarrápido en Córdobas (C$) con atajos de teclado, lector de código de barras automático, tickets térmicos 58/80mm y liquidación configurable de IVA 15%.
                     </p>
                     <div class="text-xs font-semibold text-emerald-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                         <span>Optimizado para cajeros</span>

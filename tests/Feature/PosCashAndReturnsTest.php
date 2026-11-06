@@ -373,4 +373,129 @@ class PosCashAndReturnsTest extends TestCase
         $reportsRespB->assertViewHas('grossMargin', 0.0);
         $reportsRespB->assertViewHas('totalSales', 0.0);
     }
+
+    public function test_thermal_ticket_renders_in_80mm_and_58mm_with_cordobas_currency(): void
+    {
+        [$bizA, $adminA, $cashierA] = $this->createBusinessWithAdminAndCashier('ticketA');
+        [$bizB, $adminB] = $this->createBusinessWithAdminAndCashier('ticketB');
+
+        app(TenantManager::class)->setTenant($bizA);
+
+        $product = Product::create([
+            'business_id' => $bizA->id,
+            'sku' => 'TCK-' . rand(1000, 9999),
+            'name' => 'Candado Laminado 40mm',
+            'category' => 'Cerrajería',
+            'cost' => 85.00,
+            'price' => 150.00,
+            'stock' => 25,
+            'min_stock' => 5,
+            'status' => Product::STATUS_ACTIVE,
+        ]);
+
+        $saleResp = $this->actingAs($cashierA)->postJson(route('sales.store'), [
+            'payment_method' => 'cash',
+            'paid_amount' => 200.00,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 150.00],
+            ],
+        ]);
+        $saleResp->assertOk();
+        $sale = Sale::findOrFail($saleResp->json('sale_id'));
+
+        $ticket80 = $this->actingAs($cashierA)->get(route('sales.ticket', ['sale' => $sale->id, 'size' => '80mm']));
+        $ticket80->assertOk();
+        $ticket80->assertSee($sale->invoice_number);
+        $ticket80->assertSee('Candado Laminado 40mm');
+        $ticket80->assertSee('C$');
+
+        $ticket58 = $this->actingAs($cashierA)->get(route('sales.ticket', ['sale' => $sale->id, 'size' => '58mm']));
+        $ticket58->assertOk();
+        $ticket58->assertSee('58mm');
+
+        // Aislamiento multi-tenant: Admin B no puede ver el ticket de Empresa A
+        app(TenantManager::class)->setTenant($bizB);
+        $forbiddenResp = $this->actingAs($adminB)->get(route('sales.ticket', $sale->id));
+        $this->assertTrue(in_array($forbiddenResp->status(), [403, 404], true));
+    }
+
+    public function test_onboarding_checklist_shows_for_new_business_and_hides_when_completed(): void
+    {
+        $business = Business::create([
+            'name' => 'Ferretería Juanito ' . uniqid(),
+            'slug' => 'ferreteria-juanito-' . uniqid(),
+            'status' => 'active',
+            'settings' => [
+                'currency' => 'NIO',
+                'tax_percentage' => 15.0,
+            ],
+        ]);
+
+        $owner = User::create([
+            'name' => 'Juanito Propietario',
+            'email' => 'juanito_' . uniqid() . '@puntoagil.test',
+            'password' => Hash::make('password123'),
+            'role' => 'admin',
+            'status' => 'active',
+            'current_business_id' => $business->id,
+        ]);
+        $owner->businesses()->attach($business->id, ['role' => 'owner', 'is_default' => true]);
+
+        app(TenantManager::class)->setTenant($business);
+
+        // 1. Recién creado: solo el paso 1 está completo y el checklist es visible
+        $dashInitial = $this->actingAs($owner)->get(route('dashboard'));
+        $dashInitial->assertOk();
+        $dashInitial->assertViewHas('showOnboarding', true);
+        $dashInitial->assertViewHas('completedStepsCount', 1);
+        $dashInitial->assertSeeText('Primeros Pasos en 3 Minutos');
+
+        // 2. Configurar datos del ticket
+        $this->actingAs($owner)->put(route('admin.business.update'), [
+            'name' => $business->name,
+            'phone' => '+505 8888-9999',
+            'tax_percentage' => 15,
+            'receipt_footer' => '¡Gracias por comprar en Ferretería Juanito!',
+        ])->assertRedirect();
+
+        // 3. Crear primer producto
+        $product = Product::create([
+            'business_id' => $business->id,
+            'sku' => 'ONB-' . rand(1000, 9999),
+            'name' => 'Cinta Métrica 3m',
+            'category' => 'Medición',
+            'cost' => 60.00,
+            'price' => 110.00,
+            'stock' => 10,
+            'min_stock' => 2,
+            'status' => Product::STATUS_ACTIVE,
+        ]);
+
+        // 4. Abrir primera caja registradora
+        $register = CashRegister::create([
+            'business_id' => $business->id,
+            'name' => 'Caja Principal',
+            'status' => CashRegister::STATUS_ACTIVE,
+        ]);
+        $this->actingAs($owner)->post(route('cash.open'), [
+            'cash_register_id' => $register->id,
+            'initial_cash' => 500.00,
+        ])->assertRedirect(route('cash.current'));
+
+        // 5. Realizar primera venta en el POS
+        $this->actingAs($owner)->postJson(route('sales.store'), [
+            'payment_method' => 'cash',
+            'paid_amount' => 200.00,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 110.00],
+            ],
+        ])->assertOk();
+
+        // Al completar los 5 pasos, el checklist se oculta automáticamente
+        $dashCompleted = $this->actingAs($owner)->get(route('dashboard'));
+        $dashCompleted->assertOk();
+        $dashCompleted->assertViewHas('completedStepsCount', 5);
+        $dashCompleted->assertViewHas('showOnboarding', false);
+        $dashCompleted->assertDontSeeText('Primeros Pasos en 3 Minutos');
+    }
 }

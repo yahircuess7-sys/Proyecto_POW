@@ -133,7 +133,7 @@
             <div class="text-left sm:text-right">
                 <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold block">Total Liquidado</span>
                 <div class="text-3xl font-black font-mono text-emerald-600 mt-0.5">
-                    ${{ number_format($purchase->total, 2) }}
+                    C$ {{ number_format($purchase->total, 2) }}
                 </div>
                 @if($purchase->supplier_invoice_number)
                 <div class="mt-1 text-xs text-slate-500 font-mono">
@@ -234,13 +234,13 @@
                             {{ $item->quantity }}
                         </td>
                         <td class="py-3.5 px-4 text-right font-mono text-slate-600">
-                            ${{ number_format($item->unit_cost, 2) }}
+                            C$ {{ number_format($item->unit_cost, 2) }}
                         </td>
                         <td class="py-3.5 px-4 text-right font-mono text-rose-500">
-                            {{ $item->discount > 0 ? '-$' . number_format($item->discount, 2) : '—' }}
+                            {{ $item->discount > 0 ? '-C$ ' . number_format($item->discount, 2) : '—' }}
                         </td>
                         <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
-                            ${{ number_format($item->subtotal, 2) }}
+                            C$ {{ number_format($item->subtotal, 2) }}
                         </td>
                     </tr>
                     @endforeach
@@ -260,32 +260,36 @@
             </div>
 
             <div class="sm:col-span-5">
+                @php
+                    $netBase = max(0, (float) $purchase->subtotal - (float) $purchase->discount);
+                    $effectivePct = $netBase > 0 ? round(((float) $purchase->tax / $netBase) * 100, 2) : ($taxPercentage ?? 15);
+                @endphp
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
                     <div class="flex justify-between text-slate-600">
                         <span>Subtotal Bruto:</span>
-                        <span class="font-mono font-bold text-slate-800">${{ number_format($purchase->subtotal, 2) }}</span>
+                        <span class="font-mono font-bold text-slate-800">C$ {{ number_format($purchase->subtotal, 2) }}</span>
                     </div>
 
                     @if($purchase->discount > 0)
                     <div class="flex justify-between text-rose-600 font-medium">
                         <span>Total Descuentos:</span>
-                        <span class="font-mono font-bold">-${{ number_format($purchase->discount, 2) }}</span>
+                        <span class="font-mono font-bold">-C$ {{ number_format($purchase->discount, 2) }}</span>
                     </div>
                     @endif
 
                     <div class="flex justify-between text-slate-600">
                         <span>Base Imponible (Neto):</span>
-                        <span class="font-mono font-bold text-slate-800">${{ number_format(max(0, $purchase->subtotal - $purchase->discount), 2) }}</span>
+                        <span class="font-mono font-bold text-slate-800">C$ {{ number_format($netBase, 2) }}</span>
                     </div>
 
                     <div class="flex justify-between text-slate-600">
-                        <span>Impuesto / IVA (12%):</span>
-                        <span class="font-mono font-bold text-slate-800">${{ number_format($purchase->tax, 2) }}</span>
+                        <span>Impuesto / IVA ({{ rtrim(rtrim(number_format($effectivePct, 2), '0'), '.') }}%):</span>
+                        <span class="font-mono font-bold text-slate-800">C$ {{ number_format($purchase->tax, 2) }}</span>
                     </div>
 
                     <div class="pt-2 border-t border-slate-200/80 flex justify-between text-sm">
                         <span class="font-bold text-slate-900">Total Liquidado:</span>
-                        <span class="font-mono text-lg font-black text-emerald-600">${{ number_format($purchase->total, 2) }}</span>
+                        <span class="font-mono text-lg font-black text-emerald-600">C$ {{ number_format($purchase->total, 2) }}</span>
                     </div>
                 </div>
             </div>

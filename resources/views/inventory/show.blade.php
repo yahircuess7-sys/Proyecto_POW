@@ -103,13 +103,13 @@
                     <div>
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">Precio de Venta</span>
                         <div class="text-3xl font-extrabold font-mono text-slate-900 mt-1">
-                            ${{ number_format((float) $product->price, 2) }}
+                            C$ {{ number_format((float) $product->price, 2) }}
                         </div>
                         
                         <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-200/60 text-xs">
                             <div>
                                 <span class="text-slate-400 text-[11px] block">Costo de Compra:</span>
-                                <span class="font-mono text-slate-700 font-bold">${{ number_format((float) $product->cost, 2) }}</span>
+                                <span class="font-mono text-slate-700 font-bold">C$ {{ number_format((float) $product->cost, 2) }}</span>
                             </div>
                             <div>
                                 <span class="text-slate-400 text-[11px] block">Margen Bruto Estimado:</span>

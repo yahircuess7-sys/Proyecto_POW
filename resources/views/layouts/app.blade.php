@@ -178,10 +178,93 @@
         .sidebar-scroll::-webkit-scrollbar-thumb:hover {
             background: rgba(16, 185, 129, 0.65);
         }
+
+        /* Native <dialog> top-layer scroll containment (Modern Web Guidance) */
+        dialog:modal {
+            overscroll-behavior: contain;
+        }
+        dialog::backdrop {
+            overflow: hidden;
+            overscroll-behavior: contain;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Reusable Modal & Button Utilities */
+        .pa-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+        }
+        .pa-modal {
+            width: 100%;
+            max-width: 28rem;
+            background: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            padding: 1.5rem;
+        }
+        .pa-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #10b981;
+            color: #ffffff;
+            transition: all 0.15s ease;
+        }
+        .pa-btn-primary:hover { background-color: #059669; }
+        .pa-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            transition: all 0.15s ease;
+        }
+        .pa-btn-secondary:hover { background-color: #e2e8f0; }
+        .pa-btn-danger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.125rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #e11d48;
+            color: #ffffff;
+            transition: all 0.15s ease;
+        }
+        .pa-btn-danger:hover { background-color: #be123c; }
+
+        @media print {
+            .vt-sidebar, .vt-header, footer, .no-print { display: none !important; }
+            .lg\:pl-64 { padding-left: 0 !important; }
+            .vt-main { padding: 0 !important; max-width: 100% !important; }
+            body { background: #ffffff !important; }
+        }
     </style>
     @yield('styles')
 </head>
-<body class="h-full antialiased text-slate-800 bg-[#f8fafc]" x-data="{ sidebarOpen: false, userDropdown: false }">
+<body class="h-full antialiased text-slate-800 bg-[#f8fafc]" x-data="{ sidebarOpen: false, userDropdown: false, tenantDropdown: false }">
 
     <!-- Mobile Drawer Overlay -->
     <div x-show="sidebarOpen" 
@@ -251,7 +334,6 @@
                             <i class="bi bi-wallet2 text-base {{ request()->routeIs('cash.*') ? 'text-emerald-400' : 'text-slate-400' }}"></i>
                             <span>Caja y Turnos</span>
                         </div>
-                        <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-800 text-slate-300 border border-slate-700">M11</span>
                     </a>
 
                     <a href="{{ route('sales.history') }}" 
@@ -408,54 +490,152 @@
     <div class="lg:pl-64 flex flex-col min-h-screen">
         
         <!-- Top App Header -->
-        <header class="vt-header sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
-            <div class="flex items-center gap-4">
+        @php
+            $userActiveBusinesses = auth()->check()
+                ? auth()->user()->businesses()->where('businesses.status', 'active')->get()
+                : collect();
+            $headerSub = isset($currentBusiness) && $currentBusiness ? $currentBusiness->currentSubscription() : null;
+            $activeTenantName = $currentBusiness->name ?? 'PuntoÁgil Central';
+            $activeTenantInitial = strtoupper(mb_substr($activeTenantName, 0, 1));
+            $activeRoleLabel = match ($currentBusinessUserRole ?? (auth()->user()->role ?? 'cajero')) {
+                'owner' => 'Propietario',
+                'admin' => 'Administrador',
+                'super_admin' => 'Super Admin',
+                default => 'Cajero',
+            };
+        @endphp
+        <header class="vt-header sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+            <div class="flex items-center gap-3 min-w-0">
                 <button @click="sidebarOpen = true" class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden focus:outline-none">
                     <i class="bi bi-list text-2xl leading-none"></i>
                 </button>
-                <div class="hidden sm:flex items-center gap-2 text-sm text-slate-600 font-medium">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Sistema Online
-                    </span>
-                    <span class="text-slate-300">/</span>
-                    @php
-                        $userActiveBusinesses = auth()->check()
-                            ? auth()->user()->businesses()->where('businesses.status', 'active')->get()
-                            : collect();
-                    @endphp
-                    @if($userActiveBusinesses->count() > 1)
-                        <form action="{{ route('business.switch') }}" method="POST" class="inline-flex items-center">
-                            @csrf
-                            <select name="business_id" onchange="this.form.submit()" class="text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/70 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
+
+                <!-- Modern Tenant Switcher (Notion / Linear / Shopify style) -->
+                <div class="relative" @click.away="tenantDropdown = false">
+                    <button type="button"
+                            @click="tenantDropdown = !tenantDropdown"
+                            class="group flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-50/90 hover:bg-slate-100 border border-slate-200/80 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                        <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs font-bold shadow-sm shrink-0">
+                            {{ $activeTenantInitial }}
+                        </div>
+                        <div class="text-left min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-slate-800 truncate max-w-[140px] sm:max-w-[210px]">{{ $activeTenantName }}</span>
+                                <span class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white text-slate-600 border border-slate-200/80">
+                                    {{ $activeRoleLabel }}
+                                </span>
+                            </div>
+                        </div>
+                        <i class="bi bi-chevron-expand text-xs text-slate-400 group-hover:text-slate-600 transition-colors"></i>
+                    </button>
+
+                    <div x-show="tenantDropdown"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute left-0 mt-2 w-72 bg-white rounded-2xl shadow-floating border border-slate-200/80 py-2 z-50 divide-y divide-slate-100"
+                         x-cloak>
+                        <div class="px-3.5 py-2">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Negocio Activo</p>
+                            <div class="flex items-center justify-between mt-1">
+                                <p class="text-xs font-bold text-slate-900 truncate">{{ $activeTenantName }}</p>
+                                <span class="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">C$ NIO</span>
+                            </div>
+                        </div>
+
+                        @if($userActiveBusinesses->count() > 1)
+                            <div class="py-1.5 max-h-56 overflow-y-auto">
+                                <p class="px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Cambiar de Negocio</p>
                                 @foreach($userActiveBusinesses as $ub)
-                                    <option value="{{ $ub->id }}" {{ (int) ($currentBusiness->id ?? auth()->user()->currentBusinessId()) === (int) $ub->id ? 'selected' : '' }}>
-                                        {{ $ub->name }} ({{ strtoupper($ub->pivot->role) }})
-                                    </option>
+                                    @php
+                                        $isCurrentTenant = (int) ($currentBusiness->id ?? auth()->user()->currentBusinessId()) === (int) $ub->id;
+                                    @endphp
+                                    <form action="{{ route('business.switch') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="business_id" value="{{ $ub->id }}">
+                                        <button type="submit"
+                                                class="w-full flex items-center justify-between px-3.5 py-2 text-xs transition-colors {{ $isCurrentTenant ? 'bg-emerald-50/70 text-emerald-800 font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium' }}">
+                                            <div class="flex items-center gap-2.5 min-w-0">
+                                                <span class="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0 {{ $isCurrentTenant ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600' }}">
+                                                    {{ strtoupper(mb_substr($ub->name, 0, 1)) }}
+                                                </span>
+                                                <div class="text-left min-w-0">
+                                                    <span class="block truncate max-w-[165px]">{{ $ub->name }}</span>
+                                                    <span class="block text-[10px] text-slate-400 capitalize">{{ $ub->pivot->role }}</span>
+                                                </div>
+                                            </div>
+                                            @if($isCurrentTenant)
+                                                <i class="bi bi-check2 text-emerald-600 text-sm shrink-0"></i>
+                                            @endif
+                                        </button>
+                                    </form>
                                 @endforeach
-                            </select>
-                        </form>
-                    @else
-                        <span class="text-slate-700 font-semibold truncate max-w-[200px]">{{ $currentBusiness->name ?? 'PuntoÁgil Central' }}</span>
-                    @endif
+                            </div>
+                        @endif
+
+                        <div class="py-1">
+                            @can('manage-business-settings')
+                                <a href="{{ route('admin.business.settings') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                    <i class="bi bi-sliders text-slate-400"></i>
+                                    <span>Configurar Datos y Ticket</span>
+                                </a>
+                            @endcan
+                            @if(auth()->check() && auth()->user()->isAdmin())
+                                <a href="{{ route('admin.subscription.index') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                                    <i class="bi bi-patch-check text-slate-400"></i>
+                                    <span>Estado de Suscripción</span>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Right Controls -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
+                <!-- Discreet Subscription Status Pill -->
+                @if(auth()->check() && auth()->user()->isAdmin() && $headerSub)
+                    @if($headerSub->isTrialing())
+                        @php $trialLeft = $headerSub->trialDaysRemaining(); @endphp
+                        <a href="{{ route('admin.subscription.index') }}"
+                           class="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-colors {{ $trialLeft <= 3 ? 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100' : 'bg-sky-50 text-sky-800 border border-sky-200/80 hover:bg-sky-100/80' }}"
+                           title="Administrar plan y suscripción">
+                            <i class="bi bi-hourglass-split {{ $trialLeft <= 3 ? 'text-amber-600' : 'text-sky-600' }}"></i>
+                            <span>Prueba: {{ $trialLeft }} {{ $trialLeft === 1 ? 'día restante' : 'días restantes' }}</span>
+                            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-white/90 border border-current/15">Actualizar</span>
+                        </a>
+                    @elseif(!$headerSub->isActive())
+                        <a href="{{ route('admin.subscription.index') }}"
+                           class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>Suscripción {{ $headerSub->statusLabel() }} · Renovar</span>
+                        </a>
+                    @else
+                        <a href="{{ route('admin.subscription.index') }}"
+                           class="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-emerald-50/80 text-emerald-700 border border-emerald-200/70 hover:bg-emerald-100/70 transition-colors"
+                           title="Suscripción activa">
+                            <i class="bi bi-patch-check-fill text-emerald-500"></i>
+                            <span>Plan Activo</span>
+                        </a>
+                    @endif
+                @endif
+
                 @if(auth()->check() && auth()->user()->isSuperAdmin())
                     <a href="{{ route('admin.superadmin.dashboard') }}"
                        class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors"
-                       title="Volver al Panel Global de Super Admin">
+                       title="Ir al Panel Global de Super Admin">
                         <i class="bi bi-shield-shaded"></i>
-                        <span>Super Admin: {{ $currentBusiness->name ?? 'Global' }}</span>
+                        <span>Super Admin</span>
                     </a>
                 @endif
 
                 <a href="{{ route('pos.create') }}" 
                    class="btn-shine inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 transition-all active:scale-95">
-                    <i class="bi bi-plus-circle-fill"></i>
-                    <span class="hidden sm:inline">Nueva Venta</span>
+                    <i class="bi bi-cart-plus-fill"></i>
+                    <span class="hidden sm:inline">Ir al POS</span>
                 </a>
 
                 <!-- User Popover Menu -->
@@ -464,6 +644,10 @@
                             class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none">
                         <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-900 text-white text-xs font-bold shadow-sm">
                             {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                        </div>
+                        <div class="hidden md:block text-left">
+                            <p class="text-xs font-semibold text-slate-800 leading-none truncate max-w-[110px]">{{ explode(' ', trim(auth()->user()->name ?? 'Usuario'))[0] }}</p>
+                            <p class="text-[10px] text-slate-400 leading-none mt-1">{{ $activeRoleLabel }}</p>
                         </div>
                         <i class="bi bi-chevron-down text-xs text-slate-400"></i>
                     </button>
@@ -516,7 +700,7 @@
             
             <!-- Global Flash Messages -->
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-transition class="animate-scale-in flex items-center justify-between p-4 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-subtle">
+                <div x-data="{ show: true }" x-show="show" x-transition class="no-print animate-scale-in flex items-center justify-between p-4 mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 shadow-subtle">
                     <div class="flex items-center gap-3">
                         <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-500 text-white shrink-0">
                             <i class="bi bi-check-lg text-lg"></i>
@@ -530,12 +714,33 @@
             @endif
 
             @if(session('error'))
-                <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between p-4 mb-6 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-subtle">
+                <div x-data="{ show: true }" x-show="show" x-transition class="no-print flex items-center justify-between p-4 mb-6 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-subtle">
                     <div class="flex items-center gap-3">
                         <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-rose-500 text-white shrink-0">
                             <i class="bi bi-exclamation-triangle-fill text-sm"></i>
                         </div>
                         <p class="text-sm font-medium">{{ session('error') }}</p>
+                    </div>
+                    <button @click="show = false" class="text-rose-600 hover:text-rose-900 p-1">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div x-data="{ show: true }" x-show="show" x-transition class="no-print flex items-start justify-between p-4 mb-6 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 shadow-subtle">
+                    <div class="flex items-start gap-3">
+                        <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-rose-500 text-white shrink-0 mt-0.5">
+                            <i class="bi bi-exclamation-octagon-fill text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-rose-700 mb-1">Revisa los datos ingresados</p>
+                            <ul class="text-xs font-medium space-y-0.5 list-disc list-inside">
+                                @foreach($errors->all() as $err)
+                                    <li>{{ $err }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
                     <button @click="show = false" class="text-rose-600 hover:text-rose-900 p-1">
                         <i class="bi bi-x-lg text-sm"></i>

@@ -148,9 +148,12 @@
             </div>
 
             <div>
-                <label class="block font-semibold text-slate-700 mb-1.5">Moneda Base (NIO = Córdoba C$, USD = Dólar $) <span class="text-rose-500">*</span></label>
-                <input type="text" name="currency" id="input_currency" value="{{ old('currency', $business->settings['currency'] ?? 'USD') }}" required
-                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
+                <label class="block font-semibold text-slate-700 mb-1.5">Moneda Operativa de Facturación</label>
+                <input type="hidden" name="currency" id="input_currency" value="NIO">
+                <div class="w-full px-3.5 py-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-800 font-semibold flex items-center justify-between">
+                    <span>Córdoba Nicaragüense (C$ - NIO)</span>
+                    <span class="text-[10px] font-mono bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">Oficial</span>
+                </div>
             </div>
 
             <div>
@@ -159,10 +162,17 @@
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
             </div>
 
-            <div class="sm:col-span-2">
+            <div>
                 <label class="block font-semibold text-slate-700 mb-1.5">Zona Horaria <span class="text-rose-500">*</span></label>
                 <input type="text" name="timezone" id="input_timezone" value="{{ old('timezone', $business->settings['timezone'] ?? 'America/Managua') }}" required
                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono focus:bg-white focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1.5">URL de Logo para Ticket / Factura (Opcional)</label>
+                <input type="url" name="logo_url" value="{{ old('logo_url', $business->settings['logo_url'] ?? '') }}"
+                       placeholder="https://ejemplo.com/mi-logo.png"
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none">
             </div>
         </div>
 

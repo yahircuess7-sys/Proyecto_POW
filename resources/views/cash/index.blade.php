@@ -43,7 +43,7 @@
                         {{ $currentShift->cashRegister->name ?? 'Caja' }} &bull; Abierto por {{ $currentShift->user->name ?? 'Cajero' }} el {{ $currentShift->opened_at->format('d/m/Y H:i') }}
                     </p>
                     <p class="text-xs text-slate-600 font-mono">
-                        Fondo Inicial: <strong>${{ number_format($currentShift->initial_cash, 2) }}</strong> | Efectivo Esperado: <strong>${{ number_format($currentShift->calculateExpectedCash(), 2) }}</strong>
+                        Fondo Inicial: <strong>C$ {{ number_format($currentShift->initial_cash, 2) }}</strong> | Modalidad: <strong>Arqueo Ciego Activo</strong>
                     </p>
                 </div>
             </div>
@@ -160,26 +160,30 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right font-mono font-medium text-slate-800">
-                                ${{ number_format($shift->initial_cash, 2) }}
+                                C$ {{ number_format($shift->initial_cash, 2) }}
                             </td>
                             <td class="px-4 py-3 text-right font-mono font-medium text-slate-800">
-                                ${{ number_format($shift->expected_cash ?? $shift->calculateExpectedCash(), 2) }}
+                                @if($shift->isClosed() || (auth()->check() && (auth()->user()->isOwner() || auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())))
+                                    C$ {{ number_format($shift->expected_cash ?? $shift->calculateExpectedCash(), 2) }}
+                                @else
+                                    <span class="text-slate-400 italic">Ciego</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right font-mono font-medium text-slate-800">
                                 @if($shift->closing_cash !== null)
-                                    ${{ number_format($shift->closing_cash, 2) }}
+                                    C$ {{ number_format($shift->closing_cash, 2) }}
                                 @else
                                     <span class="text-slate-400 italic">En curso</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right font-mono font-bold">
                                 @if($shift->difference !== null)
-                                    @if($shift->difference > 0)
-                                        <span class="text-emerald-600">+${{ number_format($shift->difference, 2) }} (Sobrante)</span>
-                                    @elseif($shift->difference < 0)
-                                        <span class="text-rose-600">-${{ number_format(abs($shift->difference), 2) }} (Faltante)</span>
+                                    @if($shift->difference > 0.05)
+                                        <span class="text-emerald-600">+C$ {{ number_format($shift->difference, 2) }} (Sobrante)</span>
+                                    @elseif($shift->difference < -0.05)
+                                        <span class="text-rose-600">-C$ {{ number_format(abs($shift->difference), 2) }} (Faltante)</span>
                                     @else
-                                        <span class="text-slate-500">$0.00 (Exacto)</span>
+                                        <span class="text-emerald-700">C$ 0.00 (Cuadrado)</span>
                                     @endif
                                 @else
                                     <span class="text-slate-400">---</span>

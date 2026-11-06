@@ -80,6 +80,25 @@ class Subscription extends Model
         return $this->status === self::STATUS_TRIALING;
     }
 
+    public function trialDaysRemaining(): int
+    {
+        if (! $this->isTrialing() || ! $this->trial_ends_at) {
+            return 0;
+        }
+
+        return max(0, (int) ceil(now()->diffInHours($this->trial_ends_at, false) / 24));
+    }
+
+    public function daysRemaining(): ?int
+    {
+        $targetDate = $this->isTrialing() ? $this->trial_ends_at : $this->ends_at;
+        if (! $targetDate) {
+            return null;
+        }
+
+        return max(0, (int) ceil(now()->diffInHours($targetDate, false) / 24));
+    }
+
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;

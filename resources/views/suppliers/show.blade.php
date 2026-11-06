@@ -102,7 +102,7 @@
                     <div>
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">Total Comprado</span>
                         <div class="text-3xl font-extrabold font-mono text-emerald-600 mt-1">
-                            ${{ number_format($totalPurchased, 2) }}
+                            C$ {{ number_format($totalPurchased, 2) }}
                         </div>
                         <span class="text-xs text-slate-500 mt-0.5 block">Monto histórico facturado por este proveedor</span>
                     </div>
@@ -158,9 +158,9 @@
                         <td class="py-3 px-5">
                             <div class="font-semibold text-slate-900">{{ $product->name }}</div>
                         </td>
-                        <td class="py-3 px-5 text-slate-600">{{ $product->category->name ?? 'Sin categoría' }}</td>
-                        <td class="py-3 px-5 text-right font-mono text-slate-600">${{ number_format($product->cost, 2) }}</td>
-                        <td class="py-3 px-5 text-right font-mono font-bold text-slate-900">${{ number_format($product->price, 2) }}</td>
+                        <td class="py-3 px-5 text-slate-600">{{ is_string($product->category) ? ($product->category ?: 'Sin categoría') : ($product->category->name ?? 'Sin categoría') }}</td>
+                        <td class="py-3 px-5 text-right font-mono text-slate-600">C$ {{ number_format($product->cost, 2) }}</td>
+                        <td class="py-3 px-5 text-right font-mono font-bold text-slate-900">C$ {{ number_format($product->price, 2) }}</td>
                         <td class="py-3 px-5 text-center">
                             @if($product->stock <= 0)
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Agotado (0)</span>
@@ -230,12 +230,14 @@
                         <td class="py-3 px-5 text-slate-600">
                             {{ $purchase->user->name ?? 'Usuario' }}
                         </td>
-                        <td class="py-3 px-5 text-right font-mono text-slate-500">${{ number_format($purchase->subtotal, 2) }}</td>
-                        <td class="py-3 px-5 text-right font-mono text-slate-500">${{ number_format($purchase->tax, 2) }}</td>
-                        <td class="py-3 px-5 text-right font-mono font-bold text-emerald-600">${{ number_format($purchase->total, 2) }}</td>
+                        <td class="py-3 px-5 text-right font-mono text-slate-500">C$ {{ number_format($purchase->subtotal, 2) }}</td>
+                        <td class="py-3 px-5 text-right font-mono text-slate-500">C$ {{ number_format($purchase->tax, 2) }}</td>
+                        <td class="py-3 px-5 text-right font-mono font-bold text-emerald-600">C$ {{ number_format($purchase->total, 2) }}</td>
                         <td class="py-3 px-5 text-center">
-                            @if($purchase->status === 'completed')
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Completada</span>
+                            @if($purchase->isReceived())
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Recibida</span>
+                            @elseif($purchase->isPending())
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Pendiente</span>
                             @else
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Cancelada</span>
                             @endif

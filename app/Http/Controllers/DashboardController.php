@@ -21,7 +21,8 @@ class DashboardController extends Controller
 
     public function index(): View
     {
-        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
+        $activeBusiness = $this->tenantManager->getTenant() ?: Auth::user()?->currentBusiness;
+        $businessId = $activeBusiness?->id ?: Auth::user()?->current_business_id;
         $today = now()->toDateString();
         $startOfMonth = now()->startOfMonth()->toDateString();
 
@@ -114,6 +115,67 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        // 9. Onboarding Checklist ("Primeros Pasos en 3 minutos")
+        $hasConfiguredTicket = $activeBusiness && (
+            ! empty($activeBusiness->settings['ticket_configured'])
+            || (! empty($activeBusiness->phone) && ! empty($activeBusiness->address))
+        );
+        $hasProducts = $totalProducts > 0;
+        $hasOpenedShift = $activeShift !== null || CashShift::where('business_id', $businessId)->exists();
+        $hasFirstSale = $recentSales->where('status', '!=', Sale::STATUS_CANCELLED)->isNotEmpty()
+            || Sale::where('business_id', $businessId)->where('status', '!=', Sale::STATUS_CANCELLED)->exists();
+
+        $onboardingSteps = [
+            [
+                'key' => 'business_created',
+                'title' => 'Negocio creado y activado',
+                'description' => 'Tu espacio empresarial y base de datos en la nube están listos.',
+                'done' => true,
+                'url' => null,
+                'cta' => 'Completado',
+                'icon' => 'bi-building-check',
+            ],
+            [
+                'key' => 'ticket_configured',
+                'title' => 'Configura los datos de tu ticket y factura',
+                'description' => 'Agrega teléfono, dirección, RUC opcional y logo para tus recibos.',
+                'done' => $hasConfiguredTicket,
+                'url' => Auth::user()?->can('manage-business-settings') ? route('admin.business.settings') : null,
+                'cta' => 'Configurar ticket',
+                'icon' => 'bi-receipt-cutoff',
+            ],
+            [
+                'key' => 'first_product',
+                'title' => 'Agrega tu primer producto o importa tu inventario',
+                'description' => 'Crea un artículo rápido o sube tu plantilla Excel/CSV en segundos.',
+                'done' => $hasProducts,
+                'url' => route('inventory.index'),
+                'cta' => 'Cargar inventario',
+                'icon' => 'bi-box-seam',
+            ],
+            [
+                'key' => 'first_shift',
+                'title' => 'Abre tu primera caja registradora',
+                'description' => 'Inicia un turno indicando el fondo inicial de efectivo en gaveta.',
+                'done' => $hasOpenedShift,
+                'url' => route('cash.current'),
+                'cta' => 'Abrir caja',
+                'icon' => 'bi-safe2',
+            ],
+            [
+                'key' => 'first_sale',
+                'title' => 'Realiza tu primera venta en el POS',
+                'description' => 'Prueba el cobro rápido en Córdobas (C$) e imprime tu primer ticket.',
+                'done' => $hasFirstSale,
+                'url' => route('pos.create'),
+                'cta' => 'Ir al POS',
+                'icon' => 'bi-cart-check',
+            ],
+        ];
+
+        $completedStepsCount = collect($onboardingSteps)->where('done', true)->count();
+        $showOnboarding = $completedStepsCount < count($onboardingSteps);
+
         return view('dashboard', compact(
             'dailyTotal',
             'ordersToday',
@@ -129,7 +191,10 @@ class DashboardController extends Controller
             'outOfStockCount',
             'topProducts',
             'recentMovements',
-            'recentSales'
+            'recentSales',
+            'onboardingSteps',
+            'completedStepsCount',
+            'showOnboarding'
         ));
     }
 }

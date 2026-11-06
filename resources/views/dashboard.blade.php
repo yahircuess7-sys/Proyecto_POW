@@ -19,7 +19,7 @@
                     <span class="text-slate-400 mx-1.5">&bull;</span>
                     <span class="text-slate-600">Turno #{{ $activeShift->id }} &bull; Cajero: <strong>{{ $activeShift->user->name ?? 'Cajero' }}</strong></span>
                     <span class="text-slate-400 mx-1.5">&bull;</span>
-                    <span class="font-mono text-emerald-800 font-bold">Efectivo Gaveta: ${{ number_format($activeShift->calculateExpectedCash(), 2) }}</span>
+                    <span class="font-mono text-emerald-800 font-bold">Efectivo Gaveta: C$ {{ number_format($activeShift->calculateExpectedCash(), 2) }}</span>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -69,6 +69,85 @@
         </div>
     </div>
 
+    {{-- Onboarding Checklist ("Primeros Pasos en 3 minutos") - Se oculta automáticamente al completar los 5 pasos --}}
+    @if(!empty($showOnboarding) && !empty($onboardingSteps))
+        @php
+            $totalSteps = count($onboardingSteps);
+            $progressPercent = (int) round(($completedStepsCount / max(1, $totalSteps)) * 100);
+        @endphp
+        <div x-data="{ collapsed: false }"
+             class="animate-fade-up rounded-2xl bg-white border border-emerald-200/80 shadow-card overflow-hidden">
+            <div class="px-5 py-4 bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-600 text-white shadow-sm shrink-0">
+                        <i class="bi bi-rocket-takeoff-fill text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-bold text-slate-900">Primeros Pasos en 3 Minutos</h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 font-mono">
+                                {{ $completedStepsCount }}/{{ $totalSteps }} completados
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Sigue esta guía rápida para dejar tu punto de venta listo para facturar hoy mismo. Se ocultará automáticamente al terminar.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="w-32 sm:w-36 bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                        <div class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: {{ $progressPercent }}%"></div>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-emerald-700">{{ $progressPercent }}%</span>
+                    <button type="button" @click="collapsed = !collapsed" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Contraer/Expandir">
+                        <i class="bi" :class="collapsed ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="!collapsed" x-transition class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-5 gap-3">
+                @foreach($onboardingSteps as $idx => $step)
+                    <div class="flex flex-col justify-between p-3.5 rounded-xl border transition-all {{ $step['done'] ? 'bg-emerald-50/40 border-emerald-200/70' : 'bg-slate-50/70 border-slate-200 hover:border-emerald-300 hover:bg-white' }}">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-wider {{ $step['done'] ? 'text-emerald-600' : 'text-slate-400' }}">
+                                    Paso {{ $idx + 1 }}
+                                </span>
+                                @if($step['done'])
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm">
+                                        <i class="bi bi-check2 font-bold"></i>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-slate-300 bg-white"></span>
+                                @endif
+                            </div>
+                            <h3 class="text-xs font-bold {{ $step['done'] ? 'text-slate-700 line-through decoration-emerald-400/70' : 'text-slate-900' }}">
+                                {{ $step['title'] }}
+                            </h3>
+                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                {{ $step['description'] }}
+                            </p>
+                        </div>
+
+                        <div class="mt-3 pt-2.5 border-t border-slate-200/60">
+                            @if($step['done'])
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
+                                    <i class="bi bi-check-circle-fill"></i> Listo
+                                </span>
+                            @elseif($step['url'])
+                                <a href="{{ $step['url'] }}" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-slate-900 hover:bg-emerald-600 text-white transition-colors">
+                                    <i class="bi {{ $step['icon'] }}"></i>
+                                    <span>{{ $step['cta'] }}</span>
+                                </a>
+                            @else
+                                <span class="text-[11px] text-slate-400 font-medium">Pendiente del Propietario</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <!-- 4 KPI Metrics Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
@@ -82,7 +161,7 @@
             </div>
             <div class="mt-3">
                 <h3 class="text-xl font-bold font-mono text-slate-900 tracking-tight">
-                    ${{ number_format($dailyTotal, 2) }}
+                    C$ {{ number_format($dailyTotal, 2) }}
                 </h3>
                 <p class="mt-1 text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
                     <i class="bi bi-receipt"></i>
@@ -101,7 +180,7 @@
             </div>
             <div class="mt-3">
                 <h3 class="text-xl font-bold font-mono text-slate-900 tracking-tight">
-                    ${{ number_format($monthlyTotal, 2) }}
+                    C$ {{ number_format($monthlyTotal, 2) }}
                 </h3>
                 <p class="mt-1 text-[11px] text-slate-500 font-medium">
                     <span>{{ $monthlyOrders }} ventas en el mes</span>
@@ -119,7 +198,7 @@
             </div>
             <div class="mt-3">
                 <h3 class="text-xl font-black font-mono text-white tracking-tight">
-                    ${{ number_format($monthlyGrossProfit, 2) }}
+                    C$ {{ number_format($monthlyGrossProfit, 2) }}
                 </h3>
                 <p class="mt-1 text-[10px] text-slate-400">
                     <span>Sobre costo real de mercancía</span>
@@ -185,7 +264,7 @@
                                     {{ $tp->total_sold }}
                                 </td>
                                 <td class="py-2 px-3 text-right font-mono font-bold text-emerald-700">
-                                    ${{ number_format($tp->total_revenue, 2) }}
+                                    C$ {{ number_format($tp->total_revenue, 2) }}
                                 </td>
                             </tr>
                         @empty
@@ -354,7 +433,7 @@
                                     {{ $rs->payment_method ?? 'CASH' }}
                                 </td>
                                 <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                                    ${{ number_format($rs->total, 2) }}
+                                    C$ {{ number_format($rs->total, 2) }}
                                 </td>
                             </tr>
                         @empty

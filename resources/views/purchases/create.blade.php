@@ -174,8 +174,8 @@
                                 <tr class="border-b border-slate-200 bg-slate-50/75 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                                     <th class="py-3 px-4 w-4/12">Producto del Catálogo</th>
                                     <th class="py-3 px-4 w-2/12 text-center">Cantidad</th>
-                                    <th class="py-3 px-4 w-2/12 text-right">Costo Unit. ($)</th>
-                                    <th class="py-3 px-4 w-2/12 text-right">Descto. Línea ($)</th>
+                                    <th class="py-3 px-4 w-2/12 text-right">Costo Unit. (C$)</th>
+                                    <th class="py-3 px-4 w-2/12 text-right">Descto. Línea (C$)</th>
                                     <th class="py-3 px-4 w-2/12 text-right">Subtotal Neto</th>
                                     <th class="py-3 px-4 w-1/12 text-center"></th>
                                 </tr>
@@ -193,7 +193,7 @@
                                                 <option value="">-- Seleccionar Producto --</option>
                                                 @foreach($products as $product)
                                                     <option value="{{ $product->id }}" data-cost="{{ $product->cost }}" data-stock="{{ $product->stock }}">
-                                                        {{ $product->name }} (Stock: {{ $product->stock }} | Costo: ${{ number_format($product->cost, 2) }})
+                                                        {{ $product->name }} (Stock: {{ $product->stock }} | Costo: C$ {{ number_format($product->cost, 2) }})
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -214,7 +214,7 @@
                                         <!-- Unit Cost -->
                                         <td class="py-3 px-4">
                                             <div class="relative">
-                                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-xs">$</span>
+                                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-[11px]">C$</span>
                                                 <input type="number" 
                                                        :name="`items[${index}][unit_cost]`" 
                                                        x-model.number="item.unit_cost" 
@@ -222,28 +222,28 @@
                                                        min="0" 
                                                        step="0.01" 
                                                        required 
-                                                       class="w-full text-right pl-6 pr-3 py-2 text-xs font-mono font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                                                       class="w-full text-right pl-8 pr-3 py-2 text-xs font-mono font-semibold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                                             </div>
                                         </td>
 
                                         <!-- Line Discount -->
                                         <td class="py-3 px-4">
                                             <div class="relative">
-                                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-xs">$</span>
+                                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-[11px]">C$</span>
                                                 <input type="number" 
                                                        :name="`items[${index}][discount]`" 
                                                        x-model.number="item.discount" 
                                                        @input="calculateTotals()" 
                                                        min="0" 
                                                        step="0.01" 
-                                                       class="w-full text-right pl-6 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                                       class="w-full text-right pl-8 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                                        placeholder="0.00">
                                             </div>
                                         </td>
 
                                         <!-- Row Subtotal -->
                                         <td class="py-3 px-4 text-right font-mono font-bold text-slate-800">
-                                            $<span x-text="Math.max(0, (item.quantity * item.unit_cost) - (parseFloat(item.discount) || 0)).toFixed(2)"></span>
+                                            C$ <span x-text="Math.max(0, (item.quantity * item.unit_cost) - (parseFloat(item.discount) || 0)).toFixed(2)"></span>
                                         </td>
 
                                         <!-- Delete row -->
@@ -283,10 +283,10 @@
                     <!-- Global Discount Input -->
                     <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
                         <label for="global_discount" class="block text-xs font-bold text-slate-700 mb-1">
-                            Descuento Global Adicional ($)
+                            Descuento Global Adicional (C$)
                         </label>
                         <div class="relative max-w-xs">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-xs">$</span>
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-[11px]">C$</span>
                             <input type="number" 
                                    name="discount" 
                                    id="global_discount" 
@@ -295,7 +295,7 @@
                                    min="0" 
                                    step="0.01" 
                                    placeholder="0.00" 
-                                   class="w-full pl-6 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                                   class="w-full pl-8 pr-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                         </div>
                         <span class="text-[11px] text-slate-400 mt-1 block">Aplica sobre el subtotal acumulado de la factura.</span>
                     </div>
@@ -307,27 +307,27 @@
                         
                         <div class="flex items-center justify-between text-slate-600">
                             <span>Subtotal Bruto:</span>
-                            <span class="font-mono font-bold text-slate-800">$<span x-text="grossSubtotal.toFixed(2)"></span></span>
+                            <span class="font-mono font-bold text-slate-800">C$ <span x-text="grossSubtotal.toFixed(2)"></span></span>
                         </div>
 
                         <div class="flex items-center justify-between text-rose-600 font-medium">
                             <span>Total Descuentos:</span>
-                            <span class="font-mono font-bold">-$<span x-text="totalDiscount.toFixed(2)"></span></span>
+                            <span class="font-mono font-bold">-C$ <span x-text="totalDiscount.toFixed(2)"></span></span>
                         </div>
 
                         <div class="flex items-center justify-between text-slate-600">
                             <span>Base Imponible (Neto):</span>
-                            <span class="font-mono font-bold text-slate-800">$<span x-text="netSubtotal.toFixed(2)"></span></span>
+                            <span class="font-mono font-bold text-slate-800">C$ <span x-text="netSubtotal.toFixed(2)"></span></span>
                         </div>
 
                         <div class="flex items-center justify-between text-slate-600">
-                            <span>Impuesto IVA (12%):</span>
-                            <span class="font-mono font-bold text-slate-800">$<span x-text="tax.toFixed(2)"></span></span>
+                            <span>Impuesto IVA ({{ rtrim(rtrim(number_format($taxPercentage ?? 15, 2), '0'), '.') }}%):</span>
+                            <span class="font-mono font-bold text-slate-800">C$ <span x-text="tax.toFixed(2)"></span></span>
                         </div>
 
                         <div class="pt-3 border-t border-slate-200/80 flex items-center justify-between text-sm">
                             <span class="font-bold text-slate-900">Total Liquidado:</span>
-                            <span class="font-mono text-xl font-extrabold text-emerald-600">$<span x-text="total.toFixed(2)"></span></span>
+                            <span class="font-mono text-xl font-extrabold text-emerald-600">C$ <span x-text="total.toFixed(2)"></span></span>
                         </div>
 
                     </div>
@@ -359,7 +359,7 @@
 function purchaseForm() {
     return {
         isSubmitting: false,
-        taxRate: 0.12,
+        taxRate: {{ ($taxPercentage ?? 15) / 100 }},
         status: '{{ old('status', 'received') }}',
         grossSubtotal: 0,
         globalDiscount: {{ old('discount', 0) }},

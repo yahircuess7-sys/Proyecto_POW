@@ -332,7 +332,7 @@ class SuperAdminController extends Controller
 
         // Protección de seguridad: No se puede revocar a sí mismo si es el único Super Admin
         if ($user->id === $currentUser->id && $user->isSuperAdmin()) {
-            $superAdminsCount = User::where('is_super_admin', true)->orWhere('role', User::ROLE_SUPER_ADMIN)->count();
+            $superAdminsCount = User::where('is_super_admin', true)->where('status', 'active')->count();
             if ($superAdminsCount <= 1) {
                 return back()->with('error', 'No puedes revocar tu propio acceso de Super Admin porque eres el único administrador global en el sistema.');
             }

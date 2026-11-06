@@ -34,7 +34,7 @@ Route::get('/', function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/logout', fn () => redirect()->route('login'));
+Route::get('/logout', [LoginController::class, 'logout']);
 
 Route::get('/register', [RegisterBusinessController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterBusinessController::class, 'register'])
@@ -86,9 +86,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Inventario (Lectura para Cajeros; Escritura autorizada por ProductPolicy para Owner/Admin/SuperAdmin)
+    Route::get('inventory/template/csv', [ProductController::class, 'downloadTemplate'])->name('inventory.template.csv');
     Route::get('inventory/export/pdf', [ProductController::class, 'exportPdf'])->name('inventory.export.pdf');
     Route::get('inventory/export/csv', [ProductController::class, 'exportCsv'])->name('inventory.export.csv');
     Route::post('inventory/import/csv', [ProductController::class, 'importCsv'])->name('inventory.import.csv');
+    Route::patch('inventory/{product}/quick-update', [ProductController::class, 'quickUpdate'])->name('inventory.quick-update');
     Route::patch('inventory/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('inventory.toggle-status');
     Route::post('inventory/{product}/adjust', [ProductController::class, 'adjustStock'])->name('inventory.adjust');
     Route::resource('inventory', ProductController::class)
@@ -99,6 +101,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/history', [SaleController::class, 'history'])->name('sales.history');
+    Route::get('/sales/{sale}/ticket', [SaleController::class, 'ticket'])->name('sales.ticket');
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'exportPdf'])->name('sales.pdf');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
 

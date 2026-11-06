@@ -44,13 +44,13 @@
             </h1>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-subtle transition-all">
-                <i class="bi bi-printer"></i>
-                <span>Imprimir</span>
-            </button>
+            <a href="{{ route('sales.ticket', ['sale' => $sale->id, 'autoprint' => 1]) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-subtle transition-all">
+                <i class="bi bi-printer-fill"></i>
+                <span>Ticket Térmico</span>
+            </a>
             <a href="{{ route('sales.pdf', $sale) }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-subtle transition-all">
                 <i class="bi bi-file-earmark-pdf text-rose-600"></i>
-                <span>Descargar PDF</span>
+                <span>Descargar PDF A4</span>
             </a>
             @if($sale->canBeRefunded())
                 <a href="{{ route('sales.returns.create', $sale) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-all">
@@ -127,7 +127,7 @@
                         </span>
                         @if($sale->payment_method === 'cash' && $sale->paid_amount)
                             <div class="text-[11px] text-slate-500 mt-1 font-mono">
-                                Recibido: ${{ number_format($sale->paid_amount, 2) }} | Cambio: ${{ number_format($sale->change_amount, 2) }}
+                                Recibido: C$ {{ number_format($sale->paid_amount, 2) }} | Cambio: C$ {{ number_format($sale->change_amount, 2) }}
                             </div>
                         @endif
                     </div>
@@ -136,15 +136,18 @@
         </div>
 
         <!-- Financial Summary Card -->
+        @php
+            $saleBizTaxPct = ($sale->business ?? $currentBusiness ?? null)?->effectiveTaxPercentage(15.0) ?? 15.0;
+        @endphp
         <div class="lg:col-span-2 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 shadow-card text-white flex flex-col justify-between">
             <div>
                 <div class="flex items-center justify-between pb-4 border-b border-slate-800">
                     <div>
-                        <span class="text-xs uppercase tracking-wider font-semibold text-emerald-400 font-mono">Control Administrativo</span>
+                        <span class="text-xs uppercase tracking-wider font-semibold text-emerald-400 font-mono">Control Administrativo (NIO)</span>
                         <h2 class="text-lg font-bold text-white">Liquidación de la Venta</h2>
                     </div>
                     <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-white/10 text-slate-200">
-                        IVA 12% Desglosado
+                        IVA {{ $saleBizTaxPct }}% Desglosado
                     </span>
                 </div>
 
@@ -152,21 +155,21 @@
                     <div class="p-3.5 rounded-xl bg-white/5 border border-white/10">
                         <span class="text-slate-400 block mb-1">Subtotal</span>
                         <div class="text-xl font-mono font-bold text-white">
-                            ${{ number_format($sale->subtotal, 2) }}
+                            C$ {{ number_format($sale->subtotal, 2) }}
                         </div>
                     </div>
 
                     <div class="p-3.5 rounded-xl bg-white/5 border border-white/10">
                         <span class="text-slate-400 block mb-1">Descuento</span>
                         <div class="text-xl font-mono font-bold {{ $sale->discount > 0 ? 'text-rose-400' : 'text-slate-400' }}">
-                            -${{ number_format($sale->discount, 2) }}
+                            -C$ {{ number_format($sale->discount, 2) }}
                         </div>
                     </div>
 
                     <div class="p-3.5 rounded-xl bg-white/5 border border-white/10">
-                        <span class="text-slate-400 block mb-1">IVA (12%)</span>
+                        <span class="text-slate-400 block mb-1">IVA ({{ $saleBizTaxPct }}%)</span>
                         <div class="text-xl font-mono font-bold text-emerald-400">
-                            ${{ number_format($sale->tax, 2) }}
+                            C$ {{ number_format($sale->tax, 2) }}
                         </div>
                     </div>
                 </div>
@@ -175,11 +178,11 @@
             <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
                 <div>
                     <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Cobrado</span>
-                    <p class="text-[11px] text-slate-400">Registrado en trazabilidad contable</p>
+                    <p class="text-[11px] text-slate-400">Registrado en trazabilidad contable (Córdobas)</p>
                 </div>
                 <div class="text-right">
                     <span class="text-3xl font-mono font-black text-white tracking-tight">
-                        ${{ number_format($sale->total, 2) }}
+                        C$ {{ number_format($sale->total, 2) }}
                     </span>
                 </div>
             </div>
@@ -236,10 +239,10 @@
                                 <span class="font-bold text-slate-700">{{ $item->availableForRefund() }}</span>
                             </td>
                             <td class="py-3 px-5 text-right font-mono text-slate-700">
-                                ${{ number_format($item->unit_price, 2) }}
+                                C$ {{ number_format($item->unit_price, 2) }}
                             </td>
                             <td class="py-3 px-5 text-right font-mono font-bold text-slate-900">
-                                ${{ number_format($item->subtotal, 2) }}
+                                C$ {{ number_format($item->subtotal, 2) }}
                             </td>
                         </tr>
                     @empty
@@ -288,7 +291,7 @@
                                 </td>
                                 <td class="py-2.5 px-4 italic text-slate-700">{{ $ret->reason }}</td>
                                 <td class="py-2.5 px-4 text-right font-mono font-bold text-rose-600">
-                                    -${{ number_format($ret->total_refunded, 2) }}
+                                    -C$ {{ number_format($ret->totalWithTax(), 2) }}
                                 </td>
                                 <td class="py-2.5 px-4 text-center">
                                     <a href="{{ route('sales.returns.show', $ret) }}" class="p-1 rounded text-slate-500 hover:text-emerald-700" title="Ver comprobante de devolución">

@@ -171,7 +171,7 @@ class SaleController extends Controller
             $taxableBase = max(0, $subtotal - $saleDiscount);
 
             $activeBusiness = $this->tenantManager->getTenant() ?: Business::find($businessId);
-            $effectiveTaxRate = ($activeBusiness ? $activeBusiness->effectiveTaxPercentage(12.0) : 12.0) / 100.0;
+            $effectiveTaxRate = ($activeBusiness ? $activeBusiness->effectiveTaxPercentage(15.0) : 15.0) / 100.0;
             $tax = round($taxableBase * $effectiveTaxRate, 2);
             $total = round($taxableBase + $tax, 2);
 
@@ -180,7 +180,7 @@ class SaleController extends Controller
 
             if ($paymentMethod === 'cash') {
                 if ($paidAmount < $total) {
-                    throw new \Exception("El efectivo entregado ($" . number_format($paidAmount, 2) . ") es menor al total de la venta ($" . number_format($total, 2) . ").");
+                    throw new \Exception("El efectivo entregado (C$ " . number_format($paidAmount, 2) . ") es menor al total de la venta (C$ " . number_format($total, 2) . ").");
                 }
                 $changeAmount = round($paidAmount - $total, 2);
             } else {
@@ -226,7 +226,7 @@ class SaleController extends Controller
 
             AuditLogger::record(
                 'sale_created',
-                "Venta {$sale->invoice_number} por $" . number_format($sale->total, 2) . " [Método: {$sale->payment_method}]",
+                "Venta {$sale->invoice_number} por C$ " . number_format($sale->total, 2) . " [Método: {$sale->payment_method}]",
                 $sale,
                 [
                     'total' => $sale->total,
@@ -290,8 +290,12 @@ class SaleController extends Controller
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
 
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
         $sales = $query->paginate(15)->withQueryString();
-        $cashiers = User::where('status', 'active')->orderBy('name')->get();
+        $cashiers = User::where('status', 'active')
+            ->when($businessId, fn ($q) => $q->whereHas('businesses', fn ($b) => $b->where('businesses.id', $businessId)))
+            ->orderBy('name')
+            ->get();
 
         return view('sales.history', compact('sales', 'cashiers'));
     }
@@ -310,9 +314,29 @@ class SaleController extends Controller
             'cashShift.cashRegister',
             'returns.items.product',
             'returns.user',
+            'business',
         ]);
 
         return view('sales.show', compact('sale'));
+    }
+
+    /**
+     * Ticket térmico optimizado (58mm / 80mm) listo para impresión directa.
+     */
+    public function ticket(Sale $sale): View
+    {
+        Gate::authorize('view', $sale);
+
+        $sale->load(['items.product', 'user', 'customer', 'cashShift.cashRegister', 'business']);
+        $business = $sale->business ?: $this->tenantManager->getTenant();
+        $configuredFormat = $business->settings['receipt_format'] ?? 'ticket_80mm';
+        $defaultFormat = in_array($configuredFormat, ['ticket_58mm', 'ticket_80mm'], true) ? $configuredFormat : 'ticket_80mm';
+        $format = in_array(request('format'), ['ticket_58mm', 'ticket_80mm'], true)
+            ? request('format')
+            : $defaultFormat;
+        $autoprint = request()->boolean('autoprint', false);
+
+        return view('sales.ticket', compact('sale', 'business', 'format', 'autoprint'));
     }
 
     /**
@@ -383,33 +407,48 @@ class SaleController extends Controller
 
         $netSales = max(0, $totalSales - $totalRefunded);
 
+        $businessId = $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id;
+        $activeBusiness = $this->tenantManager->getTenant() ?: Business::find($businessId);
+
         // Ganancia Bruta Real calculada sobre costo registrado de ítems
         $grossMargin = (float) DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->where('sales.business_id', $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id)
+            ->where('sales.business_id', $businessId)
             ->whereDate('sales.created_at', '>=', $dateFrom)
             ->whereDate('sales.created_at', '<=', $dateTo)
             ->where('sales.status', '!=', Sale::STATUS_CANCELLED)
             ->selectRaw('SUM(sale_items.subtotal - (sale_items.quantity * sale_items.unit_cost)) as gross_profit')
             ->value('gross_profit') ?? 0.0;
 
-        // Top 5 productos más vendidos en el período
+        // Top productos más vendidos en el período
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.business_id', $this->tenantManager->getTenantId() ?: Auth::user()?->current_business_id)
+            ->where('sales.business_id', $businessId)
             ->whereDate('sales.created_at', '>=', $dateFrom)
             ->whereDate('sales.created_at', '<=', $dateTo)
             ->where('sales.status', '!=', Sale::STATUS_CANCELLED)
             ->select(
+                'products.id',
                 'products.name',
                 'products.sku',
+                'products.stock',
+                'products.min_stock',
                 DB::raw('SUM(sale_items.quantity) as total_quantity'),
                 DB::raw('SUM(sale_items.subtotal) as total_revenue')
             )
-            ->groupBy('products.id', 'products.name', 'products.sku')
+            ->groupBy('products.id', 'products.name', 'products.sku', 'products.stock', 'products.min_stock')
             ->orderByDesc('total_quantity')
-            ->take(5)
+            ->take(8)
+            ->get();
+
+        // Productos agotados o con bajo stock ("Qué pedir al proveedor hoy")
+        $lowStockProducts = Product::with('supplier')
+            ->where('status', Product::STATUS_ACTIVE)
+            ->whereColumn('stock', '<=', 'min_stock')
+            ->orderBy('stock')
+            ->orderBy('name')
+            ->take(15)
             ->get();
 
         // Ventas recientes para la tabla
@@ -420,7 +459,10 @@ class SaleController extends Controller
             ->take(15)
             ->get();
 
-        $cashiers = User::where('status', 'active')->orderBy('name')->get();
+        $cashiers = User::where('status', 'active')
+            ->when($businessId, fn ($q) => $q->whereHas('businesses', fn ($b) => $b->where('businesses.id', $businessId)))
+            ->orderBy('name')
+            ->get();
 
         return view('admin.reports', compact(
             'transactions',
@@ -434,6 +476,8 @@ class SaleController extends Controller
             'cardSales',
             'transferSales',
             'topProducts',
+            'lowStockProducts',
+            'activeBusiness',
             'dateFrom',
             'dateTo',
             'userId',

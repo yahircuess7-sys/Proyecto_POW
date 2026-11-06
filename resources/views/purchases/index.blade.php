@@ -81,7 +81,7 @@
             <div>
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">Inversión Recibida</span>
                 <div class="text-2xl font-extrabold font-mono text-slate-900 mt-0.5">
-                    ${{ number_format($kpis['total_amount'], 2) }}
+                    C$ {{ number_format($kpis['total_amount'], 2) }}
                 </div>
                 <span class="text-[11px] text-slate-500 mt-0.5 block">Monto en compras recibidas</span>
             </div>
@@ -204,11 +204,11 @@
                         <td class="py-3.5 px-5 text-slate-600">
                             {{ $purchase->purchase_date ? $purchase->purchase_date->format('d/m/Y') : '—' }}
                         </td>
-                        <td class="py-3.5 px-5 text-right font-mono text-slate-500">${{ number_format($purchase->subtotal, 2) }}</td>
+                        <td class="py-3.5 px-5 text-right font-mono text-slate-500">C$ {{ number_format($purchase->subtotal, 2) }}</td>
                         <td class="py-3.5 px-5 text-right font-mono text-rose-500">
-                            {{ $purchase->discount > 0 ? '-$' . number_format($purchase->discount, 2) : '—' }}
+                            {{ $purchase->discount > 0 ? '-C$ ' . number_format($purchase->discount, 2) : '—' }}
                         </td>
-                        <td class="py-3.5 px-5 text-right font-mono font-bold text-slate-900">${{ number_format($purchase->total, 2) }}</td>
+                        <td class="py-3.5 px-5 text-right font-mono font-bold text-slate-900">C$ {{ number_format($purchase->total, 2) }}</td>
                         <td class="py-3.5 px-5 text-center">
                             @if($purchase->isReceived())
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
